@@ -15,6 +15,7 @@ export const NAV_LINKS = [
   { label: "Fonctionnalités", href: "#fonctionnalites" },
   { label: "Pour qui", href: "#pour-qui" },
   { label: "Tarifs", href: "#tarifs" },
+  { label: "FAQ", href: "#faq" },
 ] as const;
 
 export const AUDIENCES: { icon: LucideIcon; title: string; description: string }[] = [
@@ -91,6 +92,34 @@ export const TESTIMONIALS: { name: string; role: string; quote: string }[] = [
     role: "RH, entreprise tech",
     quote:
       "Les tests techniques générés par l'IA sont bluffants de pertinence. Notre processus de recrutement est bien plus rapide.",
+  },
+];
+
+export const FAQ_ITEMS: { question: string; answer: string }[] = [
+  {
+    question: "Combien de temps faut-il pour créer un quiz ?",
+    answer:
+      "Moins de 2 minutes pour un quiz simple : donnez un titre, ajoutez vos questions et publiez. L'IA peut aussi générer l'ensemble du quiz à partir d'un simple sujet.",
+  },
+  {
+    question: "Mes données sont-elles isolées des autres organisations ?",
+    answer:
+      "Oui. Chaque organisation dispose de son propre espace : les données sont filtrées automatiquement et aucun accès croisé n'est possible entre organisations.",
+  },
+  {
+    question: "Puis-je utiliser QuizNest sans que mes participants créent un compte ?",
+    answer:
+      "Oui, les participants peuvent répondre via un lien public, un QR code ou un code d'accès, sans création de compte.",
+  },
+  {
+    question: "Quels types de questions sont supportés ?",
+    answer:
+      "QCM, choix multiple, vrai/faux, réponse courte, et bien d'autres à venir (association, remplir les blancs, code, mathématiques).",
+  },
+  {
+    question: "Puis-je changer de plan à tout moment ?",
+    answer:
+      "Oui, vous pouvez passer du plan Free à Professional ou Enterprise à tout moment depuis les paramètres de votre organisation.",
   },
 ];
 
