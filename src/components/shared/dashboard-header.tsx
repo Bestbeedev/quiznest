@@ -6,6 +6,8 @@ import { Bell, LogOut, Menu, Search, Settings } from "lucide-react";
 
 import { signOut } from "@/lib/auth/client";
 import { DashboardNav } from "@/components/shared/dashboard-nav";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -45,7 +47,9 @@ export function DashboardHeader({ user }: { user: SessionUser }) {
     <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent side="left" className="w-64 p-4">
-          <SheetTitle className="px-3 text-base font-semibold">QuizNest</SheetTitle>
+          <SheetTitle className="px-3">
+            <Logo />
+          </SheetTitle>
           <DashboardNav onNavigate={() => setMobileNavOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -66,6 +70,7 @@ export function DashboardHeader({ user }: { user: SessionUser }) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
         <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell className="size-5" />
         </Button>

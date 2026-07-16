@@ -6,6 +6,7 @@ import { HelpCircle, Trash2 } from "lucide-react";
 
 import { deleteQuestionAction } from "@/features/quiz/actions";
 import { AddQuestionDialog } from "@/features/quiz/components/add-question-dialog";
+import { AiGenerateDialog } from "@/features/quiz/components/ai-generate-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,15 @@ const TYPE_LABELS: Record<Question["type"], string> = {
 
 type QuestionWithChoices = Question & { choices: QuestionChoice[] };
 
-export function QuestionsTab({ quizId, questions }: { quizId: string; questions: QuestionWithChoices[] }) {
+export function QuestionsTab({
+  quizId,
+  quizTitle,
+  questions,
+}: {
+  quizId: string;
+  quizTitle: string;
+  questions: QuestionWithChoices[];
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -37,7 +46,10 @@ export function QuestionsTab({ quizId, questions }: { quizId: string; questions:
         <p className="text-sm text-muted-foreground">
           {questions.length} question{questions.length !== 1 ? "s" : ""}
         </p>
-        <AddQuestionDialog quizId={quizId} />
+        <div className="flex items-center gap-2">
+          <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
+          <AddQuestionDialog quizId={quizId} />
+        </div>
       </div>
 
       {questions.length === 0 ? (

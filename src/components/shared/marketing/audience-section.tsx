@@ -1,31 +1,57 @@
 import { AUDIENCES } from "@/constants/marketing";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Reveal } from "@/components/shared/reveal";
+import { Card, CardContent } from "@/components/ui/card";
+
+const GRADIENTS = [
+  "from-blue-500/10 via-blue-500/5 to-transparent",
+  "from-violet-500/10 via-violet-500/5 to-transparent",
+  "from-emerald-500/10 via-emerald-500/5 to-transparent",
+  "from-amber-500/10 via-amber-500/5 to-transparent",
+];
+
+const COLORS = [
+  "text-blue-600 dark:text-blue-400",
+  "text-violet-600 dark:text-violet-400",
+  "text-emerald-600 dark:text-emerald-400",
+  "text-amber-600 dark:text-amber-400",
+];
 
 export function AudienceSection() {
   return (
-    <section id="pour-qui" className="mx-auto max-w-6xl px-6 py-20">
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-semibold tracking-tight">Pour qui ?</h2>
-        <p className="mt-3 text-muted-foreground">
-          QuizNest s&apos;adapte à tous les contextes d&apos;évaluation.
-        </p>
-      </Reveal>
+    <section id="pour-qui" className="scroll-mt-20">
+      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+        <Reveal>
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-medium text-primary">Publics</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Pour qui est-ce fait ?
+            </h2>
+            <p className="mt-3 text-base text-muted-foreground">
+              Une solution adaptée à chaque type d&apos;organisation.
+            </p>
+          </div>
+        </Reveal>
 
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {AUDIENCES.map((audience, index) => (
-          <Reveal key={audience.title} delay={index * 0.05}>
-            <Card className="h-full">
-              <CardHeader>
-                <audience.icon className="size-6 text-primary" />
-                <CardTitle className="pt-2">{audience.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                {audience.description}
-              </CardContent>
-            </Card>
-          </Reveal>
-        ))}
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {AUDIENCES.map((audience, i) => (
+            <Reveal key={audience.title} delay={0.1 + i * 0.1} direction="up">
+              <Card className="group relative h-full overflow-hidden border bg-card p-0 shadow-sm transition-all hover:shadow-md hover:scale-[1.03] active:scale-100">
+                <div className={`absolute inset-0 bg-gradient-to-br ${GRADIENTS[i]}`} />
+                <CardContent className="relative flex flex-col items-center p-6 text-center">
+                  <div
+                    className={`flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${GRADIENTS[i]} ring-1 ring-border ${COLORS[i]}`}
+                  >
+                    <audience.icon className="size-6" />
+                  </div>
+                  <h3 className="mt-4 font-semibold">{audience.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {audience.description}
+                  </p>
+                </CardContent>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );

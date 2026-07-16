@@ -35,7 +35,7 @@ export default async function QuizDetailPage({
         </TabsList>
 
         <TabsContent value="questions">
-          <QuestionsTab quizId={quiz.id} questions={quiz.questions} />
+          <QuestionsTab quizId={quiz.id} quizTitle={quiz.title} questions={quiz.questions} />
         </TabsContent>
 
         <TabsContent value="participants">

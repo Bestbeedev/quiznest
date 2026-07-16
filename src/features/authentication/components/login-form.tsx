@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
+import { Mail, Lock } from "lucide-react";
 
 import { signIn } from "@/lib/auth/client";
 import { signInSchema, type SignInInput } from "@/lib/validators/auth";
@@ -26,10 +27,13 @@ import {
   FieldError,
 } from "@/components/ui/field";
 
+import { ChromeIcon } from "@/components/ui/icons/chrome-icon";
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isSSOLoading, setIsSSOLoading] = useState(false);
 
   const {
     register,
@@ -58,63 +62,108 @@ export function LoginForm() {
     router.refresh();
   });
 
+  const handleGoogleSignIn = async () => {
+    setIsSSOLoading(true);
+    setServerError(null);
+    const { error } = await signIn.social({ provider: "google" });
+    if (error) {
+      setServerError(error.message ?? "Erreur lors de la connexion avec Google.");
+      setIsSSOLoading(false);
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 12 }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="w-full max-w-sm"
+      className="w-full max-w-md"
     >
-      <Card>
+      <div className="mb-6 text-center lg:hidden">
+        <h1 className="text-xl font-bold tracking-tight">Connexion</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Accédez à votre espace</p>
+      </div>
+
+      <Card className="border-border/50 shadow-xs">
         <CardHeader>
           <CardTitle>Connexion</CardTitle>
           <CardDescription>Accédez à votre espace QuizNest.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} noValidate>
-            <FieldGroup>
-              {serverError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{serverError}</AlertDescription>
-                </Alert>
-              )}
+          <FieldGroup>
+            {serverError && (
+              <Alert variant="destructive">
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
 
-              <Field data-invalid={!!errors.email}>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  aria-invalid={!!errors.email}
-                  {...register("email")}
-                />
-                <FieldError errors={[errors.email]} />
-              </Field>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={isSSOLoading}
+              onClick={handleGoogleSignIn}
+            >
+              <ChromeIcon className="size-4" />
+              {isSSOLoading ? "Connexion..." : "Continuer avec Google"}
+            </Button>
 
-              <Field data-invalid={!!errors.password}>
-                <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  aria-invalid={!!errors.password}
-                  {...register("password")}
-                />
-                <FieldError errors={[errors.password]} />
-              </Field>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
 
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+            <form onSubmit={onSubmit} noValidate>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field data-invalid={!!errors.email}>
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      aria-invalid={!!errors.email}
+                      className="pl-8"
+                      {...register("email")}
+                    />
+                  </div>
+                  <FieldError errors={[errors.email]} />
+                </Field>
+
+                <Field data-invalid={!!errors.password}>
+                  <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      aria-invalid={!!errors.password}
+                      className="pl-8"
+                      {...register("password")}
+                    />
+                  </div>
+                  <FieldError errors={[errors.password]} />
+                </Field>
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="mt-4 w-full">
                 {isSubmitting ? "Connexion..." : "Se connecter"}
               </Button>
+            </form>
 
-              <p className="text-center text-sm text-muted-foreground">
-                Pas encore de compte ?{" "}
-                <Link href="/register" className="text-primary underline underline-offset-4">
-                  Créer un compte
-                </Link>
-              </p>
-            </FieldGroup>
-          </form>
+            <p className="text-center text-sm text-muted-foreground">
+              Pas encore de compte ?{" "}
+              <Link href="/register" className="font-medium text-primary underline underline-offset-4">
+                Créer un compte
+              </Link>
+            </p>
+          </FieldGroup>
         </CardContent>
       </Card>
     </motion.div>

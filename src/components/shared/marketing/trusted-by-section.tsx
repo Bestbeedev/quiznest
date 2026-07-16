@@ -1,20 +1,26 @@
-import { AUDIENCES } from "@/constants/marketing";
-import { Reveal } from "@/components/shared/reveal";
+import { TRUSTED_BY } from "@/constants/marketing";
 
 export function TrustedBySection() {
   return (
-    <section className="border-y bg-muted/30 py-10">
-      <Reveal className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-6">
-        <p className="text-sm font-medium text-muted-foreground">Conçu pour</p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-          {AUDIENCES.map((audience) => (
-            <div key={audience.title} className="flex items-center gap-2 text-muted-foreground">
-              <audience.icon className="size-5" />
-              <span className="text-sm font-medium">{audience.title}</span>
+    <section className="border-y bg-muted/30">
+      <div className="mx-auto max-w-6xl px-6 py-12">
+        <p className="text-center text-xs font-medium tracking-widest uppercase text-muted-foreground">
+          Ils nous font confiance
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+          {TRUSTED_BY.map((org) => (
+            <div
+              key={org.name}
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+                {org.initials}
+              </span>
+              {org.name}
             </div>
           ))}
         </div>
-      </Reveal>
+      </div>
     </section>
   );
 }

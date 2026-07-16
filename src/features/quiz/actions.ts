@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth/require-auth";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { createQuizSchema, updateQuizSettingsSchema } from "@/lib/validators/quiz";
 import { createQuestionSchema } from "@/lib/validators/question";
+import { aiImportSchema, toCreateQuestionInputs } from "@/lib/validators/ai-import";
 import * as quizService from "@/lib/services/quiz";
 import * as questionService from "@/lib/services/question";
 
@@ -87,4 +88,26 @@ export async function deleteQuestionAction(quizId: string, questionId: string) {
   const organization = await requireActiveOrganization();
   await questionService.deleteQuestion(organization.id, quizId, questionId);
   revalidatePath(`/dashboard/quiz/${quizId}`);
+}
+
+export async function importQuestionsFromJsonAction(quizId: string, rawJson: string) {
+  await requireAuth();
+  const organization = await requireActiveOrganization();
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(rawJson);
+  } catch {
+    return { error: "Le texte collé n'est pas un JSON valide." };
+  }
+
+  const parsed = aiImportSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Format JSON invalide." };
+  }
+
+  const inputs = toCreateQuestionInputs(parsed.data);
+  await questionService.importQuestions(organization.id, quizId, inputs);
+  revalidatePath(`/dashboard/quiz/${quizId}`);
+  return { success: true, count: inputs.length };
 }

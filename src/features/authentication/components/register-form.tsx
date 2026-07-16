@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
+import { Mail, Lock, User, UserCheck } from "lucide-react";
 
-import { signUp } from "@/lib/auth/client";
+import { signUp, signIn } from "@/lib/auth/client";
 import { signUpSchema, type SignUpInput } from "@/lib/validators/auth";
 import { applyZodErrors } from "@/lib/utils/zod-form";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,14 @@ import {
   FieldError,
 } from "@/components/ui/field";
 
+import { ChromeIcon } from "@/components/ui/icons/chrome-icon";
+
+const iconProps = "pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground";
+
 export function RegisterForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isSSOLoading, setIsSSOLoading] = useState(false);
 
   const {
     register,
@@ -67,87 +73,145 @@ export function RegisterForm() {
     router.refresh();
   });
 
+  const handleGoogleSignUp = async () => {
+    setIsSSOLoading(true);
+    setServerError(null);
+    const { error } = await signIn.social({ provider: "google" });
+    if (error) {
+      setServerError(error.message ?? "Erreur lors de l'inscription avec Google.");
+      setIsSSOLoading(false);
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 12 }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="w-full max-w-sm"
+      className="w-full max-w-md"
     >
-      <Card>
+      <div className="mb-6 text-center lg:hidden">
+        <h1 className="text-xl font-bold tracking-tight">Créer un compte</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Commencez gratuitement</p>
+      </div>
+
+      <Card className="border-border/50 shadow-xs">
         <CardHeader>
           <CardTitle>Créer un compte</CardTitle>
           <CardDescription>Commencez gratuitement avec QuizNest.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} noValidate>
-            <FieldGroup>
-              {serverError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{serverError}</AlertDescription>
-                </Alert>
-              )}
+          <FieldGroup>
+            {serverError && (
+              <Alert variant="destructive">
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
 
-              <Field orientation="responsive">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={isSSOLoading}
+              onClick={handleGoogleSignUp}
+            >
+              <ChromeIcon className="size-4" />
+              {isSSOLoading ? "Inscription..." : "Continuer avec Google"}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            <form onSubmit={onSubmit} noValidate>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Field data-invalid={!!errors.firstName}>
                   <FieldLabel htmlFor="firstName">Prénom</FieldLabel>
-                  <Input
-                    id="firstName"
-                    autoComplete="given-name"
-                    aria-invalid={!!errors.firstName}
-                    {...register("firstName")}
-                  />
+                  <div className="relative">
+                    <User className={iconProps} />
+                    <Input
+                      id="firstName"
+                      autoComplete="given-name"
+                      aria-invalid={!!errors.firstName}
+                      className="pl-8"
+                      {...register("firstName")}
+                    />
+                  </div>
                   <FieldError errors={[errors.firstName]} />
                 </Field>
+
                 <Field data-invalid={!!errors.lastName}>
                   <FieldLabel htmlFor="lastName">Nom</FieldLabel>
-                  <Input
-                    id="lastName"
-                    autoComplete="family-name"
-                    aria-invalid={!!errors.lastName}
-                    {...register("lastName")}
-                  />
+                  <div className="relative">
+                    <UserCheck className={iconProps} />
+                    <Input
+                      id="lastName"
+                      autoComplete="family-name"
+                      aria-invalid={!!errors.lastName}
+                      className="pl-8"
+                      {...register("lastName")}
+                    />
+                  </div>
                   <FieldError errors={[errors.lastName]} />
                 </Field>
-              </Field>
 
-              <Field data-invalid={!!errors.email}>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  aria-invalid={!!errors.email}
-                  {...register("email")}
-                />
-                <FieldError errors={[errors.email]} />
-              </Field>
+                <Field data-invalid={!!errors.email}>
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <div className="relative">
+                    <Mail className={iconProps} />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      aria-invalid={!!errors.email}
+                      className="pl-8"
+                      {...register("email")}
+                    />
+                  </div>
+                  <FieldError errors={[errors.email]} />
+                </Field>
 
-              <Field data-invalid={!!errors.password}>
-                <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.password}
-                  {...register("password")}
-                />
-                <FieldError errors={[errors.password]} />
-              </Field>
+                <Field data-invalid={!!errors.password}>
+                  <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                  <div className="relative">
+                    <Lock className={iconProps} />
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="new-password"
+                      aria-invalid={!!errors.password}
+                      className="pl-8"
+                      {...register("password")}
+                    />
+                  </div>
+                  <FieldError errors={[errors.password]} />
+                </Field>
+              </div>
 
-              <Field data-invalid={!!errors.confirmPassword}>
-                <FieldLabel htmlFor="confirmPassword">Confirmer le mot de passe</FieldLabel>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.confirmPassword}
-                  {...register("confirmPassword")}
-                />
-                <FieldError errors={[errors.confirmPassword]} />
-              </Field>
+              <div className="mt-4">
+                <Field data-invalid={!!errors.confirmPassword}>
+                  <FieldLabel htmlFor="confirmPassword">Confirmer le mot de passe</FieldLabel>
+                  <div className="relative">
+                    <Lock className={iconProps} />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      aria-invalid={!!errors.confirmPassword}
+                      className="pl-8"
+                      {...register("confirmPassword")}
+                    />
+                  </div>
+                  <FieldError errors={[errors.confirmPassword]} />
+                </Field>
+              </div>
 
-              <Field orientation="horizontal" data-invalid={!!errors.acceptTerms}>
+              <Field className="mt-4" orientation="horizontal" data-invalid={!!errors.acceptTerms}>
                 <Checkbox
                   id="acceptTerms"
                   aria-invalid={!!errors.acceptTerms}
@@ -156,23 +220,26 @@ export function RegisterForm() {
                   }
                 />
                 <FieldLabel htmlFor="acceptTerms" className="font-normal">
-                  J&apos;accepte les conditions d&apos;utilisation
+                  J&apos;accepte les{" "}
+                  <Link href="/cgu" className="text-primary underline underline-offset-4">
+                    conditions d&apos;utilisation
+                  </Link>
                 </FieldLabel>
                 <FieldError errors={[errors.acceptTerms]} />
               </Field>
 
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+              <Button type="submit" disabled={isSubmitting} className="mt-4 w-full">
                 {isSubmitting ? "Création..." : "Créer mon compte"}
               </Button>
+            </form>
 
-              <p className="text-center text-sm text-muted-foreground">
-                Déjà un compte ?{" "}
-                <Link href="/login" className="text-primary underline underline-offset-4">
-                  Se connecter
-                </Link>
-              </p>
-            </FieldGroup>
-          </form>
+            <p className="text-center text-sm text-muted-foreground">
+              Déjà un compte ?{" "}
+              <Link href="/login" className="font-medium text-primary underline underline-offset-4">
+                Se connecter
+              </Link>
+            </p>
+          </FieldGroup>
         </CardContent>
       </Card>
     </motion.div>

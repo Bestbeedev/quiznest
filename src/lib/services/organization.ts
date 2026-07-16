@@ -37,3 +37,11 @@ export async function getFirstOrganizationForUser(userId: string) {
 
   return membership?.organization ?? null;
 }
+
+export async function getOrganizationMembers(organizationId: string) {
+  return prisma.organizationMember.findMany({
+    where: { organizationId },
+    orderBy: { joinedAt: "asc" },
+    include: { user: { select: { name: true, email: true, image: true } } },
+  });
+}

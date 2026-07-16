@@ -1,22 +1,58 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
+
+type Direction = "up" | "down" | "left" | "right" | "scale" | "fade";
+
+const directionVariants: Record<Direction, Variants> = {
+  up: {
+    hidden: { opacity: 0, y: 32 },
+    visible: { opacity: 1, y: 0 },
+  },
+  down: {
+    hidden: { opacity: 0, y: -32 },
+    visible: { opacity: 1, y: 0 },
+  },
+  left: {
+    hidden: { opacity: 0, x: -32 },
+    visible: { opacity: 1, x: 0 },
+  },
+  right: {
+    hidden: { opacity: 0, x: 32 },
+    visible: { opacity: 1, x: 0 },
+  },
+  scale: {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: { opacity: 1, scale: 1 },
+  },
+  fade: {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  },
+};
 
 export function Reveal({
   children,
   delay = 0,
+  duration = 0.5,
+  direction = "up",
   className,
+  once = true,
 }: {
   children: React.ReactNode;
   delay?: number;
+  duration?: number;
+  direction?: Direction;
   className?: string;
+  once?: boolean;
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.4, ease: "easeOut", delay }}
+      variants={directionVariants[direction]}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once, margin: "-60px" }}
+      transition={{ duration, ease: [0.25, 0.1, 0.25, 1], delay }}
       className={className}
     >
       {children}

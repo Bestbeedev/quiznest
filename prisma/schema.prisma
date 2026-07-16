@@ -99,6 +99,11 @@ model User {
   twoFAEnabled Boolean @default(false) @map("two_fa_enabled")
   twoFASecret  String? @map("two_fa_secret")
 
+  /// Platform-level role — grants access to the /admin space, independent of any
+  /// organization membership. Not exposed anywhere in the UI yet; must be set directly
+  /// in the database for the first super admin.
+  isSuperAdmin Boolean @default(false) @map("is_super_admin")
+
   memberships OrganizationMember[]
   quizzes     Quiz[]
 
