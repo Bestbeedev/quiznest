@@ -1,8 +1,9 @@
-import Link from "next/link";
-import { ShieldAlert } from "lucide-react";
+"use client";
 
-import { ADMIN_NAV } from "@/constants/admin-nav";
-import { SidebarNav } from "@/components/shared/sidebar-nav";
+import Link from "next/link";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
+
+import { AdminSidebar } from "@/components/shared/admin-sidebar";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,13 +16,7 @@ export function AdminShell({
 }) {
   return (
     <div className="flex min-h-full flex-1">
-      <aside className="hidden w-60 shrink-0 flex-col gap-6 border-r p-4 md:flex">
-        <div className="flex items-center gap-2 px-1">
-          <ShieldAlert className="size-5 text-primary" />
-          <span className="text-base font-semibold tracking-tight">Admin</span>
-        </div>
-        <SidebarNav items={ADMIN_NAV} />
-      </aside>
+      <AdminSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
@@ -32,7 +27,11 @@ export function AdminShell({
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground sm:inline">{userEmail}</span>
             <ThemeToggle />
-            <Link href="/dashboard" className="text-sm text-primary underline underline-offset-4">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+            >
+              <ArrowLeft className="size-3.5" />
               Retour au dashboard
             </Link>
           </div>

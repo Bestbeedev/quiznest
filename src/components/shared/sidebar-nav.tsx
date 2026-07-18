@@ -18,9 +18,9 @@ export function SidebarNav({
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col gap-1">
+    <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-0.5")}>
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
 
         return (
           <Link
@@ -29,14 +29,16 @@ export function SidebarNav({
             onClick={onNavigate}
             title={collapsed ? item.label : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              collapsed && "justify-center px-2",
+              "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              collapsed && "size-11 justify-center px-0",
               active
-                ? "bg-primary text-primary-foreground"
+                ? collapsed
+                  ? "bg-card text-primary shadow-sm"
+                  : "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <item.icon className="size-4 shrink-0" />
+            <item.icon className={cn("size-4 shrink-0", active && "text-primary")} />
             {!collapsed && item.label}
           </Link>
         );

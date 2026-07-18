@@ -8,6 +8,8 @@ export const createQuestionSchema = z
     type: questionTypeSchema,
     points: z.coerce.number().int().min(1).max(100),
     explanation: z.string().max(1000).optional().or(z.literal("")),
+    category: z.string().max(100).optional().or(z.literal("")),
+    tags: z.array(z.string().min(1).max(50)).max(10).optional(),
     choices: z
       .array(
         z.object({

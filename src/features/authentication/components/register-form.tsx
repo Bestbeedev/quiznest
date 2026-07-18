@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, UserCheck } from "lucide-react";
@@ -34,6 +34,7 @@ const iconProps = "pointer-events-none absolute top-1/2 left-2.5 size-4 -transla
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSSOLoading, setIsSSOLoading] = useState(false);
 
@@ -69,7 +70,7 @@ export function RegisterForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(searchParams.get("callbackUrl") ?? "/dashboard");
     router.refresh();
   });
 
@@ -136,6 +137,7 @@ export function RegisterForm() {
                     <User className={iconProps} />
                     <Input
                       id="firstName"
+                      placeholder="Jean"
                       autoComplete="given-name"
                       aria-invalid={!!errors.firstName}
                       className="pl-8"
@@ -151,6 +153,7 @@ export function RegisterForm() {
                     <UserCheck className={iconProps} />
                     <Input
                       id="lastName"
+                      placeholder="Dupont"
                       autoComplete="family-name"
                       aria-invalid={!!errors.lastName}
                       className="pl-8"
@@ -167,6 +170,7 @@ export function RegisterForm() {
                     <Input
                       id="email"
                       type="email"
+                      placeholder="exemple@email.com"
                       autoComplete="email"
                       aria-invalid={!!errors.email}
                       className="pl-8"
@@ -183,6 +187,7 @@ export function RegisterForm() {
                     <Input
                       id="password"
                       type="password"
+                      placeholder="8 caractères minimum"
                       autoComplete="new-password"
                       aria-invalid={!!errors.password}
                       className="pl-8"
@@ -201,6 +206,7 @@ export function RegisterForm() {
                     <Input
                       id="confirmPassword"
                       type="password"
+                      placeholder="Répétez le mot de passe"
                       autoComplete="new-password"
                       aria-invalid={!!errors.confirmPassword}
                       className="pl-8"

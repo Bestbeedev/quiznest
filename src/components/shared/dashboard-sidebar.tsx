@@ -81,7 +81,7 @@ export function DashboardSidebar({ user, planName }: { user: { name: string; ema
         <DashboardNav collapsed={collapsed} />
       </div>
 
-      <div className={cn("space-y-2 border-t pt-3", collapsed ? "flex flex-col items-center px-2" : "px-3")}>
+      <div className={cn("space-y-2 border-t py-3", collapsed ? "flex flex-col items-center px-2" : "px-3")}>
         <PlanBadge planName={planName} collapsed={collapsed} />
       </div>
 

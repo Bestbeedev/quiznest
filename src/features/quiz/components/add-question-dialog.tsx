@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 
-import { addQuestionAction } from "@/features/quiz/actions";
+import { addQuestionAction, updateQuestionAction } from "@/features/quiz/actions";
 import { createQuestionSchema, type CreateQuestionInput } from "@/lib/validators/question";
 import { applyZodErrors } from "@/lib/utils/zod-form";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 
 const TYPE_LABELS = {
   SINGLE_CHOICE: "QCM (choix unique)",
@@ -35,16 +35,55 @@ const DEFAULT_VALUES: CreateQuestionInput = {
   type: "SINGLE_CHOICE",
   points: 1,
   explanation: "",
+  category: "",
+  tags: [],
   choices: [
     { text: "", isCorrect: false },
     { text: "", isCorrect: false },
   ],
 };
 
-export function AddQuestionDialog({ quizId }: { quizId: string }) {
+export type QuestionForEdit = {
+  id: string;
+  title: string;
+  type: CreateQuestionInput["type"];
+  points: number;
+  explanation: string | null;
+  category: string | null;
+  tags: string[];
+  choices: { text: string; isCorrect: boolean }[];
+};
+
+/** Doubles as create + edit: pass `question` to edit it in place (used by the
+ * Question Bank), omit it to create a new one in `quizId` (used by the quiz
+ * detail page's Questions tab, unchanged). */
+export function AddQuestionDialog({
+  quizId,
+  question,
+  trigger,
+  onClose,
+}: {
+  quizId: string;
+  question?: QuestionForEdit;
+  trigger?: React.ReactElement;
+  onClose?: () => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const isEdit = !!question;
+  const [open, setOpen] = useState(isEdit);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const defaultValues: CreateQuestionInput = question
+    ? {
+        title: question.title,
+        type: question.type,
+        points: question.points,
+        explanation: question.explanation ?? "",
+        category: question.category ?? "",
+        tags: question.tags,
+        choices: question.choices,
+      }
+    : DEFAULT_VALUES;
 
   const {
     register,
@@ -55,11 +94,12 @@ export function AddQuestionDialog({ quizId }: { quizId: string }) {
     reset,
     control,
     formState: { errors, isSubmitting },
-  } = useForm<CreateQuestionInput>({ defaultValues: DEFAULT_VALUES });
+  } = useForm<CreateQuestionInput>({ defaultValues });
 
   const { fields, append, remove } = useFieldArray({ control, name: "choices" });
   const type = watch("type");
   const choices = watch("choices");
+  const tags = watch("tags") ?? [];
   const singleAnswer = type === "SINGLE_CHOICE" || type === "TRUE_FALSE";
 
   const handleTypeChange = (value: CreateQuestionInput["type"] | null) => {
@@ -84,6 +124,12 @@ export function AddQuestionDialog({ quizId }: { quizId: string }) {
     }
   };
 
+  const close = () => {
+    setOpen(false);
+    reset(DEFAULT_VALUES);
+    onClose?.();
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null);
 
@@ -93,14 +139,16 @@ export function AddQuestionDialog({ quizId }: { quizId: string }) {
       return;
     }
 
-    const result = await addQuestionAction(quizId, parsed.data);
+    const result = isEdit
+      ? await updateQuestionAction(question.id, parsed.data)
+      : await addQuestionAction(quizId, parsed.data);
+
     if (result?.error) {
       setServerError(result.error);
       return;
     }
 
-    setOpen(false);
-    reset(DEFAULT_VALUES);
+    close();
     router.refresh();
   });
 
@@ -108,17 +156,21 @@ export function AddQuestionDialog({ quizId }: { quizId: string }) {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) reset(DEFAULT_VALUES);
+        if (next) setOpen(true);
+        else close();
       }}
     >
-      <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 h-8 text-sm font-medium hover:bg-muted">
-        <Plus className="size-4" />
-        Ajouter une question
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      {trigger ? (
+        <DialogTrigger render={trigger} />
+      ) : (
+        <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 h-8 text-sm font-medium hover:bg-muted">
+          <Plus className="size-4" />
+          Ajouter une question
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Ajouter une question</DialogTitle>
+          <DialogTitle>{isEdit ? "Modifier la question" : "Ajouter une question"}</DialogTitle>
           <DialogDescription>Choisissez un type puis renseignez la question et ses choix.</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
@@ -194,10 +246,35 @@ export function AddQuestionDialog({ quizId }: { quizId: string }) {
               )}
             </Field>
 
-            <Field data-invalid={!!errors.points}>
-              <FieldLabel htmlFor="points">Points</FieldLabel>
-              <Input id="points" type="number" min={1} aria-invalid={!!errors.points} {...register("points")} />
-              <FieldError errors={[errors.points]} />
+            <Field orientation="responsive">
+              <Field data-invalid={!!errors.points}>
+                <FieldLabel htmlFor="points">Points</FieldLabel>
+                <Input id="points" type="number" min={1} aria-invalid={!!errors.points} {...register("points")} />
+                <FieldError errors={[errors.points]} />
+              </Field>
+
+              <Field data-invalid={!!errors.category}>
+                <FieldLabel htmlFor="category">Catégorie (optionnel)</FieldLabel>
+                <Input id="category" placeholder="Ex: Mathématiques" {...register("category")} />
+                <FieldError errors={[errors.category]} />
+              </Field>
+            </Field>
+
+            <Field data-invalid={!!errors.tags}>
+              <FieldLabel htmlFor="tags">Tags</FieldLabel>
+              <Input
+                id="tags"
+                value={tags.join(", ")}
+                onChange={(e) =>
+                  setValue(
+                    "tags",
+                    e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
+                  )
+                }
+                placeholder="ex: algèbre, niveau1"
+              />
+              <FieldDescription>Séparés par des virgules.</FieldDescription>
+              <FieldError errors={[errors.tags]} />
             </Field>
 
             <Field data-invalid={!!errors.explanation}>
@@ -209,7 +286,7 @@ export function AddQuestionDialog({ quizId }: { quizId: string }) {
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Ajout..." : "Ajouter la question"}
+              {isSubmitting ? "Enregistrement..." : isEdit ? "Enregistrer" : "Ajouter la question"}
             </Button>
           </DialogFooter>
         </form>

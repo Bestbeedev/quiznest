@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 
-export function NewQuizDialog() {
+export function NewQuizDialog({ children }: { children?: React.ReactNode } = {}) {
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -49,10 +49,14 @@ export function NewQuizDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 h-8 text-sm font-medium text-primary-foreground hover:bg-primary/80">
-        <Plus className="size-4" />
-        Nouveau quiz
-      </DialogTrigger>
+      {children ? (
+        <DialogTrigger render={children as React.ReactElement} />
+      ) : (
+        <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 h-8 text-sm font-medium text-primary-foreground hover:bg-primary/80">
+          <Plus className="size-4" />
+          Nouveau quiz
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nouveau quiz</DialogTitle>

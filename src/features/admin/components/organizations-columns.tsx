@@ -7,6 +7,7 @@ import type { Organization, OrganizationStatus } from "@/generated/prisma/client
 
 export type OrganizationRow = Organization & {
   _count: { members: number; quizzes: number };
+  subscription: { plan: { name: string } } | null;
 };
 
 const STATUS_LABELS: Record<OrganizationStatus, string> = {
@@ -40,6 +41,17 @@ export const organizationsColumns: ColumnDef<OrganizationRow>[] = [
     id: "quizzes",
     header: "Quiz",
     accessorFn: (row) => row._count.quizzes,
+  },
+  {
+    id: "plan",
+    header: "Plan",
+    accessorFn: (row) => row.subscription?.plan.name ?? "—",
+    cell: ({ row }) =>
+      row.original.subscription ? (
+        <Badge variant="outline">{row.original.subscription.plan.name}</Badge>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
   },
   {
     accessorKey: "createdAt",

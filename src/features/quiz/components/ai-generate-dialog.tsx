@@ -63,7 +63,7 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
         <Sparkles className="size-4" />
         Générer avec l&apos;IA
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Générer des questions avec l&apos;IA</DialogTitle>
           <DialogDescription>

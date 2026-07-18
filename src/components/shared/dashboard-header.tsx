@@ -2,25 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, LogOut, Menu, Search, Settings } from "lucide-react";
+import { LogOut, Menu, Plus, Settings } from "lucide-react";
 
 import { signOut } from "@/lib/auth/client";
 import { DashboardNav } from "@/components/shared/dashboard-nav";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Logo } from "@/components/shared/logo";
+import { GlobalSearch } from "@/features/dashboard/components/global-search";
+import { NewQuizDialog } from "@/features/quiz/components/new-quiz-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 type SessionUser = { name: string; email: string };
 
@@ -46,11 +39,46 @@ export function DashboardHeader({ user }: { user: SessionUser }) {
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetContent side="left" className="w-64 p-4">
-          <SheetTitle className="px-3">
-            <Logo />
-          </SheetTitle>
-          <DashboardNav onNavigate={() => setMobileNavOpen(false)} />
+        <SheetContent side="left" className="flex w-64 flex-col p-0">
+          <div className="flex flex-col gap-6 p-4">
+            <SheetTitle className="px-3">
+              <Logo />
+            </SheetTitle>
+            <DashboardNav onNavigate={() => setMobileNavOpen(false)} />
+          </div>
+          <div className="mt-auto border-t p-4">
+            <div className="flex items-center gap-2.5 px-1">
+              <Avatar className="size-8">
+                <AvatarFallback className="text-xs">{initials(user.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-medium">{user.name}</span>
+                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+              </div>
+            </div>
+            <Separator className="my-2" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2.5 px-1"
+              onClick={() => {
+                setMobileNavOpen(false);
+                router.push("/dashboard/settings");
+              }}
+            >
+              <Settings className="size-4" />
+              Paramètres
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2.5 px-1"
+              onClick={handleSignOut}
+            >
+              <LogOut className="size-4" />
+              Déconnexion
+            </Button>
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -64,41 +92,17 @@ export function DashboardHeader({ user }: { user: SessionUser }) {
         <Menu className="size-5" />
       </Button>
 
-      <div className="relative hidden flex-1 max-w-sm sm:block">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Rechercher..." className="h-8 pl-8" />
+      <div className="max-w-md flex-1">
+        <GlobalSearch />
       </div>
 
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="size-5" />
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Avatar className="size-8">
-              <AvatarFallback>{initials(user.name)}</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="font-normal">
-                <p className="text-sm font-medium">{user.name}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-              <Settings />
-              Paramètres
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSignOut}>
-              <LogOut />
-              Déconnexion
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <NewQuizDialog>
+          <Button size="icon" className="rounded-full" aria-label="Nouveau quiz" title="Nouveau quiz">
+            <Plus className="size-4" />
+          </Button>
+        </NewQuizDialog>
       </div>
     </header>
   );

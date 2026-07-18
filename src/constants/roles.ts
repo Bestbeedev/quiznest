@@ -22,3 +22,12 @@ export const ROLE_HIERARCHY: Record<MemberRole, number> = {
 export function roleAtLeast(role: MemberRole, minimum: MemberRole): boolean {
   return ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[minimum];
 }
+
+export const ROLE_LABELS: Record<MemberRole, string> = {
+  SUPER_ADMIN: "Super admin",
+  OWNER: "Propriétaire",
+  ADMIN: "Admin",
+  MANAGER: "Manager",
+  EDITOR: "Éditeur",
+  VIEWER: "Lecteur",
+};

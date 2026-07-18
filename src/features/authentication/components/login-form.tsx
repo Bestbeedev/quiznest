@@ -126,6 +126,7 @@ export function LoginForm() {
                     <Input
                       id="email"
                       type="email"
+                      placeholder="exemple@email.com"
                       autoComplete="email"
                       aria-invalid={!!errors.email}
                       className="pl-8"
@@ -142,6 +143,7 @@ export function LoginForm() {
                     <Input
                       id="password"
                       type="password"
+                      placeholder="Votre mot de passe"
                       autoComplete="current-password"
                       aria-invalid={!!errors.password}
                       className="pl-8"

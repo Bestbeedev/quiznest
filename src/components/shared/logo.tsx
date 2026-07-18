@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-export function Logo() {
+export function Logo({ iconOnly, href = "/" }: { iconOnly?: boolean; href?: string }) {
   return (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href={href} className="flex items-center gap-2">
       <svg
         width="28"
         height="28"
@@ -34,7 +34,7 @@ export function Logo() {
         />
         <circle cx="14" cy="17" r="1.5" className="fill-primary" stroke="none" />
       </svg>
-      <span className="text-lg font-bold tracking-tight">QuizNest</span>
+      {!iconOnly && <span className="text-lg font-bold tracking-tight">QuizNest</span>}
     </Link>
   );
 }

@@ -5,7 +5,6 @@ import {
   HelpCircle,
   LayoutDashboard,
   ListChecks,
-  Settings,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -17,6 +16,5 @@ export const DASHBOARD_NAV: { label: string; href: string; icon: LucideIcon }[] 
   { label: "Participants", href: "/dashboard/participants", icon: Users },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "IA", href: "/dashboard/ai", icon: Sparkles },
-  { label: "Paramètres", href: "/dashboard/settings", icon: Settings },
   { label: "Abonnement", href: "/dashboard/billing", icon: CreditCard },
 ];
