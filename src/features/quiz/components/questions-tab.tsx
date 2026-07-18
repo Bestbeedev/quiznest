@@ -10,6 +10,7 @@ import { AiGenerateDialog } from "@/features/quiz/components/ai-generate-dialog"
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { Question, QuestionChoice } from "@/generated/prisma/client";
 
 const TYPE_LABELS: Record<Question["type"], string> = {
@@ -17,6 +18,13 @@ const TYPE_LABELS: Record<Question["type"], string> = {
   MULTIPLE_CHOICE: "Choix multiple",
   TRUE_FALSE: "Vrai / Faux",
   SHORT_ANSWER: "Réponse courte",
+};
+
+const TYPE_COLORS: Record<Question["type"], string> = {
+  SINGLE_CHOICE: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
+  MULTIPLE_CHOICE: "bg-violet-500/10 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
+  TRUE_FALSE: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+  SHORT_ANSWER: "bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
 };
 
 type QuestionWithChoices = Question & { choices: QuestionChoice[] };
@@ -60,39 +68,61 @@ export function QuestionsTab({
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {questions.map((question, index) => (
-            <Card key={question.id}>
-              <CardContent className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{index + 1}.</span>
-                    <p className="font-medium">{question.title}</p>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{TYPE_LABELS[question.type]}</Badge>
-                    <Badge variant="outline">{question.points} pt{question.points !== 1 ? "s" : ""}</Badge>
-                  </div>
-                  <ul className="mt-2 flex flex-col gap-0.5 text-sm text-muted-foreground">
-                    {question.choices.map((choice) => (
-                      <li key={choice.id} className={choice.isCorrect ? "font-medium text-foreground" : ""}>
-                        {choice.isCorrect ? "✓ " : "— "}
-                        {choice.text}
-                      </li>
-                    ))}
-                  </ul>
+            <div
+              key={question.id}
+              className="group flex items-start gap-3 rounded-xl border bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
+            >
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-semibold text-muted-foreground">
+                {index + 1}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{question.title}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={isPending}
-                  onClick={() => handleDelete(question.id)}
-                  aria-label="Supprimer la question"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", TYPE_COLORS[question.type])}>
+                    {TYPE_LABELS[question.type]}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {question.points} pt{question.points !== 1 ? "s" : ""}
+                  </Badge>
+                </div>
+                {question.choices.length > 0 && (
+                  <div className="mt-3 grid gap-1 sm:grid-cols-2">
+                    {question.choices.map((choice) => (
+                      <div
+                        key={choice.id}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm",
+                          choice.isCorrect
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        <span className="text-xs">
+                          {choice.isCorrect ? "✓" : "—"}
+                        </span>
+                        <span className="truncate">{choice.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={isPending}
+                onClick={() => handleDelete(question.id)}
+                aria-label="Supprimer la question"
+                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <Trash2 className="size-4 text-muted-foreground" />
+              </Button>
+            </div>
           ))}
         </div>
       )}

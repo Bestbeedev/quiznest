@@ -1,102 +1,168 @@
 import type { Metadata } from "next";
-import { UserPlus } from "lucide-react";
+import { headers } from "next/headers";
 
+import { requireAuth } from "@/lib/auth/require-auth";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getOrganizationMembers } from "@/lib/services/organization";
+import { getNotificationPreferences, listUserSessions } from "@/lib/services/user";
+import { listPendingInvitations } from "@/lib/services/invitation";
+import { listApiKeys } from "@/lib/services/api-key";
+import { prisma } from "@/lib/db/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
-import type { MemberRole } from "@/generated/prisma/client";
+import { Separator } from "@/components/ui/separator";
+import { SettingsNav } from "@/features/settings/components/settings-nav";
+import { ProfileForm } from "@/features/settings/components/profile-form";
+import { PasswordForm } from "@/features/settings/components/password-form";
+import { SessionsList } from "@/features/settings/components/sessions-list";
+import { OrganizationSettingsForm } from "@/features/settings/components/organization-settings-form";
+import { TeamMembersList } from "@/features/settings/components/team-members-list";
+import { InviteMemberDialog } from "@/features/settings/components/invite-member-dialog";
+import { PendingInvitationsList } from "@/features/settings/components/pending-invitations-list";
+import { ApiKeysManager } from "@/features/settings/components/api-keys-manager";
+import { NotificationPreferencesForm } from "@/features/settings/components/notification-preferences-form";
+import type { MemberRole } from "@/constants/roles";
 
 export const metadata: Metadata = {
   title: "Paramètres — QuizNest",
 };
 
-const ROLE_LABELS: Record<MemberRole, string> = {
-  SUPER_ADMIN: "Super admin",
-  OWNER: "Propriétaire",
-  ADMIN: "Admin",
-  MANAGER: "Manager",
-  EDITOR: "Éditeur",
-  VIEWER: "Lecteur",
-};
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export default async function SettingsPage() {
+  const session = await requireAuth();
   const organization = await requireActiveOrganization();
-  const members = await getOrganizationMembers(organization.id);
+  const headerList = await headers();
+
+  const [user, members, preferences, sessionsResult, pendingInvitations, apiKeys] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: session.user.id } }),
+    getOrganizationMembers(organization.id),
+    getNotificationPreferences(session.user.id),
+    listUserSessions(headerList),
+    listPendingInvitations(organization.id),
+    listApiKeys(organization.id),
+  ]);
+
+  const currentMember = members.find((m) => m.userId === session.user.id);
+  const canManageTeam = currentMember?.role === "OWNER";
+  const branding = (organization.settings as { branding?: { primaryColor?: string } } | null)?.branding;
+  const sessionsList = sessionsResult ?? [];
+  const sessionsUnavailable = sessionsResult === null;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Paramètres</h1>
-        <p className="text-sm text-muted-foreground">Gérez votre organisation et ses membres.</p>
+        <p className="text-sm text-muted-foreground">Centre de configuration de votre compte et de votre organisation.</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Général</CardTitle>
-          <CardDescription>Informations de votre organisation.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex max-w-md flex-col gap-4">
-          <Field>
-            <FieldLabel htmlFor="org-name">Nom</FieldLabel>
-            <Input id="org-name" defaultValue={organization.name} disabled />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="org-slug">Identifiant</FieldLabel>
-            <Input id="org-slug" defaultValue={organization.slug} disabled />
-            <FieldDescription>La modification de l&apos;identifiant sera bientôt disponible.</FieldDescription>
-          </Field>
-        </CardContent>
-      </Card>
+      <SettingsNav
+        profile={
+          <div className="flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Profil</CardTitle>
+                <CardDescription>Vos informations personnelles.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProfileForm user={user} />
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Membres</CardTitle>
-            <CardDescription>
-              {members.length} membre{members.length !== 1 ? "s" : ""}
-            </CardDescription>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Mot de passe</CardTitle>
+                <CardDescription>Changez votre mot de passe de connexion.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PasswordForm />
+              </CardContent>
+            </Card>
           </div>
-          <Button size="sm" disabled className="gap-1.5">
-            <UserPlus className="size-4" />
-            Inviter
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <ul className="flex flex-col divide-y">
-            {members.map((member) => (
-              <li key={member.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-9">
-                    <AvatarFallback>{initials(member.user.name)}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{member.user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{member.user.email}</p>
-                  </div>
-                </div>
-                <Badge variant="secondary">{ROLE_LABELS[member.role]}</Badge>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-xs text-muted-foreground">
-            L&apos;invitation par email nécessite la configuration de l&apos;envoi d&apos;emails — bientôt disponible.
-          </p>
-        </CardContent>
-      </Card>
+        }
+        security={
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Sessions et appareils</CardTitle>
+              <CardDescription>Les appareils actuellement connectés à votre compte.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SessionsList
+                sessions={sessionsList}
+                currentSessionToken={session.session.token}
+                unavailable={sessionsUnavailable}
+              />
+            </CardContent>
+          </Card>
+        }
+        organization={
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Organisation</CardTitle>
+              <CardDescription>Identité, branding et localisation de votre organisation.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <OrganizationSettingsForm
+                organization={{
+                  name: organization.name,
+                  slug: organization.slug,
+                  logo: organization.logo,
+                  timezone: organization.timezone,
+                  language: organization.language,
+                  primaryColor: branding?.primaryColor ?? null,
+                }}
+              />
+            </CardContent>
+          </Card>
+        }
+        team={
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="text-base">Membres de l&apos;équipe</CardTitle>
+                <CardDescription>
+                  {members.length} membre{members.length !== 1 ? "s" : ""}
+                </CardDescription>
+              </div>
+              <InviteMemberDialog />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <TeamMembersList
+                members={members.map((m) => ({ ...m, role: m.role as MemberRole }))}
+                currentUserId={session.user.id}
+                canManage={canManageTeam}
+              />
+              {pendingInvitations.length > 0 && (
+                <>
+                  <Separator />
+                  <PendingInvitationsList
+                    invitations={pendingInvitations.map((i) => ({ ...i, role: i.role as MemberRole }))}
+                  />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        }
+        api={
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Clés API</CardTitle>
+              <CardDescription>Gérez les clés d&apos;accès de votre organisation.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ApiKeysManager apiKeys={apiKeys} />
+            </CardContent>
+          </Card>
+        }
+        preferences={
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Notifications</CardTitle>
+              <CardDescription>Choisissez les notifications que vous souhaitez recevoir.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NotificationPreferencesForm preferences={preferences} />
+            </CardContent>
+          </Card>
+        }
+      />
     </div>
   );
 }

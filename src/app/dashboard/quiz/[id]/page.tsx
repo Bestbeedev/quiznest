@@ -1,13 +1,26 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Users, BarChart3 } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getQuiz } from "@/lib/services/quiz";
-import { EmptyStateCard } from "@/components/shared/empty-state-card";
+import {
+  listParticipants,
+  getQuizResultsSummary,
+  getQuizAttemptsTrend,
+} from "@/lib/services/participation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { QuizDetailHeader } from "@/features/quiz/components/quiz-detail-header";
 import { QuestionsTab } from "@/features/quiz/components/questions-tab";
 import { QuizSettingsForm } from "@/features/quiz/components/quiz-settings-form";
+import { ParticipantsTab } from "@/features/quiz/components/participants-tab";
+import { ResultsTab } from "@/features/quiz/components/results-tab";
 
 export default async function QuizDetailPage({
   params,
@@ -22,12 +35,37 @@ export default async function QuizDetailPage({
     notFound();
   }
 
+  const [participants, resultsSummary, attemptsTrend] = await Promise.all([
+    listParticipants(organization.id, id),
+    getQuizResultsSummary(organization.id, id),
+    getQuizAttemptsTrend(organization.id, id),
+  ]);
+
   return (
     <div className="flex flex-col gap-6">
-      <QuizDetailHeader quizId={quiz.id} title={quiz.title} status={quiz.status} />
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <Link href="/dashboard/quiz" className="transition-colors hover:text-foreground">
+              Quiz
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="max-w-64 truncate">{quiz.title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <QuizDetailHeader
+        quizId={quiz.id}
+        title={quiz.title}
+        status={quiz.status}
+        accessCode={quiz.accessCode}
+      />
 
       <Tabs defaultValue="questions">
-        <TabsList>
+        <TabsList variant="line" className="w-full justify-start">
           <TabsTrigger value="questions">Questions</TabsTrigger>
           <TabsTrigger value="participants">Participants</TabsTrigger>
           <TabsTrigger value="results">Résultats</TabsTrigger>
@@ -39,18 +77,15 @@ export default async function QuizDetailPage({
         </TabsContent>
 
         <TabsContent value="participants">
-          <EmptyStateCard
-            icon={Users}
-            title="Participants"
-            description="Le suivi des participants sera disponible une fois le quiz publié et partagé."
-          />
+          <ParticipantsTab quizId={quiz.id} participants={participants} />
         </TabsContent>
 
         <TabsContent value="results">
-          <EmptyStateCard
-            icon={BarChart3}
-            title="Résultats"
-            description="Les statistiques de résultats apparaîtront après les premières tentatives."
+          <ResultsTab
+            quizTitle={quiz.title}
+            participants={participants}
+            attemptsTrend={attemptsTrend}
+            {...resultsSummary}
           />
         </TabsContent>
 
