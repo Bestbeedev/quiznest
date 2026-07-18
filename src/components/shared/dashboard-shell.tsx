@@ -6,15 +6,17 @@ type SessionUser = typeof auth.$Infer.Session.user;
 
 export function DashboardShell({
   user,
+  planName,
   children,
 }: {
   user: SessionUser;
+  planName: string | null;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <nav className="h-screen shrink-0 flex flex-col">
-        <DashboardSidebar user={user} />
+        <DashboardSidebar user={user} planName={planName} />
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

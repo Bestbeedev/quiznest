@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { listQuizzes } from "@/lib/services/quiz";
-import { DataTable } from "@/components/shared/data-table";
-import { quizColumns } from "@/features/quiz/components/quiz-columns";
-import { NewQuizDialog } from "@/features/quiz/components/new-quiz-dialog";
+import { getOrganizationSubscription } from "@/lib/services/billing";
+import { QuizViewProvider } from "@/features/quiz/components/quiz-view-context";
+import { QuizListView } from "./quiz-list-view";
 
 export const metadata: Metadata = {
   title: "Quiz — QuizNest",
@@ -11,26 +12,20 @@ export const metadata: Metadata = {
 
 export default async function QuizListPage() {
   const organization = await requireActiveOrganization();
-  const quizzes = await listQuizzes(organization.id);
+  const [quizzes, subscription] = await Promise.all([
+    listQuizzes(organization.id),
+    getOrganizationSubscription(organization.id),
+  ]);
+
+  const plan = subscription?.plan;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Quiz</h1>
-          <p className="text-sm text-muted-foreground">
-            {quizzes.length} quiz{quizzes.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <NewQuizDialog />
-      </div>
-
-      <DataTable
-        columns={quizColumns}
-        data={quizzes}
-        searchColumn="title"
-        searchPlaceholder="Rechercher un quiz..."
+    <QuizViewProvider>
+      <QuizListView
+        quizzes={quizzes}
+        planSlug={plan?.slug ?? "free"}
+        quizLimit={plan?.quizLimit ?? null}
       />
-    </div>
+    </QuizViewProvider>
   );
 }

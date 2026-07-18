@@ -10,6 +10,7 @@ import { Logo } from "@/components/shared/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PlanBadge } from "@/features/dashboard/components/plan-badge";
 
 const STORAGE_KEY = "quiznest:sidebar-collapsed";
 
@@ -45,7 +46,7 @@ function setCollapsedStore(value: boolean) {
   collapsedListeners.forEach((listener) => listener());
 }
 
-export function DashboardSidebar({ user }: { user: { name: string; email: string } }) {
+export function DashboardSidebar({ user, planName }: { user: { name: string; email: string }; planName: string | null }) {
   const router = useRouter();
   const collapsed = useSyncExternalStore(subscribeCollapsed, getCollapsedSnapshot, getCollapsedServerSnapshot);
 
@@ -80,13 +81,18 @@ export function DashboardSidebar({ user }: { user: { name: string; email: string
         <DashboardNav collapsed={collapsed} />
       </div>
 
+      <div className={cn("space-y-2 border-t pt-3", collapsed ? "flex flex-col items-center px-2" : "px-3")}>
+        <PlanBadge planName={planName} collapsed={collapsed} />
+      </div>
+
       <div className={cn("flex flex-col gap-2 border-t py-3", collapsed ? "items-center" : "px-3")}>
         {collapsed ? (
           <>
             <Button
-              variant="ghost"
+              variant="default"
               size="icon"
               title="Paramètres"
+              className="rounded-lg p-4.5"
               aria-label="Paramètres"
               onClick={() => router.push("/dashboard/settings")}
             >
@@ -96,7 +102,7 @@ export function DashboardSidebar({ user }: { user: { name: string; email: string
             <Avatar className="size-9" title={user.name}>
               <AvatarFallback className="text-xs">{initials(user.name)}</AvatarFallback>
             </Avatar>
-            <Button variant="destructive" size="icon" title="Déconnexion" aria-label="Déconnexion" onClick={handleSignOut}>
+            <Button variant="destructive" size="icon" title="Déconnexion" aria-label="Déconnexion" className="rounded-lg p-4.5" onClick={handleSignOut}>
               <LogOut className="size-4" />
             </Button>
           </>
@@ -112,9 +118,9 @@ export function DashboardSidebar({ user }: { user: { name: string; email: string
               </div>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start gap-2.5 px-1"
+              className="w-full justify-start rounded-lg gap-2.5 p-4.5"
               onClick={() => router.push("/dashboard/settings")}
             >
               <Settings className="size-4" />
@@ -123,7 +129,7 @@ export function DashboardSidebar({ user }: { user: { name: string; email: string
             <Button
               variant="destructive"
               size="sm"
-              className="w-full justify-start gap-2.5 px-1 text-destructive hover:text-destructive"
+              className="w-full justify-start rounded-lg gap-2.5 p-4.5 text-destructive hover:text-destructive"
               onClick={handleSignOut}
             >
               <LogOut className="size-4" />
