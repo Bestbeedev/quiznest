@@ -1,55 +1,137 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronsLeft, ChevronsRight, LogOut, Settings } from "lucide-react";
 
+import { signOut } from "@/lib/auth/client";
 import { DashboardNav } from "@/components/shared/dashboard-nav";
+import { Logo } from "@/components/shared/logo";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "quiznest:sidebar-collapsed";
 
-export function DashboardSidebar({ organizationName }: { organizationName: string }) {
-  const [collapsed, setCollapsed] = useState(false);
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
-  useEffect(() => {
-    // Deferred to an effect (not a lazy initializer) so the first client render matches
-    // the server-rendered "expanded" markup — reading localStorage during render would
-    // cause a hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCollapsed(localStorage.getItem(STORAGE_KEY) === "true");
-  }, []);
+let collapsedListeners: Array<() => void> = [];
 
-  const toggle = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+function subscribeCollapsed(callback: () => void) {
+  collapsedListeners.push(callback);
+  return () => {
+    collapsedListeners = collapsedListeners.filter((listener) => listener !== callback);
+  };
+}
+
+function getCollapsedSnapshot() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored === null ? true : stored === "true";
+}
+
+function getCollapsedServerSnapshot() {
+  return true;
+}
+
+function setCollapsedStore(value: boolean) {
+  localStorage.setItem(STORAGE_KEY, String(value));
+  collapsedListeners.forEach((listener) => listener());
+}
+
+export function DashboardSidebar({ user }: { user: { name: string; email: string } }) {
+  const router = useRouter();
+  const collapsed = useSyncExternalStore(subscribeCollapsed, getCollapsedSnapshot, getCollapsedServerSnapshot);
+
+  const toggle = () => setCollapsedStore(!collapsed);
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+    router.refresh();
   };
 
   return (
     <aside
       className={cn(
-        "hidden shrink-0 flex-col gap-6 border-r p-4 transition-[width] duration-200 md:flex",
-        collapsed ? "w-16" : "w-60",
+        "hidden h-full shrink-0 flex-col border-r bg-sidebar transition-[width] duration-200 md:flex",
+        collapsed ? "w-[76px] items-center" : "w-60",
       )}
     >
-      <div className="flex items-center justify-between px-1">
-        {!collapsed && (
-          <span className="truncate text-base font-semibold tracking-tight">
-            {organizationName}
-          </span>
-        )}
+      <div className={cn("flex items-center border-b py-3.5", collapsed ? "w-full flex-col gap-2" : "justify-between px-4")}>
+        <Logo iconOnly={collapsed} href="/dashboard" />
         <button
           type="button"
           onClick={toggle}
           aria-label={collapsed ? "Déplier la navigation" : "Replier la navigation"}
-          className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          {collapsed ? <ChevronsRight className="size-4" /> : <ChevronsLeft className="size-4" />}
         </button>
       </div>
-      <DashboardNav collapsed={collapsed} />
+
+      <div className={cn("flex flex-1 flex-col overflow-y-auto py-4", collapsed ? "items-center" : "px-3")}>
+        <DashboardNav collapsed={collapsed} />
+      </div>
+
+      <div className={cn("flex flex-col gap-2 border-t py-3", collapsed ? "items-center" : "px-3")}>
+        {collapsed ? (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Paramètres"
+              aria-label="Paramètres"
+              onClick={() => router.push("/dashboard/settings")}
+            >
+              <Settings className="size-4" />
+            </Button>
+            <div className="h-px w-6 bg-border" />
+            <Avatar className="size-9" title={user.name}>
+              <AvatarFallback className="text-xs">{initials(user.name)}</AvatarFallback>
+            </Avatar>
+            <Button variant="destructive" size="icon" title="Déconnexion" aria-label="Déconnexion" onClick={handleSignOut}>
+              <LogOut className="size-4" />
+            </Button>
+          </>
+        ) : (
+            <>
+              <div className="flex items-center gap-2.5 px-1">
+                <Avatar className="size-8">
+                <AvatarFallback className="text-xs">{initials(user.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-medium">{user.name}</span>
+                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2.5 px-1"
+              onClick={() => router.push("/dashboard/settings")}
+            >
+              <Settings className="size-4" />
+              Paramètres
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full justify-start gap-2.5 px-1 text-destructive hover:text-destructive"
+              onClick={handleSignOut}
+            >
+              <LogOut className="size-4" />
+              Déconnexion
+            </Button>
+          </>
+        )}
+      </div>
     </aside>
   );
 }
