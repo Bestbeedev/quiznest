@@ -16,14 +16,35 @@ const NAV_ITEMS = [
 
 type SettingsTab = (typeof NAV_ITEMS)[number]["value"];
 
-export function SettingsNav({
-  children,
-  defaultValue = "profile",
-}: {
-  children: Record<SettingsTab, React.ReactNode>;
-  defaultValue?: SettingsTab;
-}) {
-  const [active, setActive] = useState<SettingsTab>(defaultValue);
+interface SettingsNavProps {
+  profile: React.ReactNode;
+  security: React.ReactNode;
+  organization: React.ReactNode;
+  team: React.ReactNode;
+  api: React.ReactNode;
+  preferences: React.ReactNode;
+}
+
+const TAB_CONTENT: Record<SettingsTab, keyof SettingsNavProps> = {
+  profile: "profile",
+  security: "security",
+  organization: "organization",
+  team: "team",
+  api: "api",
+  preferences: "preferences",
+};
+
+export function SettingsNav({ profile, security, organization, team, api, preferences }: SettingsNavProps) {
+  const [active, setActive] = useState<SettingsTab>("profile");
+
+  const content: Record<SettingsTab, React.ReactNode> = {
+    profile,
+    security,
+    organization,
+    team,
+    api,
+    preferences,
+  };
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
@@ -59,7 +80,7 @@ export function SettingsNav({
         </div>
       </nav>
 
-      <div className="min-w-0 flex-1">{children[active]}</div>
+      <div className="min-w-0 flex-1">{content[active]}</div>
     </div>
   );
 }
