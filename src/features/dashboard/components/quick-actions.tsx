@@ -1,47 +1,52 @@
 import Link from "next/link";
-import { Sparkles, UserPlus, ListChecks, BarChart3, Users } from "lucide-react";
+import { Sparkles, UserPlus, ListChecks, BarChart3, Users, FileDown } from "lucide-react";
 
 import { NewQuizDialog } from "@/features/quiz/components/new-quiz-dialog";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const actions = [
   {
     label: "Nouveau quiz",
+    description: "Créez un quiz from scratch",
     icon: Sparkles,
-    variant: "default" as const,
+    color: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
     component: "dialog" as const,
   },
   {
-    label: "Voir les quiz",
+    label: "Importer",
+    description: "Générez avec l'IA",
+    icon: FileDown,
+    color: "bg-violet-500/10 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
+    href: "/dashboard/ai" as const,
+  },
+  {
+    label: "Mes quiz",
+    description: "Gérez vos quiz",
     icon: ListChecks,
-    variant: "outline" as const,
+    color: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
     href: "/dashboard/quiz" as const,
   },
   {
     label: "Participants",
+    description: "Suivez les résultats",
     icon: Users,
-    variant: "outline" as const,
+    color: "bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
     href: "/dashboard/participants" as const,
   },
   {
     label: "Analytics",
+    description: "Statistiques détaillées",
     icon: BarChart3,
-    variant: "outline" as const,
+    color: "bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
     href: "/dashboard/analytics" as const,
   },
   {
-    label: "Inviter un membre",
+    label: "Inviter",
+    description: "Ajoutez un membre",
     icon: UserPlus,
-    variant: "outline" as const,
+    color: "bg-slate-500/10 text-slate-600 dark:bg-slate-500/15 dark:text-slate-400",
     disabled: true,
-  },
-  {
-    label: "Importer un quiz",
-    icon: Sparkles,
-    variant: "outline" as const,
-    href: "/dashboard/ai" as const,
   },
 ];
 
@@ -52,14 +57,19 @@ export function QuickActions() {
         <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Actions rapides
         </p>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {actions.map((action) => {
             if (action.component === "dialog") {
               return (
                 <NewQuizDialog key={action.label}>
-                  <button className="flex flex-col items-center gap-1.5 rounded-lg border bg-card px-2 py-3 text-xs font-medium text-card-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
-                    <action.icon className="size-5" />
-                    {action.label}
+                  <button className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-primary/5 hover:shadow-md">
+                    <div className={cn("flex size-10 items-center justify-center rounded-lg transition-transform group-hover:scale-110", action.color)}>
+                      <action.icon className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium leading-none group-hover:text-primary">{action.label}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{action.description}</p>
+                    </div>
                   </button>
                 </NewQuizDialog>
               );
@@ -70,25 +80,32 @@ export function QuickActions() {
                 <Link
                   key={action.label}
                   href={action.href}
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-lg border bg-card px-2 py-3 text-xs font-medium text-card-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                  )}
+                  className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
                 >
-                  <action.icon className="size-5" />
-                  {action.label}
+                  <div className={cn("flex size-10 items-center justify-center rounded-lg transition-transform group-hover:scale-110", action.color)}>
+                    <action.icon className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium leading-none group-hover:text-primary">{action.label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{action.description}</p>
+                  </div>
                 </Link>
               );
             }
 
             return (
-              <button
+              <div
                 key={action.label}
-                disabled={action.disabled}
-                className="flex cursor-not-allowed flex-col items-center gap-1.5 rounded-lg border bg-card px-2 py-3 text-xs font-medium text-muted-foreground/50 shadow-sm"
+                className="flex cursor-not-allowed flex-col items-start gap-3 rounded-xl border border-dashed bg-card/50 p-4 opacity-50"
               >
-                <action.icon className="size-5" />
-                {action.label}
-              </button>
+                <div className={cn("flex size-10 items-center justify-center rounded-lg grayscale", action.color)}>
+                  <action.icon className="size-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium leading-none text-muted-foreground">{action.label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground/60">{action.description}</p>
+                </div>
+              </div>
             );
           })}
         </div>
