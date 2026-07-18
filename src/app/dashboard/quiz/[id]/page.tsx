@@ -8,7 +8,6 @@ import {
   getQuizResultsSummary,
   getQuizAttemptsTrend,
 } from "@/lib/services/participation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,6 +16,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { QuizDetailHeader } from "@/features/quiz/components/quiz-detail-header";
+import { QuizDetailNav } from "@/features/quiz/components/quiz-detail-nav";
 import { QuestionsTab } from "@/features/quiz/components/questions-tab";
 import { QuizSettingsForm } from "@/features/quiz/components/quiz-settings-form";
 import { ParticipantsTab } from "@/features/quiz/components/participants-tab";
@@ -64,35 +64,19 @@ export default async function QuizDetailPage({
         accessCode={quiz.accessCode}
       />
 
-      <Tabs defaultValue="questions">
-        <TabsList variant="line" className="w-full justify-start">
-          <TabsTrigger value="questions">Questions</TabsTrigger>
-          <TabsTrigger value="participants">Participants</TabsTrigger>
-          <TabsTrigger value="results">Résultats</TabsTrigger>
-          <TabsTrigger value="settings">Paramètres</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="questions">
-          <QuestionsTab quizId={quiz.id} quizTitle={quiz.title} questions={quiz.questions} />
-        </TabsContent>
-
-        <TabsContent value="participants">
-          <ParticipantsTab quizId={quiz.id} participants={participants} />
-        </TabsContent>
-
-        <TabsContent value="results">
+      <QuizDetailNav
+        questions={<QuestionsTab quizId={quiz.id} quizTitle={quiz.title} questions={quiz.questions} />}
+        participants={<ParticipantsTab quizId={quiz.id} participants={participants} />}
+        results={
           <ResultsTab
             quizTitle={quiz.title}
             participants={participants}
             attemptsTrend={attemptsTrend}
             {...resultsSummary}
           />
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <QuizSettingsForm quiz={quiz} />
-        </TabsContent>
-      </Tabs>
+        }
+        settings={<QuizSettingsForm quiz={quiz} />}
+      />
     </div>
   );
 }
