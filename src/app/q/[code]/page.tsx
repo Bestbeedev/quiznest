@@ -6,7 +6,7 @@ import {
   Shield,
   AlertTriangle,
   MonitorOff,
-  CopyOff,
+  Ban,
   MousePointerClick,
   Maximize,
   CheckCircle2,
@@ -46,7 +46,7 @@ const RULES = [
     detail: "Changer d'onglet ou d'application est détecté",
   },
   {
-    icon: CopyOff,
+    icon: Ban,
     text: "Copier/coller désactivé",
     detail: "Les raccourcis Ctrl+C, Ctrl+V, etc. sont bloqués",
   },
