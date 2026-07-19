@@ -490,7 +490,7 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
               </div>
             </div>
 
-            <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+            <div className="flex max-h-80 flex-col gap-3 overflow-y-auto">
               {results.map((row) => (
                 <div
                   key={row.index}
