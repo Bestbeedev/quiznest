@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { Building2, ListChecks, TrendingUp, Users } from "lucide-react";
 
 import { listAllOrganizations } from "@/lib/services/admin";
@@ -8,9 +9,12 @@ import { DataTable } from "@/components/shared/data-table";
 import { StatCard } from "@/components/shared/stat-card";
 import { organizationsColumns } from "@/features/admin/components/organizations-columns";
 
-export const metadata: Metadata = {
-  title: "Organisations — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Organisations",
+  description: "Gestion des organisations : listes, membres et statistiques.",
+  path: "/admin/organizations",
+  noindex: true,
+});
 
 export default async function AdminOrganizationsPage() {
   const organizations = await listAllOrganizations();

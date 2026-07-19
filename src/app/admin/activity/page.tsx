@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import type { LucideIcon } from "lucide-react";
 import { Building2, ScrollText, UserPlus, Wallet } from "lucide-react";
 
@@ -8,9 +9,12 @@ import { Section } from "@/components/shared/section";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
 
-export const metadata: Metadata = {
-  title: "Activité — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Activité",
+  description: "Activité récente de la plateforme : inscriptions, créations d'organisations et événements.",
+  path: "/admin/activity",
+  noindex: true,
+});
 
 const ICONS: Record<ActivityItem["type"], LucideIcon> = {
   audit: ScrollText,

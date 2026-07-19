@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 
 import { listAllPlans } from "@/lib/services/plan";
 import { PageHeader } from "@/components/shared/page-header";
@@ -7,9 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PlanFormDialog } from "@/features/admin/components/plan-form-dialog";
 import { PlansList } from "@/features/admin/components/plans-list";
 
-export const metadata: Metadata = {
-  title: "Plans — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Plans",
+  description: "Gestion des plans d'abonnement : création, modification et activation des offres.",
+  path: "/admin/plans",
+  noindex: true,
+});
 
 export default async function AdminPlansPage() {
   const plans = await listAllPlans();

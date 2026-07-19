@@ -10,10 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS } from "@/constants/roles";
 import { AcceptInvitationButton } from "@/features/settings/components/accept-invitation-button";
+import { buildMetadata } from "@/constants/seo";
 
-export const metadata: Metadata = {
-  title: "Invitation — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Invitation d'équipe",
+  description:
+    "Vous avez été invité à rejoindre une équipe sur QuizNest. Acceptez l'invitation pour accéder à l'espace partagé.",
+  path: "/invite",
+  noindex: true,
+});
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

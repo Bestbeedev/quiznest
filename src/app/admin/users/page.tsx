@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { ShieldCheck, UserPlus, Users, UsersRound } from "lucide-react";
 
 import { listAllUsers } from "@/lib/services/admin";
@@ -8,9 +9,12 @@ import { DataTable } from "@/components/shared/data-table";
 import { StatCard } from "@/components/shared/stat-card";
 import { usersColumns } from "@/features/admin/components/users-columns";
 
-export const metadata: Metadata = {
-  title: "Utilisateurs — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Utilisateurs",
+  description: "Gestion des utilisateurs : liste complète, recherche et statistiques d'inscription.",
+  path: "/admin/users",
+  noindex: true,
+});
 
 export default async function AdminUsersPage() {
   const users = await listAllUsers();

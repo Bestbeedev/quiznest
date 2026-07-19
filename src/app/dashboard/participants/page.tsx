@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AlertOctagon, CheckCircle2, Clock, Target, TrendingUp, Users } from "lucide-react";
 
+import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { listAllOrgParticipants, getOrgParticipantsTrend } from "@/lib/services/participation";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
@@ -13,9 +14,12 @@ import { ParticipantsTimelineChart } from "./participants-timeline-chart";
 import { ParticipantsView } from "./participants-view";
 import { ParticipantsExportButtons } from "@/features/quiz/components/participants-export-buttons";
 
-export const metadata: Metadata = {
-  title: "Participants — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Participants",
+  description:
+    "Suivez les participants de vos quiz : scores, taux de réussite, temps moyen et tendances en temps réel.",
+  path: "/dashboard/participants",
+});
 
 function StatItem({
   icon: Icon,

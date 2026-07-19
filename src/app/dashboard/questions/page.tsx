@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HelpCircle } from "lucide-react";
 
+import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { listAllQuestions } from "@/lib/services/question";
 import { listQuizzes } from "@/lib/services/quiz";
@@ -12,9 +13,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { QuestionsCharts } from "./questions-charts";
 import { QuestionBankView } from "./question-bank-view";
 
-export const metadata: Metadata = {
-  title: "Banque de questions — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Banque de Questions",
+  description:
+    "Consultez et gérez toutes vos questions : par type, difficulté et catégorie. Réutilisez vos questions entre plusieurs quiz.",
+  path: "/dashboard/questions",
+});
 
 export default async function QuestionsPage() {
   const organization = await requireActiveOrganization();

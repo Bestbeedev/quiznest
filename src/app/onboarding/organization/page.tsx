@@ -5,10 +5,15 @@ import { requireAuth } from "@/lib/auth/require-auth";
 import { getActiveOrganization } from "@/lib/db/tenant";
 import { CreateOrganizationForm } from "@/features/organizations/components/create-organization-form";
 import { Logo } from "@/components/shared/logo";
+import { buildMetadata } from "@/constants/seo";
 
-export const metadata: Metadata = {
-  title: "Créer votre organisation — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Créer votre organisation",
+  description:
+    "Configurez votre espace de travail QuizNest en quelques secondes. Ajoutez votre nom, logo et commencez à créer des quiz.",
+  path: "/onboarding/organization",
+  noindex: true,
+});
 
 const NEXT_STEPS = [
   { icon: Sparkles, title: "Créez votre organisation", desc: "Votre espace de travail, en 30 secondes." },

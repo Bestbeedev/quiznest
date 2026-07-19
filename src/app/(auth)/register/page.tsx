@@ -4,10 +4,21 @@ import { UserX } from "lucide-react";
 import { RegisterForm } from "@/features/authentication/components/register-form";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
 import { redirectIfAuthenticated } from "@/lib/auth/redirect-if-auth";
+import { buildMetadata } from "@/constants/seo";
 
-export const metadata: Metadata = {
-  title: "Créer un compte — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Créer un compte gratuit",
+  description:
+    "Inscrivez-vous gratuitement sur QuizNest et créez votre premier quiz en moins de 2 minutes. IA intégrée, analytics avancés, sans engagement.",
+  path: "/register",
+  keywords: [
+    "inscription gratuite quiz",
+    "créer compte quiznest",
+    "s'inscrire plateforme évaluation",
+    "quiz gratuit sans engagement",
+    "nouveau compte quiz en ligne",
+  ],
+});
 
 export default async function RegisterPage() {
   await redirectIfAuthenticated();

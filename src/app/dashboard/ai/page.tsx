@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkles, Zap, FileText, Copy, CheckCircle2 } from "lucide-react";
 
+import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { listQuizzes } from "@/lib/services/quiz";
 import { getOrganizationSubscription } from "@/lib/services/billing";
@@ -12,9 +13,12 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
 
-export const metadata: Metadata = {
-  title: "IA — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Génération IA de Questions",
+  description:
+    "Générez des questions de quiz automatiquement avec l'intelligence artificielle. Choisissez le sujet, le niveau et le nombre de questions.",
+  path: "/dashboard/ai",
+});
 
 export default async function AiPage() {
   const organization = await requireActiveOrganization();

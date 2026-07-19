@@ -20,10 +20,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { StartAttemptForm } from "@/features/participation/components/start-attempt-form";
 import { Reveal } from "@/components/shared/reveal";
+import { buildMetadata } from "@/constants/seo";
 
-export const metadata: Metadata = {
-  title: "Participer — QuizNest",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  try {
+    const quiz = await getPublicQuiz(code);
+    if (!quiz) return buildMetadata({ title: "Quiz introuvable", noindex: true });
+    return buildMetadata({
+      title: quiz.title,
+      description: quiz.description || `Passez le quiz « ${quiz.title} » sur QuizNest. ${quiz._count?.questions ?? 0} questions.`,
+      path: `/q/${code}`,
+      noindex: true,
+    });
+  } catch {
+    return buildMetadata({ title: "Quiz", noindex: true });
+  }
+}
 
 const QUESTION_TYPE_ICONS: Record<string, typeof CircleDot> = {
   SINGLE_CHOICE: CircleDot,

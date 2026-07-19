@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import { CheckCircle2, ListChecks, Percent, Rocket, Users, Sparkles, Zap } from "lucide-react";
 
 import { getActiveOrganization } from "@/lib/db/tenant";
+import { buildMetadata } from "@/constants/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Tableau de bord",
+  description:
+    "Vue d'ensemble de votre espace QuizNest : quiz, participants, taux de réussite et statistiques en temps réel.",
+  path: "/dashboard",
+});
 import {
   getQuizStats,
   getRecentQuizzes,

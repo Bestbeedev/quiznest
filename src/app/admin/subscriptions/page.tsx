@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { AlertTriangle, CreditCard, Hourglass, XCircle } from "lucide-react";
 
 import { listAllSubscriptions } from "@/lib/services/billing";
@@ -8,9 +9,12 @@ import { DataTable } from "@/components/shared/data-table";
 import { StatCard } from "@/components/shared/stat-card";
 import { subscriptionsColumns } from "@/features/admin/components/subscriptions-columns";
 
-export const metadata: Metadata = {
-  title: "Abonnements — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Abonnements",
+  description: "Gestion des abonnements : plans actifs, essais et statuts de facturation.",
+  path: "/admin/subscriptions",
+  noindex: true,
+});
 
 export default async function AdminSubscriptionsPage() {
   const subscriptions = await listAllSubscriptions();

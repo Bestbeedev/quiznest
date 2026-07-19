@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 
+import { buildMetadata } from "@/constants/seo";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getOrganizationMembers } from "@/lib/services/organization";
@@ -23,9 +24,13 @@ import { ApiKeysManager } from "@/features/settings/components/api-keys-manager"
 import { NotificationPreferencesForm } from "@/features/settings/components/notification-preferences-form";
 import type { MemberRole } from "@/constants/roles";
 
-export const metadata: Metadata = {
-  title: "Paramètres — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Paramètres",
+  description:
+    "Gérez votre profil, sécurité, organisation, équipe et préférences de notification.",
+  path: "/dashboard/settings",
+  noindex: true,
+});
 
 export default async function SettingsPage() {
   const session = await requireAuth();

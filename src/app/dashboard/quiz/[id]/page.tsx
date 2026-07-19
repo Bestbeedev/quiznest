@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -22,6 +23,28 @@ import { QuestionsTab } from "@/features/quiz/components/questions-tab";
 import { QuizSettingsSheet } from "@/features/quiz/components/quiz-settings-sheet";
 import { ParticipantsTab } from "@/features/quiz/components/participants-tab";
 import { ResultsTab } from "@/features/quiz/components/results-tab";
+import { buildMetadata } from "@/constants/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const organization = await requireActiveOrganization();
+    const quiz = await getQuiz(organization.id, id);
+    if (!quiz) return buildMetadata({ title: "Quiz introuvable", noindex: true });
+    return buildMetadata({
+      title: quiz.title,
+      description: `Gérez le quiz « ${quiz.title} » : questions, participants, résultats et paramètres.`,
+      path: `/dashboard/quiz/${id}`,
+      noindex: true,
+    });
+  } catch {
+    return buildMetadata({ title: "Quiz", noindex: true });
+  }
+}
 
 export default async function QuizDetailPage({
   params,

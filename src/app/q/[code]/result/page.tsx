@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import {
   Trophy,
   Target,
@@ -17,6 +18,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Reveal } from "@/components/shared/reveal";
+import { buildMetadata } from "@/constants/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: "Résultats du quiz",
+    description: "Consultez votre score, vos réponses et les explications détaillées.",
+    noindex: true,
+  });
+}
 
 export default async function QuizResultPage({
   params,

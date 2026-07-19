@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { CreditCard, TrendingUp, Wallet } from "lucide-react";
 
 import { getRevenueStats, getSubscriptionStatsByPlan, getMonthlyRevenueTrend } from "@/lib/services/billing";
@@ -11,9 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { RevenueChart } from "./revenue-chart";
 
-export const metadata: Metadata = {
-  title: "Revenus — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Revenus",
+  description: "Revenus de la plateforme : chiffre d'affaires, abonnements actifs et tendances mensuelles.",
+  path: "/admin/revenue",
+  noindex: true,
+});
 
 export default async function AdminRevenuePage() {
   const [revenue, planStats, monthlyTrend] = await Promise.all([

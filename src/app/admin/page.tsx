@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { Building2, CreditCard, ListChecks, TrendingUp, Users } from "lucide-react";
 
 import { getPlatformStats, getWeeklyGrowthTrend, getRecentUsers, getRecentOrganizations } from "@/lib/services/admin";
@@ -11,9 +12,12 @@ import { formatCurrency } from "@/lib/format";
 import { AdminCharts } from "./admin-charts";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Vue d'ensemble — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Vue d'ensemble",
+  description: "Vue d'ensemble de la plateforme QuizNest : statistiques, croissance et activité récente.",
+  path: "/admin",
+  noindex: true,
+});
 
 export default async function AdminOverviewPage() {
   const [stats, revenue, growthTrend, recentUsers, recentOrgs] = await Promise.all([

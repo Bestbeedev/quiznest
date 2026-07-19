@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { CheckCircle2, TrendingUp, Wallet, XCircle } from "lucide-react";
 
 import { listAllPayments } from "@/lib/services/billing";
@@ -9,9 +10,12 @@ import { DataTable } from "@/components/shared/data-table";
 import { StatCard } from "@/components/shared/stat-card";
 import { paymentsColumns } from "@/features/admin/components/payments-columns";
 
-export const metadata: Metadata = {
-  title: "Paiements — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Paiements",
+  description: "Historique des paiements : transactions, revenus et statuts.",
+  path: "/admin/payments",
+  noindex: true,
+});
 
 export default async function AdminPaymentsPage() {
   const payments = await listAllPayments();

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CreditCard, Check, Zap } from "lucide-react";
 
+import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getOrganizationSubscription } from "@/lib/services/billing";
 import { listPublicPlans } from "@/lib/services/plan";
@@ -14,9 +15,13 @@ import { Section } from "@/components/shared/section";
 import { formatCurrency } from "@/lib/format";
 import { UsageChart } from "./usage-chart";
 
-export const metadata: Metadata = {
-  title: "Abonnement — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Abonnement & Facturation",
+  description:
+    "Gérez votre abonnement QuizNest : plans, limites d'utilisation et options de facturation.",
+  path: "/dashboard/billing",
+  noindex: true,
+});
 
 function planPriceLabel(price: number | null, currency: string) {
   if (price === null) return "Sur devis";

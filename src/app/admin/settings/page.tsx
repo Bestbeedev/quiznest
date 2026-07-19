@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { Activity, Building2, ListChecks, ShieldCheck, Users } from "lucide-react";
 
 import { getPlatformStats } from "@/lib/services/admin";
@@ -16,9 +17,12 @@ import { MaintenanceModeCard } from "@/features/admin/components/maintenance-mod
 import { FeatureFlagsCard } from "@/features/admin/components/feature-flags-card";
 import { NotificationSettingsCard } from "@/features/admin/components/notification-settings-card";
 
-export const metadata: Metadata = {
-  title: "Paramètres — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Paramètres",
+  description: "Paramètres de la plateforme : configuration système, fonctionnalités et notifications.",
+  path: "/admin/settings",
+  noindex: true,
+});
 
 export default async function AdminSettingsPage() {
   const [stats, revenue, planStats, platformSettings, dbHealth] = await Promise.all([

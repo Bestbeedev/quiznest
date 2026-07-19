@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/constants/seo";
 import { ScrollText } from "lucide-react";
 
 import { listAuditLogs } from "@/lib/services/audit-log";
@@ -8,9 +9,12 @@ import { DataTable } from "@/components/shared/data-table";
 import { StatCard } from "@/components/shared/stat-card";
 import { logsColumns } from "@/features/admin/components/logs-columns";
 
-export const metadata: Metadata = {
-  title: "Logs — Admin QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Logs",
+  description: "Journaux d'audit : traçabilité complète des actions effectuées sur la plateforme.",
+  path: "/admin/logs",
+  noindex: true,
+});
 
 export default async function AdminLogsPage() {
   const logs = await listAuditLogs();

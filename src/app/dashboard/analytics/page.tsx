@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BarChart3, Clock, BarChart } from "lucide-react";
 
+import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getOrgParticipantStats, listAllOrgParticipants } from "@/lib/services/participation";
 import { getQuizStats, listQuizzes } from "@/lib/services/quiz";
@@ -30,9 +31,12 @@ import { ScoreEvolutionChart } from "./score-evolution-chart";
 import { QuizComparisonRadar } from "./quiz-comparison-radar";
 import { QuestionDifficultyLists } from "./question-difficulty-lists";
 
-export const metadata: Metadata = {
-  title: "Analytics — QuizNest",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Analytics",
+  description:
+    "Analysez les performances de vos quiz : taux de réussite, distribution des scores, évolution dans le temps et questions difficiles.",
+  path: "/dashboard/analytics",
+});
 
 export default async function AnalyticsPage() {
   const organization = await requireActiveOrganization();

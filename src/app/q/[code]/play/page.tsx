@@ -1,7 +1,21 @@
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getPublicQuiz, getQuizForPlay } from "@/lib/services/participation";
 import { prisma } from "@/lib/db/client";
 import { QuizRunner } from "@/features/participation/components/quiz-runner";
+import { buildMetadata } from "@/constants/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  return buildMetadata({
+    title: "Passation du quiz",
+    description: "Répondez aux questions du quiz en temps limité.",
+    noindex: true,
+  });
+}
 
 export default async function PlayQuizPage({
   params,
