@@ -5,7 +5,8 @@ import { autoTable } from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 import { ExportMenu } from "@/components/shared/export-menu";
-import { PARTICIPANT_STATUS_LABELS, downloadBlob, toCsvValue } from "@/lib/export-utils";
+import { downloadBlob, toCsvValue } from "@/lib/export-utils";
+import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
 import type { Participant } from "@/generated/prisma/client";
 
 type ExportRow = Participant & { quiz: { title: string } };

@@ -5,7 +5,8 @@ import { autoTable } from "jspdf-autotable";
 
 import { ExportMenu } from "@/components/shared/export-menu";
 import { formatDuration } from "@/lib/format";
-import { PARTICIPANT_STATUS_LABELS, downloadBlob, toCsvValue } from "@/lib/export-utils";
+import { downloadBlob, toCsvValue } from "@/lib/export-utils";
+import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
 import type { Participant } from "@/generated/prisma/client";
 
 type QuestionStat = { id: string; title: string; successRate: number | null };
