@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Check, Copy, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 
 import { inviteMemberAction } from "@/features/settings/actions";
 import { inviteMemberSchema, type InviteMemberInput } from "@/lib/validators/settings";
@@ -63,11 +64,13 @@ export function InviteMemberDialog() {
     const result = await inviteMemberAction(parsed.data);
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
       return;
     }
 
     if (result?.token) {
       setInviteLink(`${window.location.origin}/invite/${result.token}`);
+      toast.success("Invitation envoyée.");
     }
   });
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { addQuestionAction, updateQuestionAction } from "@/features/quiz/actions";
 import { createQuestionSchema, type CreateQuestionInput } from "@/lib/validators/question";
@@ -145,9 +146,11 @@ export function AddQuestionDialog({
 
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
       return;
     }
 
+    toast.success(isEdit ? "Question modifiée." : "Question ajoutée.");
     close();
     router.refresh();
   });

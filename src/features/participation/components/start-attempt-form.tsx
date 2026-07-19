@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { startAttemptAction } from "@/features/participation/actions";
 import { startAttemptSchema, type StartAttemptInput } from "@/lib/validators/participation";
@@ -33,6 +34,7 @@ export function StartAttemptForm({ accessCode }: { accessCode: string }) {
     const result = await startAttemptAction(accessCode, parsed.data);
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
     }
   });
 

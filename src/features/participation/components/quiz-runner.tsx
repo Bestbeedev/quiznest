@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Timer } from "lucide-react";
+import { Clock, Timer, AlertTriangle, Shield, CheckCircle2, CircleDot, Copy, ToggleLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import { submitAttemptAction } from "@/features/participation/actions";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAntiCheat } from "@/features/participation/hooks/use-anti-cheat";
 
 type PlayQuestion = {
   id: string;
@@ -20,6 +22,36 @@ type PlayQuestion = {
   hint: string | null;
   timeLimit: number | null;
   choices: { id: string; text: string }[];
+};
+
+const TYPE_CONFIG: Record<
+  PlayQuestion["type"],
+  { label: string; help: string; icon: typeof CircleDot; color: string }
+> = {
+  SINGLE_CHOICE: {
+    label: "Choix unique",
+    help: "Sélectionnez une seule réponse",
+    icon: CircleDot,
+    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  },
+  MULTIPLE_CHOICE: {
+    label: "Choix multiple",
+    help: "Sélectionnez toutes les réponses correctes",
+    icon: Copy,
+    color: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
+  },
+  TRUE_FALSE: {
+    label: "Vrai ou Faux",
+    help: "Choisissez Vrai ou Faux",
+    icon: ToggleLeft,
+    color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  },
+  SHORT_ANSWER: {
+    label: "Réponse courte",
+    help: "Entrez votre réponse",
+    icon: CheckCircle2,
+    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  },
 };
 
 function formatClock(totalSeconds: number) {
@@ -40,6 +72,8 @@ export function QuizRunner({
   participantId,
   quizTitle,
   quizTimeLimit,
+  fullscreen,
+  passingScore,
   questions,
 }: {
   accessCode: string;
@@ -47,6 +81,8 @@ export function QuizRunner({
   participantId: string;
   quizTitle: string;
   quizTimeLimit: number | null;
+  fullscreen: boolean;
+  passingScore: number;
   questions: PlayQuestion[];
 }) {
   const [index, setIndex] = useState(0);
@@ -58,35 +94,39 @@ export function QuizRunner({
     quizTimeLimit ? quizTimeLimit * 60 : null,
   );
 
+  const {
+    violations,
+    violationMessage,
+    isFullscreen,
+    setOnSubmit,
+    requestFullscreen,
+    violationLimit,
+  } = useAntiCheat({ enabled: true });
+
   const question = questions[index];
   const isLast = index === questions.length - 1;
   const singleAnswer = question.type === "SINGLE_CHOICE" || question.type === "TRUE_FALSE";
   const selected = answers[question.id] ?? [];
+  const typeConfig = TYPE_CONFIG[question.type];
+  const TypeIcon = typeConfig.icon;
 
   const [questionSecondsLeft, setQuestionSecondsLeft] = useState(question.timeLimit);
-  // Reset the per-question countdown when the question changes — done during
-  // render (React's documented pattern for "adjust state on prop change"),
-  // not in an effect, so it can't trigger the set-state-in-effect lint rule.
   const [trackedQuestionId, setTrackedQuestionId] = useState(question.id);
   if (question.id !== trackedQuestionId) {
     setTrackedQuestionId(question.id);
     setQuestionSecondsLeft(question.timeLimit);
   }
 
-  // Per-question time spent, accumulated across revisits (prev/next can land
-  // on the same question twice). Refs + `Date.now()` are side effects, so this
-  // lives in an effect: the cleanup (which runs right before the effect
-  // re-fires for the next question, or on unmount) is where each question's
-  // elapsed time actually gets flushed into `questionTimesRef`.
   const questionStartRef = useRef<number | null>(null);
   const questionTimesRef = useRef<Record<string, number>>({});
   useEffect(() => {
     const questionId = question.id;
     questionStartRef.current = Date.now();
+    const timesRef = questionTimesRef;
     return () => {
       const startedAt = questionStartRef.current;
       const elapsed = startedAt === null ? 0 : Math.round((Date.now() - startedAt) / 1000);
-      questionTimesRef.current[questionId] = (questionTimesRef.current[questionId] ?? 0) + elapsed;
+      timesRef.current[questionId] = (timesRef.current[questionId] ?? 0) + elapsed;
     };
   }, [question.id]);
 
@@ -114,8 +154,13 @@ export function QuizRunner({
     setIsSubmitting(false);
     if (result?.error) {
       setError(result.error);
+      toast.error(result.error);
     }
   };
+
+  useEffect(() => {
+    setOnSubmit(handleSubmit);
+  });
 
   const goNext = () => {
     setDirection(1);
@@ -127,8 +172,6 @@ export function QuizRunner({
     setIndex((i) => Math.max(i - 1, 0));
   };
 
-  // Refs mirror the latest callbacks so the interval effects below never
-  // fire with a stale closure over `answers`/`index`.
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
@@ -138,7 +181,6 @@ export function QuizRunner({
     goNextRef.current = goNext;
   });
 
-  // Overall quiz timer — a single interval for the whole attempt.
   useEffect(() => {
     if (quizTimeLimit === null) return;
     const id = setInterval(() => {
@@ -151,7 +193,6 @@ export function QuizRunner({
     if (overallSecondsLeft === 0) handleSubmitRef.current();
   }, [overallSecondsLeft]);
 
-  // Per-question timer — (re)create the ticking interval whenever the question changes.
   useEffect(() => {
     if (question.timeLimit === null) return;
     const id = setInterval(() => {
@@ -167,6 +208,12 @@ export function QuizRunner({
     }
   }, [questionSecondsLeft, isLast]);
 
+  useEffect(() => {
+    if (fullscreen && !isFullscreen) {
+      requestFullscreen();
+    }
+  }, [fullscreen, isFullscreen, requestFullscreen]);
+
   const toggleChoice = (choiceId: string) => {
     setAnswers((prev) => {
       const current = prev[question.id] ?? [];
@@ -181,17 +228,50 @@ export function QuizRunner({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="quiz-anti-cheat flex flex-col gap-4">
+      {violationMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+        >
+          <Alert variant="destructive" className="gap-2">
+            <AlertTriangle className="size-4 shrink-0" />
+            <AlertDescription className="font-medium">{violationMessage}</AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="min-w-0 truncate text-lg font-semibold tracking-tight">{quizTitle}</h1>
-        {overallSecondsLeft !== null && (
-          <Badge
-            variant={overallSecondsLeft <= 30 ? "destructive" : "outline"}
-            className="gap-1.5 tabular-nums"
-          >
-            <Clock className="size-3.5" />
-            {formatClock(overallSecondsLeft)}
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 text-xs">
+            <Shield className="size-3" />
+            {violations}/{violationLimit}
           </Badge>
+          {overallSecondsLeft !== null && (
+            <Badge
+              variant={overallSecondsLeft <= 30 ? "destructive" : "outline"}
+              className="gap-1.5 tabular-nums"
+            >
+              <Clock className="size-3.5" />
+              {formatClock(overallSecondsLeft)}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">
+          {questions.length} question{questions.length !== 1 ? "s" : ""}
+        </span>
+        <span>·</span>
+        <span>Score pour passer : {passingScore}%</span>
+        {quizTimeLimit && (
+          <>
+            <span>·</span>
+            <span>Temps total : {quizTimeLimit} min</span>
+          </>
         )}
       </div>
 
@@ -242,7 +322,16 @@ export function QuizRunner({
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="flex flex-col gap-4"
             >
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={cn("gap-1.5 border", typeConfig.color)}>
+                  <TypeIcon className="size-3.5" />
+                  {typeConfig.label}
+                </Badge>
+              </div>
+
               <CardTitle>{question.title}</CardTitle>
+
+              <p className="text-xs text-muted-foreground">{typeConfig.help}</p>
 
               <div className="flex flex-col gap-2">
                 {question.choices.map((choice) => (

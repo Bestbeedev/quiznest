@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { HelpCircle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { deleteQuestionAction } from "@/features/quiz/actions";
 import { AddQuestionDialog } from "@/features/quiz/components/add-question-dialog";
@@ -45,6 +46,7 @@ export function QuestionsTab({
     startTransition(async () => {
       await deleteQuestionAction(quizId, questionId);
       router.refresh();
+      toast.success("Question supprimée.");
     });
   };
 

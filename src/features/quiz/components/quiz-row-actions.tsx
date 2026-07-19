@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Copy, MoreHorizontal, Pencil, Send, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   archiveQuizAction,
@@ -27,10 +28,11 @@ export function QuizRowActions({ quizId, status }: { quizId: string; status: Qui
   const [isPending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const run = (action: () => Promise<void>) => {
+  const run = (action: () => Promise<void>, message: string) => {
     startTransition(async () => {
       await action();
       router.refresh();
+      toast.success(message);
     });
   };
 
@@ -48,18 +50,18 @@ export function QuizRowActions({ quizId, status }: { quizId: string; status: Qui
             <Pencil />
             Modifier
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run(() => duplicateQuizAction(quizId))}>
+          <DropdownMenuItem onClick={() => run(() => duplicateQuizAction(quizId), "Quiz dupliqué.")}>
             <Copy />
             Dupliquer
           </DropdownMenuItem>
           {status === "DRAFT" && (
-            <DropdownMenuItem onClick={() => run(() => publishQuizAction(quizId))}>
+            <DropdownMenuItem onClick={() => run(() => publishQuizAction(quizId), "Quiz publié.")}>
               <Send />
               Publier
             </DropdownMenuItem>
           )}
           {status === "PUBLISHED" && (
-            <DropdownMenuItem onClick={() => run(() => archiveQuizAction(quizId))}>
+            <DropdownMenuItem onClick={() => run(() => archiveQuizAction(quizId), "Quiz archivé.")}>
               <Archive />
               Archiver
             </DropdownMenuItem>
@@ -83,7 +85,7 @@ export function QuizRowActions({ quizId, status }: { quizId: string; status: Qui
           run(async () => {
             await deleteQuizAction(quizId);
             setConfirmOpen(false);
-          })
+          }, "Quiz supprimé.")
         }
       />
     </>

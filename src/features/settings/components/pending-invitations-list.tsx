@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { revokeInvitationAction } from "@/features/settings/actions";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ export function PendingInvitationsList({ invitations }: { invitations: Invitatio
     startTransition(async () => {
       await revokeInvitationAction(id);
       router.refresh();
+      toast.success("Invitation révoquée.");
     });
   };
 

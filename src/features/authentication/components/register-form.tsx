@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, UserCheck } from "lucide-react";
+import { toast } from "sonner";
 
 import { signUp, signIn } from "@/lib/auth/client";
 import { signUpSchema, type SignUpInput } from "@/lib/validators/auth";
@@ -66,7 +67,9 @@ export function RegisterForm() {
     });
 
     if (error) {
-      setServerError(error.message ?? "Impossible de créer le compte.");
+      const message = error.message ?? "Impossible de créer le compte.";
+      setServerError(message);
+      toast.error(message);
       return;
     }
 
@@ -79,7 +82,9 @@ export function RegisterForm() {
     setServerError(null);
     const { error } = await signIn.social({ provider: "google" });
     if (error) {
-      setServerError(error.message ?? "Erreur lors de l'inscription avec Google.");
+      const message = error.message ?? "Erreur lors de l'inscription avec Google.";
+      setServerError(message);
+      toast.error(message);
       setIsSSOLoading(false);
     }
   };

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Laptop, Smartphone, Tablet } from "lucide-react";
+import { toast } from "sonner";
 
 import { revokeOtherSessionsAction, revokeSessionAction } from "@/features/settings/actions";
 import { Button } from "@/components/ui/button";
@@ -62,10 +63,11 @@ export function SessionsList({
     );
   }
 
-  const run = (action: () => Promise<void>) => {
+  const run = (action: () => Promise<void>, successMessage: string) => {
     startTransition(async () => {
       await action();
       router.refresh();
+      toast.success(successMessage);
     });
   };
 
@@ -104,7 +106,7 @@ export function SessionsList({
                   variant="ghost"
                   size="sm"
                   disabled={isPending}
-                  onClick={() => run(() => revokeSessionAction(session.token))}
+                  onClick={() => run(() => revokeSessionAction(session.token), "Session révoquée.")}
                 >
                   Révoquer
                 </Button>
@@ -136,7 +138,7 @@ export function SessionsList({
               run(async () => {
                 await revokeOtherSessionsAction();
                 setConfirmOpen(false);
-              })
+              }, "Autres sessions déconnectées.")
             }
           />
         </>

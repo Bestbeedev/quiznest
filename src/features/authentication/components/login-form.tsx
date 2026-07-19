@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Mail, Lock } from "lucide-react";
+import { toast } from "sonner";
 
 import { signIn } from "@/lib/auth/client";
 import { signInSchema, type SignInInput } from "@/lib/validators/auth";
@@ -54,7 +55,9 @@ export function LoginForm() {
     const { error } = await signIn.email(parsed.data);
 
     if (error) {
-      setServerError(error.message ?? "Email ou mot de passe incorrect.");
+      const message = error.message ?? "Email ou mot de passe incorrect.";
+      setServerError(message);
+      toast.error(message);
       return;
     }
 
@@ -67,7 +70,9 @@ export function LoginForm() {
     setServerError(null);
     const { error } = await signIn.social({ provider: "google" });
     if (error) {
-      setServerError(error.message ?? "Erreur lors de la connexion avec Google.");
+      const message = error.message ?? "Erreur lors de la connexion avec Google.";
+      setServerError(message);
+      toast.error(message);
       setIsSSOLoading(false);
     }
   };

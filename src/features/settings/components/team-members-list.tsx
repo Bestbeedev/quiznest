@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { UserX } from "lucide-react";
+import { toast } from "sonner";
 
 import { changeMemberRoleAction, removeMemberAction } from "@/features/settings/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,7 +48,12 @@ export function TeamMembersList({
     setError(null);
     run(async () => {
       const result = await changeMemberRoleAction(memberId, role);
-      if (result?.error) setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Rôle mis à jour.");
     });
   };
 
@@ -118,8 +124,13 @@ export function TeamMembersList({
         onConfirm={() => {
           if (!removingId) return;
           run(async () => {
-            await removeMemberAction(removingId);
+            const result = await removeMemberAction(removingId);
             setRemovingId(null);
+            if (result?.error) {
+              toast.error(result.error);
+              return;
+            }
+            toast.success("Membre retiré.");
           });
         }}
       />

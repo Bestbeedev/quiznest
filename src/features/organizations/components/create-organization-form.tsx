@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import { createOrganizationAction } from "@/features/organizations/actions";
 import { createOrganizationSchema, type CreateOrganizationInput } from "@/lib/validators/organization";
@@ -45,6 +46,7 @@ export function CreateOrganizationForm() {
     const result = await createOrganizationAction(parsed.data);
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
     }
   });
 

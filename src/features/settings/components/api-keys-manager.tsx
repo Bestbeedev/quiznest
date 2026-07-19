@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { createApiKeyAction, revokeApiKeyAction } from "@/features/settings/actions";
 import { createApiKeySchema, type CreateApiKeyInput } from "@/lib/validators/settings";
@@ -42,10 +43,15 @@ export function ApiKeysManager({ apiKeys }: { apiKeys: ApiKeyRow[] }) {
     if (!parsed.success) return;
 
     const result = await createApiKeyAction(parsed.data);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
     if (result?.key) {
       setNewKey(result.key);
       reset();
       router.refresh();
+      toast.success("Clé API créée.");
     }
   });
 
@@ -133,6 +139,7 @@ export function ApiKeysManager({ apiKeys }: { apiKeys: ApiKeyRow[] }) {
             await revokeApiKeyAction(revokingId);
             setRevokingId(null);
             router.refresh();
+            toast.success("Clé API révoquée.");
           });
         }}
       />

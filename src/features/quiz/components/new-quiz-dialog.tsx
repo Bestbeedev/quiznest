@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { createQuizAction } from "@/features/quiz/actions";
 import { createQuizSchema, type CreateQuizInput } from "@/lib/validators/quiz";
@@ -44,7 +45,9 @@ export function NewQuizDialog({ children }: { children?: React.ReactNode } = {})
     const result = await createQuizAction(parsed.data);
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
     }
+    // On success, createQuizAction redirects — no toast needed here.
   });
 
   return (

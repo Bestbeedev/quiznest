@@ -128,3 +128,15 @@
     @apply font-sans scroll-smooth;
   }
 }
+
+.quiz-anti-cheat {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.quiz-anti-cheat img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}

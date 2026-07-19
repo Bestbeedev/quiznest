@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Table } from "@tanstack/react-table";
 import { Archive, Copy, Send, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   bulkArchiveQuizzesAction,
@@ -22,11 +23,15 @@ export function QuizBulkActions({ table }: { table: Table<QuizRow> }) {
 
   const selectedIds = table.getSelectedRowModel().rows.map((row) => row.original.id);
 
-  const run = (action: (ids: string[]) => Promise<{ count: number }>) => {
+  const run = (
+    action: (ids: string[]) => Promise<{ count: number }>,
+    message: (count: number) => string,
+  ) => {
     startTransition(async () => {
-      await action(selectedIds);
+      const result = await action(selectedIds);
       table.resetRowSelection();
       router.refresh();
+      toast.success(message(result.count));
     });
   };
 
@@ -37,7 +42,7 @@ export function QuizBulkActions({ table }: { table: Table<QuizRow> }) {
           variant="outline"
           size="sm"
           disabled={isPending}
-          onClick={() => run(bulkPublishQuizzesAction)}
+          onClick={() => run(bulkPublishQuizzesAction, (count) => `${count} quiz(s) publié(s).`)}
         >
           <Send className="size-3.5" />
           Publier
@@ -46,7 +51,7 @@ export function QuizBulkActions({ table }: { table: Table<QuizRow> }) {
           variant="outline"
           size="sm"
           disabled={isPending}
-          onClick={() => run(bulkArchiveQuizzesAction)}
+          onClick={() => run(bulkArchiveQuizzesAction, (count) => `${count} quiz(s) archivé(s).`)}
         >
           <Archive className="size-3.5" />
           Archiver
@@ -55,7 +60,7 @@ export function QuizBulkActions({ table }: { table: Table<QuizRow> }) {
           variant="outline"
           size="sm"
           disabled={isPending}
-          onClick={() => run(bulkDuplicateQuizzesAction)}
+          onClick={() => run(bulkDuplicateQuizzesAction, (count) => `${count} quiz(s) dupliqué(s).`)}
         >
           <Copy className="size-3.5" />
           Dupliquer
@@ -80,11 +85,14 @@ export function QuizBulkActions({ table }: { table: Table<QuizRow> }) {
         confirmLabel="Supprimer"
         loading={isPending}
         onConfirm={() =>
-          run(async (ids) => {
-            const result = await bulkDeleteQuizzesAction(ids);
-            setConfirmOpen(false);
-            return result;
-          })
+          run(
+            async (ids) => {
+              const result = await bulkDeleteQuizzesAction(ids);
+              setConfirmOpen(false);
+              return result;
+            },
+            (count) => `${count} quiz(s) supprimé(s).`,
+          )
         }
       />
     </>

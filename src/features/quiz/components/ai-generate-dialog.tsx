@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { importQuestionsFromJsonAction } from "@/features/quiz/actions";
 import { buildQuestionGenerationPrompt } from "@/lib/utils/ai-question-prompt";
@@ -49,10 +50,13 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
 
     if (result?.error) {
       setError(result.error);
+      toast.error(result.error);
       return;
     }
 
-    setSuccess(`${result?.count} question(s) importée(s) avec succès.`);
+    const message = `${result?.count} question(s) importée(s) avec succès.`;
+    setSuccess(message);
+    toast.success(message);
     setPasted("");
     router.refresh();
   };

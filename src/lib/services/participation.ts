@@ -11,6 +11,9 @@ export async function getPublicQuiz(accessCode: string) {
     include: {
       _count: { select: { questions: true } },
       organization: { select: { name: true, logo: true } },
+      questions: {
+        select: { type: true },
+      },
     },
   });
 
@@ -28,7 +31,11 @@ export async function getPublicQuiz(accessCode: string) {
 export async function getQuizForPlay(quizId: string) {
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: {
+    select: {
+      title: true,
+      timeLimit: true,
+      fullscreen: true,
+      passingScore: true,
       questions: {
         orderBy: { order: "asc" },
         select: {

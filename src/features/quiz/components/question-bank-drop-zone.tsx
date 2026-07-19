@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ListChecks } from "lucide-react";
+import { toast } from "sonner";
 
 import { moveQuestionAction } from "@/features/quiz/actions";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,7 @@ export function QuestionBankDropZone({ quizzes }: { quizzes: { id: string; title
 
   if (quizzes.length === 0) return null;
 
-  const handleDrop = async (quizId: string, event: React.DragEvent) => {
+  const handleDrop = async (quizId: string, quizTitle: string, event: React.DragEvent) => {
     event.preventDefault();
     setOverQuizId(null);
     const questionId = event.dataTransfer.getData(QUESTION_DRAG_MIME);
@@ -29,6 +30,7 @@ export function QuestionBankDropZone({ quizzes }: { quizzes: { id: string; title
     setBusy(true);
     await moveQuestionAction(questionId, quizId);
     setBusy(false);
+    toast.success(`Question déplacée vers "${quizTitle}".`);
     router.refresh();
   };
 
@@ -46,7 +48,7 @@ export function QuestionBankDropZone({ quizzes }: { quizzes: { id: string; title
               setOverQuizId(quiz.id);
             }}
             onDragLeave={() => setOverQuizId((current) => (current === quiz.id ? null : current))}
-            onDrop={(e) => handleDrop(quiz.id, e)}
+            onDrop={(e) => handleDrop(quiz.id, quiz.title, e)}
             className={cn(
               "flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-1.5 text-sm text-muted-foreground transition-colors",
               overQuizId === quiz.id && "border-primary bg-primary/5 text-foreground",

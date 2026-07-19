@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { archiveQuizAction, publishQuizAction } from "@/features/quiz/actions";
 import { QuizStatusBadge } from "@/features/quiz/components/quiz-status-badge";
@@ -23,10 +24,11 @@ export function QuizDetailHeader({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const run = (action: () => Promise<void>) => {
+  const run = (action: () => Promise<void>, message: string) => {
     startTransition(async () => {
       await action();
       router.refresh();
+      toast.success(message);
     });
   };
 
@@ -39,7 +41,7 @@ export function QuizDetailHeader({
       <div className="flex items-center gap-2">
         {status === "PUBLISHED" && accessCode && <ShareQuizDialog accessCode={accessCode} />}
         {status === "DRAFT" && (
-          <Button disabled={isPending} onClick={() => run(() => publishQuizAction(quizId))}>
+          <Button disabled={isPending} onClick={() => run(() => publishQuizAction(quizId), "Quiz publié.")}>
             Publier
           </Button>
         )}
@@ -47,7 +49,7 @@ export function QuizDetailHeader({
           <Button
             variant="outline"
             disabled={isPending}
-            onClick={() => run(() => archiveQuizAction(quizId))}
+            onClick={() => run(() => archiveQuizAction(quizId), "Quiz archivé.")}
           >
             Archiver
           </Button>

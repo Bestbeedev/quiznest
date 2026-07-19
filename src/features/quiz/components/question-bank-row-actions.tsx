@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, MoreHorizontal, Pencil, Send, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { deleteQuestionAction, duplicateQuestionAction, moveQuestionAction } from "@/features/quiz/actions";
 import { AddQuestionDialog, type QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
@@ -39,10 +40,11 @@ export function QuestionBankRowActions({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  const run = (action: () => Promise<void>) => {
+  const run = (action: () => Promise<void>, message: string) => {
     startTransition(async () => {
       await action();
       router.refresh();
+      toast.success(message);
     });
   };
 
@@ -72,7 +74,12 @@ export function QuestionBankRowActions({
                   {otherQuizzes.map((quiz) => (
                     <DropdownMenuItem
                       key={quiz.id}
-                      onClick={() => run(() => duplicateQuestionAction(questionId, quiz.id))}
+                      onClick={() =>
+                        run(
+                          () => duplicateQuestionAction(questionId, quiz.id),
+                          `Question dupliquée vers "${quiz.title}".`,
+                        )
+                      }
                     >
                       {quiz.title}
                     </DropdownMenuItem>
@@ -89,7 +96,12 @@ export function QuestionBankRowActions({
                   {otherQuizzes.map((quiz) => (
                     <DropdownMenuItem
                       key={quiz.id}
-                      onClick={() => run(() => moveQuestionAction(questionId, quiz.id))}
+                      onClick={() =>
+                        run(
+                          () => moveQuestionAction(questionId, quiz.id),
+                          `Question déplacée vers "${quiz.title}".`,
+                        )
+                      }
                     >
                       {quiz.title}
                     </DropdownMenuItem>
@@ -127,7 +139,7 @@ export function QuestionBankRowActions({
           run(async () => {
             await deleteQuestionAction(quizId, questionId);
             setConfirmOpen(false);
-          })
+          }, "Question supprimée.")
         }
       />
     </>

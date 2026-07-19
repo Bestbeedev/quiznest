@@ -25,14 +25,6 @@ interface SettingsNavProps {
   preferences: React.ReactNode;
 }
 
-const TAB_CONTENT: Record<SettingsTab, keyof SettingsNavProps> = {
-  profile: "profile",
-  security: "security",
-  organization: "organization",
-  team: "team",
-  api: "api",
-  preferences: "preferences",
-};
 
 export function SettingsNav({ profile, security, organization, team, api, preferences }: SettingsNavProps) {
   const [active, setActive] = useState<SettingsTab>("profile");

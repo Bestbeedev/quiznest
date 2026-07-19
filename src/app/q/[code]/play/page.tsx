@@ -47,6 +47,8 @@ export default async function PlayQuizPage({
       participantId={pid}
       quizTitle={quizWithQuestions.title}
       quizTimeLimit={quizWithQuestions.timeLimit}
+      fullscreen={quizWithQuestions.fullscreen}
+      passingScore={quizWithQuestions.passingScore}
       questions={quizWithQuestions.questions}
     />
   );

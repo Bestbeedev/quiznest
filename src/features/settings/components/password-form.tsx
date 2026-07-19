@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { KeyRound } from "lucide-react";
+import { toast } from "sonner";
 
 import { changePasswordAction } from "@/features/settings/actions";
 import { passwordSchema, type PasswordInput } from "@/lib/validators/settings";
@@ -37,11 +38,13 @@ export function PasswordForm() {
     const result = await changePasswordAction(parsed.data);
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
       return;
     }
 
     setSaved(true);
     reset();
+    toast.success("Mot de passe modifié.");
   });
 
   return (

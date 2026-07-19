@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { updateOrganizationAction } from "@/features/settings/actions";
 import { updateOrganizationSchema, type UpdateOrganizationInput } from "@/lib/validators/settings";
@@ -68,11 +69,13 @@ export function OrganizationSettingsForm({
     const result = await updateOrganizationAction(parsed.data);
     if (result?.error) {
       setServerError(result.error);
+      toast.error(result.error);
       return;
     }
 
     setSaved(true);
     router.refresh();
+    toast.success("Organisation mise à jour.");
   });
 
   return (

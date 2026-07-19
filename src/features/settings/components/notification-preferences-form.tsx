@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { updateNotificationPreferencesAction } from "@/features/settings/actions";
 import type { NotificationPreferencesInput } from "@/lib/validators/settings";
@@ -26,9 +27,14 @@ export function NotificationPreferencesForm({ preferences }: { preferences: Noti
 
   const onSubmit = handleSubmit(async (values) => {
     setSaved(false);
-    await updateNotificationPreferencesAction(values);
+    const result = await updateNotificationPreferencesAction(values);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
     setSaved(true);
     router.refresh();
+    toast.success("Préférences enregistrées.");
   });
 
   return (

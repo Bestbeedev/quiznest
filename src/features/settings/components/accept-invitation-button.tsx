@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { acceptInvitationAction } from "@/features/settings/actions";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,10 @@ export function AcceptInvitationButton({ token }: { token: string }) {
       const result = await acceptInvitationAction(token);
       if (result?.error) {
         setError(result.error);
+        toast.error(result.error);
         return;
       }
+      toast.success("Invitation acceptée.");
       router.push("/dashboard");
       router.refresh();
     });

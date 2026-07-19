@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Table } from "@tanstack/react-table";
 import { Copy, Send, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   bulkDeleteQuestionsAction,
@@ -29,11 +30,15 @@ export function QuestionBankBulkActions({
 
   const selectedIds = table.getSelectedRowModel().rows.map((row) => row.original.id);
 
-  const run = (action: (ids: string[]) => Promise<{ count: number }>) => {
+  const run = (
+    action: (ids: string[]) => Promise<{ count: number }>,
+    message: (count: number) => string,
+  ) => {
     startTransition(async () => {
-      await action(selectedIds);
+      const result = await action(selectedIds);
       table.resetRowSelection();
       router.refresh();
+      toast.success(message(result.count));
     });
   };
 
@@ -56,7 +61,12 @@ export function QuestionBankBulkActions({
           variant="outline"
           size="sm"
           disabled={isPending || !targetQuizId}
-          onClick={() => run((ids) => bulkMoveQuestionsAction(ids, targetQuizId))}
+          onClick={() =>
+            run(
+              (ids) => bulkMoveQuestionsAction(ids, targetQuizId),
+              (count) => `${count} question(s) déplacée(s).`,
+            )
+          }
         >
           <Send className="size-3.5" />
           Déplacer
@@ -65,7 +75,12 @@ export function QuestionBankBulkActions({
           variant="outline"
           size="sm"
           disabled={isPending || !targetQuizId}
-          onClick={() => run((ids) => bulkDuplicateQuestionsAction(ids, targetQuizId))}
+          onClick={() =>
+            run(
+              (ids) => bulkDuplicateQuestionsAction(ids, targetQuizId),
+              (count) => `${count} question(s) dupliquée(s).`,
+            )
+          }
         >
           <Copy className="size-3.5" />
           Dupliquer
@@ -90,11 +105,14 @@ export function QuestionBankBulkActions({
         confirmLabel="Supprimer"
         loading={isPending}
         onConfirm={() =>
-          run(async (ids) => {
-            const result = await bulkDeleteQuestionsAction(ids);
-            setConfirmOpen(false);
-            return result;
-          })
+          run(
+            async (ids) => {
+              const result = await bulkDeleteQuestionsAction(ids);
+              setConfirmOpen(false);
+              return result;
+            },
+            (count) => `${count} question(s) supprimée(s).`,
+          )
         }
       />
     </>
