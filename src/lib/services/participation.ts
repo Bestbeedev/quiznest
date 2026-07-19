@@ -314,6 +314,9 @@ export async function getQuizResultsSummary(organizationId: string, quizId: stri
     select: {
       id: true,
       title: true,
+      order: true,
+      difficulty: true,
+      category: true,
       answers: { where: { participant: { status: "COMPLETED" } }, select: { isCorrect: true } },
     },
   });
@@ -321,6 +324,9 @@ export async function getQuizResultsSummary(organizationId: string, quizId: stri
   const questionStats = questions.map((q) => ({
     id: q.id,
     title: q.title,
+    order: q.order,
+    difficulty: q.difficulty,
+    category: q.category,
     successRate:
       q.answers.length > 0
         ? Math.round((q.answers.filter((a) => a.isCorrect).length / q.answers.length) * 100)
