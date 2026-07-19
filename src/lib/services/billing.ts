@@ -196,6 +196,9 @@ export async function getSubscriptionStatsByPlan() {
     name: plan.name,
     price: plan.price,
     currency: plan.currency,
+    quizLimit: plan.quizLimit,
+    participantLimit: plan.participantLimit,
+    questionLimit: plan.questionLimit,
     subscriberCount: plan._count.subscriptions,
   }));
 }

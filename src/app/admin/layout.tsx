@@ -8,5 +8,11 @@ export default async function AdminLayout({
 }>) {
   const session = await requireSuperAdmin();
 
-  return <AdminShell userEmail={session.user.email}>{children}</AdminShell>;
+  return (
+    <AdminShell
+      user={{ name: session.user.name, email: session.user.email }}
+    >
+      {children}
+    </AdminShell>
+  );
 }

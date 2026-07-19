@@ -9,8 +9,8 @@ import {
   Users,
 } from "lucide-react";
 
-export const DASHBOARD_NAV: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+export const DASHBOARD_NAV: { label: string; href: string; icon: LucideIcon; exact?: boolean }[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
   { label: "Quiz", href: "/dashboard/quiz", icon: ListChecks },
   { label: "Questions", href: "/dashboard/questions", icon: HelpCircle },
   { label: "Participants", href: "/dashboard/participants", icon: Users },

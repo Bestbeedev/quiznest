@@ -3,7 +3,10 @@ import type { LucideIcon } from "lucide-react";
 import { Building2, ScrollText, UserPlus, Wallet } from "lucide-react";
 
 import { getRecentActivity, type ActivityItem } from "@/lib/services/activity";
+import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyStateCard } from "@/components/shared/empty-state-card";
 
 export const metadata: Metadata = {
   title: "Activité — Admin QuizNest",
@@ -20,40 +23,45 @@ export default async function AdminActivityPage() {
   const activity = await getRecentActivity();
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Activité récente</h1>
-        <p className="text-sm text-muted-foreground">
-          Les derniers évènements sur la plateforme : inscriptions, organisations, paiements, actions.
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Activité récente"
+        subtitle="Les derniers événements sur la plateforme : inscriptions, organisations, paiements, actions."
+      />
 
-      <Card>
-        <CardContent className="flex flex-col divide-y">
-          {activity.length === 0 && (
-            <p className="py-10 text-center text-sm text-muted-foreground">Aucune activité pour le moment.</p>
-          )}
-          {activity.map((item) => {
-            const Icon = ICONS[item.type];
-            return (
-              <div key={`${item.type}-${item.id}`} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <Icon className="size-4 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">{item.label}</p>
-                  {item.detail && <p className="truncate text-xs text-muted-foreground">{item.detail}</p>}
-                </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(
-                    item.createdAt,
-                  )}
-                </span>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      <Section title="Flux d'activité" description="Timeline des événements récents.">
+        {activity.length === 0 ? (
+          <EmptyStateCard
+            icon={ScrollText}
+            title="Aucune activité"
+            description="Aucun événement enregistré pour le moment."
+          />
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col divide-y">
+              {activity.map((item) => {
+                const Icon = ICONS[item.type];
+                return (
+                  <div key={`${item.type}-${item.id}`} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="size-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{item.label}</p>
+                      {item.detail && <p className="truncate text-xs text-muted-foreground">{item.detail}</p>}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(
+                        item.createdAt,
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+      </Section>
     </div>
   );
 }

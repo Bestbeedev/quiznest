@@ -11,7 +11,7 @@ export function SidebarNav({
   onNavigate,
   collapsed = false,
 }: {
-  items: { label: string; href: string; icon: LucideIcon }[];
+  items: { label: string; href: string; icon: LucideIcon; exact?: boolean }[];
   onNavigate?: () => void;
   collapsed?: boolean;
 }) {
@@ -20,7 +20,9 @@ export function SidebarNav({
   return (
     <nav className={cn("flex flex-col", collapsed ? "gap-2" : "gap-0.5")}>
       {items.map((item) => {
-        const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+        const active = item.exact
+          ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link
