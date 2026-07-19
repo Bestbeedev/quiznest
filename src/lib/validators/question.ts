@@ -10,7 +10,10 @@ export const createQuestionSchema = z
     type: questionTypeSchema,
     difficulty: questionDifficultySchema.default("MEDIUM"),
     points: z.coerce.number().int().min(1).max(100),
-    timeLimit: z.coerce.number().int().min(1).max(3600).optional().nullable(),
+    timeLimit: z.preprocess(
+      (val) => (val === "" || val === null ? undefined : val),
+      z.coerce.number().int().min(1).max(3600).optional(),
+    ).nullable(),
     hint: z.string().max(500).optional().nullable(),
     explanation: z.string().max(1000).optional().or(z.literal("")).nullable(),
     category: z.string().max(100).optional().or(z.literal("")).nullable(),
@@ -22,10 +25,14 @@ export const createQuestionSchema = z
           isCorrect: z.boolean(),
         }),
       )
-      .min(2),
+      .min(1),
   })
   .refine((data) => data.choices.some((choice) => choice.isCorrect), {
     message: "Sélectionnez au moins une bonne réponse.",
+    path: ["choices"],
+  })
+  .refine((data) => (data.type === "SHORT_ANSWER" ? data.choices.length >= 1 : data.choices.length >= 2), {
+    message: "Ajoutez au moins 2 choix de réponse.",
     path: ["choices"],
   })
   .refine(

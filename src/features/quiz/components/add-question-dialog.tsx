@@ -29,6 +29,13 @@ const TYPE_LABELS = {
   SINGLE_CHOICE: "QCM (choix unique)",
   MULTIPLE_CHOICE: "Choix multiple",
   TRUE_FALSE: "Vrai / Faux",
+  SHORT_ANSWER: "Réponse courte",
+} as const;
+
+const DIFFICULTY_LABELS = {
+  EASY: "Facile",
+  MEDIUM: "Moyen",
+  HARD: "Difficile",
 } as const;
 
 const DEFAULT_VALUES: CreateQuestionInput = {
@@ -36,6 +43,8 @@ const DEFAULT_VALUES: CreateQuestionInput = {
   type: "SINGLE_CHOICE",
   difficulty: "MEDIUM",
   points: 1,
+  hint: "",
+  timeLimit: undefined,
   explanation: "",
   category: "",
   tags: [],
@@ -109,6 +118,7 @@ export function AddQuestionDialog({
   const choices = watch("choices");
   const tags = watch("tags") ?? [];
   const singleAnswer = type === "SINGLE_CHOICE" || type === "TRUE_FALSE";
+  const isShortAnswer = type === "SHORT_ANSWER";
 
   const handleTypeChange = (value: CreateQuestionInput["type"] | null) => {
     if (!value) return;
@@ -117,6 +127,13 @@ export function AddQuestionDialog({
       setValue("choices", [
         { text: "Vrai", isCorrect: false },
         { text: "Faux", isCorrect: false },
+      ]);
+    } else if (value === "SHORT_ANSWER") {
+      setValue("choices", [{ text: "", isCorrect: true }]);
+    } else if (type === "SHORT_ANSWER" || type === "TRUE_FALSE") {
+      setValue("choices", [
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
       ]);
     }
   };
@@ -214,21 +231,23 @@ export function AddQuestionDialog({
             </Field>
 
             <Field data-invalid={!!errors.choices}>
-              <FieldLabel>Choix de réponse</FieldLabel>
+              <FieldLabel>{isShortAnswer ? "Réponses acceptées" : "Choix de réponse"}</FieldLabel>
               <div className="flex flex-col gap-2">
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={choices[index]?.isCorrect}
-                      onCheckedChange={() => toggleCorrect(index)}
-                      aria-label="Bonne réponse"
-                    />
+                    {!isShortAnswer && (
+                      <Checkbox
+                        checked={choices[index]?.isCorrect}
+                        onCheckedChange={() => toggleCorrect(index)}
+                        aria-label="Bonne réponse"
+                      />
+                    )}
                     <Input
                       readOnly={type === "TRUE_FALSE"}
                       {...register(`choices.${index}.text`)}
-                      placeholder={`Choix ${index + 1}`}
+                      placeholder={isShortAnswer ? `Réponse acceptée ${index + 1}` : `Choix ${index + 1}`}
                     />
-                    {type !== "TRUE_FALSE" && fields.length > 2 && (
+                    {type !== "TRUE_FALSE" && (isShortAnswer ? fields.length > 1 : fields.length > 2) && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -242,16 +261,21 @@ export function AddQuestionDialog({
                 ))}
               </div>
               <FieldError errors={[errors.choices]} />
+              {isShortAnswer && (
+                <FieldDescription>
+                  Toute réponse tapée par le participant correspondant exactement à l&apos;une de ces valeurs sera acceptée.
+                </FieldDescription>
+              )}
               {type !== "TRUE_FALSE" && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="w-fit"
-                  onClick={() => append({ text: "", isCorrect: false })}
+                  onClick={() => append({ text: "", isCorrect: isShortAnswer })}
                 >
                   <Plus className="size-4" />
-                  Ajouter un choix
+                  {isShortAnswer ? "Ajouter une réponse acceptée" : "Ajouter un choix"}
                 </Button>
               )}
             </Field>
@@ -263,10 +287,47 @@ export function AddQuestionDialog({
                 <FieldError errors={[errors.points]} />
               </Field>
 
+              <Field>
+                <FieldLabel>Difficulté</FieldLabel>
+                <Select value={watch("difficulty")} onValueChange={(v) => v && setValue("difficulty", v as CreateQuestionInput["difficulty"])}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(DIFFICULTY_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field data-invalid={!!errors.timeLimit}>
+                <FieldLabel htmlFor="time-limit">Temps limite (s, optionnel)</FieldLabel>
+                <Input
+                  id="time-limit"
+                  type="number"
+                  min={1}
+                  placeholder="Illimité"
+                  aria-invalid={!!errors.timeLimit}
+                  {...register("timeLimit")}
+                />
+                <FieldError errors={[errors.timeLimit]} />
+              </Field>
+            </Field>
+
+            <Field orientation="responsive">
               <Field data-invalid={!!errors.category}>
                 <FieldLabel htmlFor="category">Catégorie (optionnel)</FieldLabel>
                 <Input id="category" placeholder="Ex: Mathématiques" {...register("category")} />
                 <FieldError errors={[errors.category]} />
+              </Field>
+
+              <Field data-invalid={!!errors.hint}>
+                <FieldLabel htmlFor="hint">Indice (optionnel)</FieldLabel>
+                <Input id="hint" placeholder="Un indice sans révéler la réponse" aria-invalid={!!errors.hint} {...register("hint")} />
+                <FieldError errors={[errors.hint]} />
               </Field>
             </Field>
 

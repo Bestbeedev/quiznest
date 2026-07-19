@@ -134,6 +134,7 @@ export async function importQuestions(
         },
       }),
     ),
+    { timeout: 30_000 },
   );
 }
 
@@ -211,6 +212,7 @@ export async function bulkMoveQuestions(organizationId: string, questionIds: str
     ids.map((id) =>
       prisma.question.update({ where: { id }, data: { quizId: targetQuizId, order: order++ } }),
     ),
+    { timeout: 30_000 },
   );
   return ids;
 }

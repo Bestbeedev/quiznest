@@ -9,7 +9,7 @@ const importTypeSchema = z.enum([
 
 const importDifficultySchema = z.enum(["easy", "medium", "hard"]).default("medium");
 
-const importQuestionSchema = z
+export const aiImportQuestionSchema = z
   .object({
     type: importTypeSchema,
     question: z.string().min(1).max(500),
@@ -57,10 +57,11 @@ const importQuestionSchema = z
   );
 
 export const aiImportSchema = z.object({
-  questions: z.array(importQuestionSchema).min(1).max(50),
+  questions: z.array(aiImportQuestionSchema).min(1).max(50),
 });
 
 export type AiImportInput = z.infer<typeof aiImportSchema>;
+export type AiImportQuestion = z.infer<typeof aiImportQuestionSchema>;
 
 const TYPE_MAP = {
   single_choice: "SINGLE_CHOICE",
@@ -75,32 +76,26 @@ const DIFFICULTY_MAP = {
   hard: "HARD",
 } as const;
 
-export function toCreateQuestionInputs(input: AiImportInput) {
-  return input.questions.map((question) => {
-    const choices =
-      question.type === "short_answer"
-        ? (question.acceptedAnswers ?? []).map((text, i) => ({
-            text,
-            isCorrect: true,
-            order: i,
-          }))
-        : (question.choices ?? []).map((choice, i) => ({
-            text: choice.text,
-            isCorrect: choice.correct,
-            order: i,
-          }));
+export function toCreateQuestionInput(question: AiImportQuestion) {
+  const choices =
+    question.type === "short_answer"
+      ? (question.acceptedAnswers ?? []).map((text) => ({ text, isCorrect: true }))
+      : (question.choices ?? []).map((choice) => ({ text: choice.text, isCorrect: choice.correct }));
 
-    return {
-      title: question.question,
-      type: TYPE_MAP[question.type],
-      difficulty: DIFFICULTY_MAP[question.difficulty],
-      points: question.points,
-      category: question.category ?? null,
-      tags: question.tags ?? [],
-      hint: question.hint ?? null,
-      timeLimit: question.timeLimit ?? null,
-      explanation: question.explanation ?? "",
-      choices,
-    };
-  });
+  return {
+    title: question.question,
+    type: TYPE_MAP[question.type],
+    difficulty: DIFFICULTY_MAP[question.difficulty],
+    points: question.points,
+    category: question.category ?? null,
+    tags: question.tags ?? [],
+    hint: question.hint ?? null,
+    timeLimit: question.timeLimit ?? null,
+    explanation: question.explanation ?? "",
+    choices,
+  };
+}
+
+export function toCreateQuestionInputs(input: AiImportInput) {
+  return input.questions.map(toCreateQuestionInput);
 }

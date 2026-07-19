@@ -8,7 +8,7 @@ import { requireActiveOrganization } from "@/lib/db/tenant";
 import { requireOrgRole } from "@/lib/auth/require-org-role";
 import { createQuizSchema, updateQuizSettingsSchema } from "@/lib/validators/quiz";
 import { createQuestionSchema } from "@/lib/validators/question";
-import { aiImportSchema, toCreateQuestionInputs } from "@/lib/validators/ai-import";
+import { aiImportSchema, aiImportQuestionSchema, toCreateQuestionInputs, toCreateQuestionInput } from "@/lib/validators/ai-import";
 import * as quizService from "@/lib/services/quiz";
 import * as questionService from "@/lib/services/question";
 import { getParticipantAnswers } from "@/lib/services/participation";
@@ -264,4 +264,40 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
   await questionService.importQuestions(organization.id, quizId, inputs);
   revalidatePath(`/dashboard/quiz/${quizId}`);
   return { success: true, count: inputs.length };
+}
+
+/** Imports one AI-generated question at a time (as opposed to
+ * `importQuestionsFromJsonAction`'s single all-or-nothing transaction) so the
+ * client can show real-time per-question progress and surface each failure
+ * individually instead of aborting the whole batch on the first bad item. */
+export async function importAiQuestionAction(quizId: string, rawQuestion: unknown) {
+  const session = await requireAuth();
+  const organization = await requireActiveOrganization();
+  await requireOrgRole(organization.id, session.user.id, "EDITOR");
+
+  const parsed = aiImportQuestionSchema.safeParse(rawQuestion);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Question invalide." };
+  }
+
+  const input = toCreateQuestionInput(parsed.data);
+  const created = await questionService.addQuestion(organization.id, quizId, input);
+  revalidatePath(`/dashboard/quiz/${quizId}`);
+
+  return {
+    success: true as const,
+    question: {
+      id: created.id,
+      title: input.title,
+      type: input.type,
+      difficulty: input.difficulty,
+      points: input.points,
+      hint: input.hint,
+      timeLimit: input.timeLimit,
+      explanation: input.explanation,
+      category: input.category,
+      tags: input.tags,
+      choices: input.choices,
+    },
+  };
 }
