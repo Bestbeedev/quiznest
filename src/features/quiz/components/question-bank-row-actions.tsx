@@ -24,15 +24,12 @@ import { cn } from "@/lib/utils";
 export function QuestionBankRowActions({
   questionId,
   quizId,
-  /** null when the question's type isn't supported by the edit form yet
-   * (e.g. SHORT_ANSWER, never actually creatable via the UI today) — the
-   * other actions (duplicate/move/delete) don't need the typed shape. */
   editableQuestion,
   otherQuizzes,
 }: {
   questionId: string;
   quizId: string;
-  editableQuestion: QuestionForEdit | null;
+  editableQuestion: QuestionForEdit;
   otherQuizzes: { id: string; title: string }[];
 }) {
   const router = useRouter();
@@ -58,7 +55,7 @@ export function QuestionBankRowActions({
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem disabled={!editableQuestion} onClick={() => setEditing(true)}>
+          <DropdownMenuItem onClick={() => setEditing(true)}>
             <Pencil />
             Modifier
           </DropdownMenuItem>
@@ -119,7 +116,7 @@ export function QuestionBankRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {editing && editableQuestion && (
+      {editing && (
         <AddQuestionDialog
           key={questionId}
           quizId={quizId}

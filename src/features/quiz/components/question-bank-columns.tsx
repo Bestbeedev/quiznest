@@ -9,6 +9,7 @@ import { formatDuration } from "@/lib/format";
 import { QuestionPreviewDialog } from "@/features/quiz/components/question-preview-dialog";
 import { QuestionBankRowActions } from "@/features/quiz/components/question-bank-row-actions";
 import { QUESTION_DRAG_MIME } from "@/features/quiz/components/question-bank-drop-zone";
+import type { QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
 import type { Question, QuestionChoice } from "@/generated/prisma/client";
 
 export type QuestionBankRow = Question & {
@@ -31,10 +32,6 @@ const DIFFICULTY_LABELS: Record<Question["difficulty"], string> = {
   MEDIUM: "Moyen",
   HARD: "Difficile",
 };
-
-/** The edit form only supports these — SHORT_ANSWER is a valid enum value
- * but was never actually reachable through any creation UI. */
-const EDITABLE_TYPES = new Set<Question["type"]>(["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE"]);
 
 /** Built as a function (not a static array) because the actions/preview cells
  * need the full list of quizzes for the "move/duplicate to..." menus, which
@@ -155,18 +152,19 @@ export function buildQuestionBankColumns(
       enableHiding: false,
       cell: ({ row }) => {
         const q = row.original;
-        const editableQuestion = EDITABLE_TYPES.has(q.type)
-          ? {
-              id: q.id,
-              title: q.title,
-              type: q.type as "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE",
-              points: q.points,
-              explanation: q.explanation,
-              category: q.category,
-              tags: q.tags,
-              choices: q.choices.map((c) => ({ text: c.text, isCorrect: c.isCorrect })),
-            }
-          : null;
+        const editableQuestion: QuestionForEdit = {
+          id: q.id,
+          title: q.title,
+          type: q.type,
+          difficulty: q.difficulty,
+          points: q.points,
+          hint: q.hint,
+          timeLimit: q.timeLimit,
+          explanation: q.explanation,
+          category: q.category,
+          tags: q.tags,
+          choices: q.choices.map((c) => ({ text: c.text, isCorrect: c.isCorrect })),
+        };
 
         return (
           <QuestionBankRowActions

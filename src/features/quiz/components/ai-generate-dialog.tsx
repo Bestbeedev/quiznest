@@ -495,18 +495,18 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
                 <div
                   key={row.index}
                   className={cn(
-                    "flex items-start gap-2.5 overflow-hidden rounded-lg border p-2.5 text-sm",
+                    "flex items-center gap-2.5 overflow-hidden rounded-lg h-full border p-4 text-sm",
                     row.status === "error" && "border-destructive/30 bg-destructive/5",
                   )}
                 >
                   {row.status === "pending" && (
-                    <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground" />
+                    <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
                   )}
                   {row.status === "success" && (
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                    <CheckCircle2 className="size-4 shrink-0 text-primary" />
                   )}
                   {row.status === "error" && (
-                    <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                    <XCircle className="size-4 shrink-0 text-destructive" />
                   )}
 
                   <div className="min-w-0 flex-1 overflow-hidden">

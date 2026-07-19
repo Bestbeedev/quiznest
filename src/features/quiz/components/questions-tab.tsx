@@ -1,12 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, Trash2 } from "lucide-react";
+import { HelpCircle, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteQuestionAction } from "@/features/quiz/actions";
-import { AddQuestionDialog } from "@/features/quiz/components/add-question-dialog";
+import { AddQuestionDialog, type QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
 import { AiGenerateDialog } from "@/features/quiz/components/ai-generate-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ export function QuestionsTab({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleDelete = (questionId: string) => {
     startTransition(async () => {
@@ -49,6 +50,23 @@ export function QuestionsTab({
       toast.success("Question supprimée.");
     });
   };
+
+  const editingQuestion = questions.find((q) => q.id === editingId);
+  const editableQuestion: QuestionForEdit | null = editingQuestion
+    ? {
+        id: editingQuestion.id,
+        title: editingQuestion.title,
+        type: editingQuestion.type,
+        difficulty: editingQuestion.difficulty,
+        points: editingQuestion.points,
+        hint: editingQuestion.hint,
+        timeLimit: editingQuestion.timeLimit,
+        explanation: editingQuestion.explanation,
+        category: editingQuestion.category,
+        tags: editingQuestion.tags,
+        choices: editingQuestion.choices.map((c) => ({ text: c.text, isCorrect: c.isCorrect })),
+      }
+    : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -114,19 +132,37 @@ export function QuestionsTab({
                 )}
               </div>
 
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={isPending}
-                onClick={() => handleDelete(question.id)}
-                aria-label="Supprimer la question"
-                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <Trash2 className="size-4 text-muted-foreground" />
-              </Button>
+              <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setEditingId(question.id)}
+                  aria-label="Modifier la question"
+                >
+                  <Pencil className="size-4 text-muted-foreground" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={isPending}
+                  onClick={() => handleDelete(question.id)}
+                  aria-label="Supprimer la question"
+                >
+                  <Trash2 className="size-4 text-muted-foreground" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
+      )}
+
+      {editableQuestion && (
+        <AddQuestionDialog
+          key={editableQuestion.id}
+          quizId={quizId}
+          question={editableQuestion}
+          onClose={() => setEditingId(null)}
+        />
       )}
     </div>
   );
