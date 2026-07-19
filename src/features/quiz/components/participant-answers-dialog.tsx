@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDuration } from "@/lib/format";
-import { PARTICIPANT_PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
+import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
 import type { ParticipantStatus } from "@/generated/prisma/client";
 
 type AnswerDetail = {
