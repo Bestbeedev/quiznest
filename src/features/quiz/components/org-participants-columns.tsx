@@ -5,13 +5,8 @@ import type { ColumnDef, FilterFn } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
 import { ParticipantAnswersDialog } from "@/features/quiz/components/participant-answers-dialog";
+import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
 import type { Participant, ParticipantStatus } from "@/generated/prisma/client";
-
-const STATUS_LABELS: Record<ParticipantStatus, string> = {
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminé",
-  ABANDONED: "Abandonné",
-};
 
 export type OrgParticipantRow = Participant & { quiz: { id: string; title: string } };
 
@@ -54,7 +49,7 @@ export const orgParticipantsColumns: ColumnDef<OrgParticipantRow>[] = [
     accessorKey: "status",
     header: "Statut",
     filterFn: "equalsString",
-    cell: ({ row }) => <Badge variant="secondary">{STATUS_LABELS[row.original.status]}</Badge>,
+    cell: ({ row }) => <Badge variant="secondary">{PARTICIPANT_STATUS_LABELS[row.original.status]}</Badge>,
   },
   {
     accessorKey: "percentage",

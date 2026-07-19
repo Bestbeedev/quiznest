@@ -17,6 +17,8 @@ import { getOrgRecentActivity, type OrgActivityItem } from "@/lib/services/activ
 import { getOrganizationRevenueStats, getOrganizationSubscription } from "@/lib/services/billing";
 import { getOrganizationMembers } from "@/lib/services/organization";
 import { StatCard } from "@/components/shared/stat-card";
+import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { Reveal } from "@/components/shared/reveal";
 import { RecentQuizzesCard } from "@/features/dashboard/components/recent-quizzes-card";
 import { ActivityFeedCard } from "@/features/dashboard/components/activity-feed-card";
@@ -65,8 +67,6 @@ export default async function DashboardPage() {
     getTopQuizzesByParticipation(organization.id),
   ]);
 
-  // New widgets' data, fetched independently via allSettled: a failure here
-  // degrades that one card to its empty state instead of breaking the page.
   const [activityResult, revenueResult, subscriptionResult, membersResult] = await Promise.allSettled([
     getOrgRecentActivity(organization.id),
     getOrganizationRevenueStats(organization.id),
@@ -112,9 +112,6 @@ export default async function DashboardPage() {
     });
   }
 
-  // Week-over-week deltas — only computed where a real historical baseline
-  // exists; stats with no comparable history (pass rate, completion rate)
-  // render without a trend rather than a fabricated one.
   const quizTrend = computeTrend(
     creationTrend.at(-1)?.quiz ?? 0,
     creationTrend.at(-2)?.quiz ?? 0,
@@ -135,21 +132,21 @@ export default async function DashboardPage() {
   const approachingLimit = quizLimit !== null && quizLimit !== undefined && stats.total >= quizLimit * 0.8;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tableau de bord</h1>
-          <p className="text-sm text-muted-foreground">{organization.name}</p>
-        </div>
-        <LastUpdatedPill
-          formattedDate={new Date().toLocaleDateString("fr-FR", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        />
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Tableau de bord"
+        subtitle={organization.name}
+        actions={
+          <LastUpdatedPill
+            formattedDate={new Date().toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          />
+        }
+      />
 
       <NotificationsBanner notifications={notifications} />
 
@@ -179,120 +176,130 @@ export default async function DashboardPage() {
         />
       )}
 
-      <QuickActions />
+      <Section title="Actions rapides">
+        <QuickActions />
+      </Section>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Reveal>
-          <StatCard icon={ListChecks} label="Quiz créés" value={String(stats.total)} trend={quizTrend ? { ...quizTrend, comparisonLabel: "vs semaine dernière" } : undefined} />
-        </Reveal>
-        <Reveal delay={0.05}>
-          <StatCard icon={Rocket} label="Quiz publiés" value={String(stats.published)} />
-        </Reveal>
-        <Reveal delay={0.1}>
-          <StatCard
-            icon={Users}
-            label="Participants"
-            value={String(participantStats.totalParticipants)}
-            trend={participantsTrendDelta ? { ...participantsTrendDelta, comparisonLabel: "vs 7j précédents" } : undefined}
-          />
-        </Reveal>
-        <Reveal delay={0.15}>
-          <StatCard
-            icon={Percent}
-            label="Taux de réussite"
-            value={participantStats.passRate === null ? "—" : `${participantStats.passRate}%`}
-            hint={participantStats.passRate === null ? "Bientôt disponible" : undefined}
-            muted={participantStats.passRate === null}
-          />
-        </Reveal>
-        <Reveal delay={0.2}>
-          <StatCard
-            icon={CheckCircle2}
-            label="Taux de complétion"
-            value={completionRate === null ? "—" : `${completionRate}%`}
-            hint={completionRate === null ? "Bientôt disponible" : undefined}
-            muted={completionRate === null}
-          />
-        </Reveal>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Reveal delay={0.22} className="lg:col-span-2">
-          {participantsTrend.some((d) => d.participants > 0) ? (
-            <ChartAreaInteractive
-              data={participantsTrend.map((d) => ({ date: d.date, participants: d.participants }))}
-              title="Participation"
-              description="Tentatives quotidiennes sur vos quiz"
-              config={{
-                participants: { label: "Participants", color: "var(--chart-1)" },
-              } satisfies ChartConfig}
-              dataKeys={["participants"]}
-              timeRanges={[
-                { label: "30 jours", value: "30d" },
-                { label: "14 jours", value: "14d" },
-                { label: "7 jours", value: "7d" },
-              ]}
+      <Section title="Aperçu" description="Statistiques clés de votre organisation">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Reveal>
+            <StatCard icon={ListChecks} label="Quiz créés" value={String(stats.total)} trend={quizTrend ? { ...quizTrend, comparisonLabel: "vs semaine dernière" } : undefined} />
+          </Reveal>
+          <Reveal delay={0.05}>
+            <StatCard icon={Rocket} label="Quiz publiés" value={String(stats.published)} />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <StatCard
+              icon={Users}
+              label="Participants"
+              value={String(participantStats.totalParticipants)}
+              trend={participantsTrendDelta ? { ...participantsTrendDelta, comparisonLabel: "vs 7j précédents" } : undefined}
             />
-          ) : (
-            <div className="flex h-full min-h-[300px] items-center justify-center rounded-xl border p-8 text-center text-sm text-muted-foreground">
-              Publiez un quiz et partagez son lien pour voir la participation ici.
-            </div>
-          )}
-        </Reveal>
-        <Reveal delay={0.24}>
-          <QuizStatusPanel breakdown={quizStatusBreakdown} />
-        </Reveal>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Reveal delay={0.26}>
-          {totalTrackedParticipants > 0 ? (
-            <ChartDonutTotal
-              data={[
-                { statut: "termine", nombre: participantStatusBreakdown.COMPLETED, fill: "var(--color-termine)" },
-                { statut: "en_cours", nombre: participantStatusBreakdown.IN_PROGRESS, fill: "var(--color-en_cours)" },
-                { statut: "abandonne", nombre: participantStatusBreakdown.ABANDONED, fill: "var(--color-abandonne)" },
-              ]}
-              title="Statut des participations"
-              config={{
-                nombre: { label: "Participants" },
-                termine: { label: "Terminé", color: "var(--chart-2)" },
-                en_cours: { label: "En cours", color: "var(--chart-3)" },
-                abandonne: { label: "Abandonné", color: "var(--chart-5)" },
-              } satisfies ChartConfig}
-              dataKey="nombre"
-              nameKey="statut"
-              totalLabel="Participations"
+          </Reveal>
+          <Reveal delay={0.15}>
+            <StatCard
+              icon={Percent}
+              label="Taux de réussite"
+              value={participantStats.passRate === null ? "—" : `${participantStats.passRate}%`}
+              hint={participantStats.passRate === null ? "Bientôt disponible" : undefined}
+              muted={participantStats.passRate === null}
             />
-          ) : (
-            <div className="flex h-full min-h-[250px] items-center justify-center rounded-xl border p-8 text-center text-sm text-muted-foreground">
-              Pas encore de participations à analyser.
-            </div>
-          )}
-        </Reveal>
-        <Reveal delay={0.28}>
-          <ActivityFeedCard activity={activity} />
-        </Reveal>
-        <Reveal delay={0.3}>
-          <TopQuizzesList quizzes={topQuizzes} />
-        </Reveal>
-      </div>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <StatCard
+              icon={CheckCircle2}
+              label="Taux de complétion"
+              value={completionRate === null ? "—" : `${completionRate}%`}
+              hint={completionRate === null ? "Bientôt disponible" : undefined}
+              muted={completionRate === null}
+            />
+          </Reveal>
+        </div>
+      </Section>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Reveal delay={0.32}>
-          <RevenueSummaryCard
-            planName={subscription?.plan.name ?? null}
-            totalPaid={revenue?.totalPaid ?? 0}
-            lastPaymentAt={revenue?.lastPayment?.createdAt ?? null}
-          />
-        </Reveal>
-        <Reveal delay={0.34}>
-          <MembersOverviewCard members={members} />
-        </Reveal>
-        <Reveal delay={0.36}>
-          <RecentQuizzesCard quizzes={recentQuizzes} />
-        </Reveal>
-      </div>
+      <Section title="Tendances" description="Évolution de la participation">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Reveal className="lg:col-span-2">
+            {participantsTrend.some((d) => d.participants > 0) ? (
+              <ChartAreaInteractive
+                data={participantsTrend.map((d) => ({ date: d.date, participants: d.participants }))}
+                title="Participation"
+                description="Tentatives quotidiennes sur vos quiz"
+                config={{
+                  participants: { label: "Participants", color: "var(--chart-1)" },
+                } satisfies ChartConfig}
+                dataKeys={["participants"]}
+                timeRanges={[
+                  { label: "30 jours", value: "30d" },
+                  { label: "14 jours", value: "14d" },
+                  { label: "7 jours", value: "7d" },
+                ]}
+              />
+            ) : (
+              <div className="flex h-full min-h-[300px] items-center justify-center rounded-xl border p-8 text-center text-sm text-muted-foreground">
+                Publiez un quiz et partagez son lien pour voir la participation ici.
+              </div>
+            )}
+          </Reveal>
+          <Reveal delay={0.02}>
+            <QuizStatusPanel breakdown={quizStatusBreakdown} />
+          </Reveal>
+        </div>
+      </Section>
+
+      <Section title="Activité" description="Résumé des participations et quiz populaires">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Reveal>
+            {totalTrackedParticipants > 0 ? (
+              <ChartDonutTotal
+                data={[
+                  { statut: "termine", nombre: participantStatusBreakdown.COMPLETED, fill: "var(--color-termine)" },
+                  { statut: "en_cours", nombre: participantStatusBreakdown.IN_PROGRESS, fill: "var(--color-en_cours)" },
+                  { statut: "abandonne", nombre: participantStatusBreakdown.ABANDONED, fill: "var(--color-abandonne)" },
+                ]}
+                title="Statut des participations"
+                config={{
+                  nombre: { label: "Participants" },
+                  termine: { label: "Terminé", color: "var(--chart-2)" },
+                  en_cours: { label: "En cours", color: "var(--chart-3)" },
+                  abandonne: { label: "Abandonné", color: "var(--chart-5)" },
+                } satisfies ChartConfig}
+                dataKey="nombre"
+                nameKey="statut"
+                totalLabel="Participations"
+              />
+            ) : (
+              <div className="flex h-full min-h-[250px] items-center justify-center rounded-xl border p-8 text-center text-sm text-muted-foreground">
+                Pas encore de participations à analyser.
+              </div>
+            )}
+          </Reveal>
+          <Reveal delay={0.02}>
+            <ActivityFeedCard activity={activity} />
+          </Reveal>
+          <Reveal delay={0.04}>
+            <TopQuizzesList quizzes={topQuizzes} />
+          </Reveal>
+        </div>
+      </Section>
+
+      <Section title="Organisation" description="Facturation, équipe et quiz récents">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Reveal>
+            <RevenueSummaryCard
+              planName={subscription?.plan.name ?? null}
+              totalPaid={revenue?.totalPaid ?? 0}
+              lastPaymentAt={revenue?.lastPayment?.createdAt ?? null}
+            />
+          </Reveal>
+          <Reveal delay={0.02}>
+            <MembersOverviewCard members={members} />
+          </Reveal>
+          <Reveal delay={0.04}>
+            <RecentQuizzesCard quizzes={recentQuizzes} />
+          </Reveal>
+        </div>
+      </Section>
     </div>
   );
 }

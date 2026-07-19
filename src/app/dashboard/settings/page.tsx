@@ -10,6 +10,7 @@ import { listApiKeys } from "@/lib/services/api-key";
 import { prisma } from "@/lib/db/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { PageHeader } from "@/components/shared/page-header";
 import { SettingsNav } from "@/features/settings/components/settings-nav";
 import { ProfileForm } from "@/features/settings/components/profile-form";
 import { PasswordForm } from "@/features/settings/components/password-form";
@@ -48,10 +49,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Paramètres</h1>
-        <p className="text-sm text-muted-foreground">Centre de configuration de votre compte et de votre organisation.</p>
-      </div>
+      <PageHeader title="Paramètres" subtitle="Centre de configuration de votre compte et de votre organisation." />
 
       <SettingsNav
         profile={

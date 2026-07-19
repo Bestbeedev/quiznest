@@ -4,7 +4,10 @@ import { HelpCircle } from "lucide-react";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { listAllQuestions } from "@/lib/services/question";
 import { listQuizzes } from "@/lib/services/quiz";
+import { QUESTION_TYPE_LABELS, DIFFICULTY_LABELS } from "@/lib/constants";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
+import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { Card, CardContent } from "@/components/ui/card";
 import { QuestionsCharts } from "./questions-charts";
 import { QuestionBankView } from "./question-bank-view";
@@ -37,7 +40,7 @@ export default async function QuestionsPage() {
   );
 
   const difficultyPoints = Object.entries(difficultyCount).map(([key, val]) => ({
-    name: DIFFICULTY_LABELS[key as keyof typeof DIFFICULTY_LABELS] ?? key,
+    name: DIFFICULTY_LABELS[key] ?? key,
     value: val,
   }));
 
@@ -49,13 +52,11 @@ export default async function QuestionsPage() {
   const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Banque de questions</h1>
-        <p className="text-sm text-muted-foreground">
-          Toutes les questions de vos quiz, réunies au même endroit.
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Banque de questions"
+        subtitle="Toutes les questions de vos quiz, réunies au même endroit."
+      />
 
       {questions.length === 0 ? (
         <EmptyStateCard
@@ -65,58 +66,51 @@ export default async function QuestionsPage() {
         />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <HelpCircle className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-lg font-semibold">{questions.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            {Object.entries(typeCount).slice(0, 3).map(([type, count]) => (
-              <Card key={type}>
+          <Section title="Statistiques" description="Vue d'ensemble de vos questions">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
                 <CardContent className="flex items-center gap-3 p-4">
                   <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
                     <HelpCircle className="size-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">
-                      {TYPE_LABELS[type as keyof typeof TYPE_LABELS] ?? type}
-                    </p>
-                    <p className="text-lg font-semibold">{count}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-lg font-semibold">{questions.length}</p>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              {Object.entries(typeCount).slice(0, 3).map(([type, count]) => (
+                <Card key={type}>
+                  <CardContent className="flex items-center gap-3 p-4">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                      <HelpCircle className="size-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        {QUESTION_TYPE_LABELS[type] ?? type}
+                      </p>
+                      <p className="text-lg font-semibold">{count}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </Section>
 
-          <QuestionsCharts
-            typeData={typeData}
-            difficultyData={difficultyPoints}
-            totalPoints={totalPoints}
-            totalQuestions={questions.length}
-          />
+          <Section title="Répartition" description="Distribution par type et difficulté">
+            <QuestionsCharts
+              typeData={typeData}
+              difficultyData={difficultyPoints}
+              totalPoints={totalPoints}
+              totalQuestions={questions.length}
+            />
+          </Section>
 
-          <QuestionBankView questions={questions} quizzes={quizzes} />
+          <Section title="Toutes les questions" description="Gestion et recherche">
+            <QuestionBankView questions={questions} quizzes={quizzes} />
+          </Section>
         </>
       )}
     </div>
   );
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  SINGLE_CHOICE: "QCM",
-  MULTIPLE_CHOICE: "Choix multiple",
-  TRUE_FALSE: "Vrai / Faux",
-  SHORT_ANSWER: "Réponse courte",
-};
-
-const DIFFICULTY_LABELS: Record<string, string> = {
-  EASY: "Facile",
-  MEDIUM: "Moyen",
-  HARD: "Difficile",
-};

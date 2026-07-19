@@ -18,7 +18,7 @@ import {
 import { QuizDetailHeader } from "@/features/quiz/components/quiz-detail-header";
 import { QuizDetailNav } from "@/features/quiz/components/quiz-detail-nav";
 import { QuestionsTab } from "@/features/quiz/components/questions-tab";
-import { QuizSettingsForm } from "@/features/quiz/components/quiz-settings-form";
+import { QuizSettingsSheet } from "@/features/quiz/components/quiz-settings-sheet";
 import { ParticipantsTab } from "@/features/quiz/components/participants-tab";
 import { ResultsTab } from "@/features/quiz/components/results-tab";
 
@@ -75,7 +75,7 @@ export default async function QuizDetailPage({
             {...resultsSummary}
           />
         }
-        settings={<QuizSettingsForm quiz={quiz} />}
+        settingsTrigger={<QuizSettingsSheet quiz={quiz} />}
       />
     </div>
   );

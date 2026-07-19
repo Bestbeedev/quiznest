@@ -1,33 +1,12 @@
 "use client";
 
-import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
-import { Button } from "@/components/ui/button";
+import { ExportMenu } from "@/components/shared/export-menu";
+import { downloadBlob, toCsvTable } from "@/lib/export-utils";
 import type { QuizComparisonRow, UserAnalysisRow } from "@/lib/analytics";
-
-function downloadBlob(content: BlobPart, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function toCsvValue(value: string | number) {
-  const str = String(value);
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-}
-
-function toCsvTable(rows: Record<string, string | number>[]) {
-  if (rows.length === 0) return "";
-  const header = Object.keys(rows[0]);
-  return [header, ...rows.map((r) => Object.values(r))].map((row) => row.map(toCsvValue).join(",")).join("\n");
-}
 
 export function AnalyticsExportButtons({
   quizRows,
@@ -105,19 +84,13 @@ export function AnalyticsExportButtons({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5">
-        <FileText className="size-3.5" />
-        CSV
-      </Button>
-      <Button variant="outline" size="sm" onClick={exportExcel} className="gap-1.5">
-        <FileSpreadsheet className="size-3.5" />
-        Excel
-      </Button>
-      <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5">
-        <FileDown className="size-3.5" />
-        PDF
-      </Button>
-    </div>
+    <ExportMenu
+      formats={["csv", "excel", "pdf"]}
+      onExport={(f) => {
+        if (f === "csv") exportCsv();
+        else if (f === "excel") exportExcel();
+        else exportPdf();
+      }}
+    />
   );
 }

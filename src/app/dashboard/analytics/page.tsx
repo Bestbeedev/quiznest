@@ -16,6 +16,8 @@ import {
 import { formatDuration } from "@/lib/format";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { DataTable } from "@/components/shared/data-table";
 import { quizComparisonColumns } from "@/features/quiz/components/quiz-comparison-columns";
 import { userAnalysisColumns } from "@/features/quiz/components/user-analysis-columns";
@@ -63,16 +65,16 @@ export default async function AnalyticsPage() {
   const { hardest, easiest } = rankQuestionsByDifficulty(questions);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-          <p className="text-sm text-muted-foreground">
-            Distribution des scores, taux de réussite et évolution des participants.
-          </p>
-        </div>
-        {hasData && !isFree && <AnalyticsExportButtons quizRows={quizComparison} userRows={userAnalysis} />}
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Analytics"
+        subtitle="Distribution des scores, taux de réussite et évolution des participants."
+        actions={
+          hasData && !isFree ? (
+            <AnalyticsExportButtons quizRows={quizComparison} userRows={userAnalysis} />
+          ) : undefined
+        }
+      />
 
       {isFree && (
         <UpgradeBanner
@@ -110,121 +112,122 @@ export default async function AnalyticsPage() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Taux de réussite global
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-bold">{participantStats.passRate}%</p>
-                  <Badge variant="secondary" className="text-xs">
-                    {participantStats.totalParticipants} participants
-                  </Badge>
-                </div>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${participantStats.passRate}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          <Section title="Synthèse" description="Indicateurs clés de performance">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Taux de réussite global
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold">{participantStats.passRate}%</p>
+                    <Badge variant="secondary" className="text-xs">
+                      {participantStats.totalParticipants} participants
+                    </Badge>
+                  </div>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${participantStats.passRate}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Quiz publiés
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-bold">{quizStats.published}</p>
-                  <Badge variant="secondary" className="text-xs">
-                    sur {quizStats.total}
-                  </Badge>
-                </div>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${(quizStats.published / quizStats.total) * 100}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Quiz publiés
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold">{quizStats.published}</p>
+                    <Badge variant="secondary" className="text-xs">
+                      sur {quizStats.total}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${(quizStats.published / quizStats.total) * 100}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Questions créées
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-bold">{quizStats.questionCount}</p>
-                  <Badge variant="secondary" className="text-xs">
-                    au total
-                  </Badge>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Réparties dans {quizStats.total} quiz
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Questions créées
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold">{quizStats.questionCount}</p>
+                    <Badge variant="secondary" className="text-xs">
+                      au total
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Réparties dans {quizStats.total} quiz
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                  <Clock className="size-3.5" />
-                  Temps moyen
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{avgTime !== null ? formatDuration(avgTime) : "—"}</p>
-                <p className="mt-2 text-xs text-muted-foreground">par tentative terminée</p>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                    <Clock className="size-3.5" />
+                    Temps moyen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{avgTime !== null ? formatDuration(avgTime) : "—"}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">par tentative terminée</p>
+                </CardContent>
+              </Card>
+            </div>
+          </Section>
 
-          <AnalyticsCharts
-            totalParticipants={participantStats.totalParticipants}
-            passRate={participantStats.passRate}
-            totalQuizzes={quizStats.total}
-            publishedQuizzes={quizStats.published}
-          />
+          <Section title="Graphiques" description="Tendances et répartitions">
+            <AnalyticsCharts
+              totalParticipants={participantStats.totalParticipants}
+              passRate={participantStats.passRate}
+              totalQuizzes={quizStats.total}
+              publishedQuizzes={quizStats.published}
+            />
+          </Section>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ScoreDistributionChart distribution={scoreDistribution} />
-            <ScoreEvolutionChart evolution={scoreEvolution} />
-          </div>
+          <Section title="Scores" description="Distribution et évolution des scores">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ScoreDistributionChart distribution={scoreDistribution} />
+              <ScoreEvolutionChart evolution={scoreEvolution} />
+            </div>
+            <QuizComparisonRadar rows={quizComparison} />
+          </Section>
 
-          <QuizComparisonRadar rows={quizComparison} />
+          <Section title="Questions" description="Performance par question">
+            {questions.length > 0 && <QuestionHeatmap questionStats={questions} />}
+            <QuestionDifficultyLists hardest={hardest} easiest={easiest} />
+          </Section>
 
-          {questions.length > 0 && <QuestionHeatmap questionStats={questions} />}
-
-          <QuestionDifficultyLists hardest={hardest} easiest={easiest} />
-
-          <div>
-            <h2 className="mb-3 text-lg font-semibold tracking-tight">Analyse par quiz</h2>
+          <Section title="Analyses détaillées" description="Données brutes par quiz et par participant">
             <DataTable
               columns={quizComparisonColumns}
               data={quizComparison.map((r) => ({ ...r, id: r.quizId }))}
               searchColumn="title"
               searchPlaceholder="Rechercher un quiz..."
             />
-          </div>
-
-          <div>
-            <h2 className="mb-3 text-lg font-semibold tracking-tight">Analyse par utilisateur</h2>
             <DataTable
               columns={userAnalysisColumns}
               data={userAnalysis.map((r) => ({ ...r, id: r.key }))}
               searchColumn="name"
               searchPlaceholder="Rechercher un participant..."
             />
-          </div>
+          </Section>
         </>
       )}
     </div>

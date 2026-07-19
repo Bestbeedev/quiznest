@@ -4,6 +4,8 @@ import { AlertOctagon, CheckCircle2, Clock, Target, TrendingUp, Users } from "lu
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { listAllOrgParticipants, getOrgParticipantsTrend } from "@/lib/services/participation";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
+import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDuration } from "@/lib/format";
 import { ParticipantsCharts } from "./participants-charts";
@@ -14,6 +16,32 @@ import { ParticipantsExportButtons } from "@/features/quiz/components/participan
 export const metadata: Metadata = {
   title: "Participants — QuizNest",
 };
+
+function StatItem({
+  icon: Icon,
+  iconColor,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  iconColor: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div className={`flex size-10 items-center justify-center rounded-lg ${iconColor}`}>
+          <Icon className="size-5" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-lg font-semibold">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default async function ParticipantsPage() {
   const organization = await requireActiveOrganization();
@@ -40,16 +68,14 @@ export default async function ParticipantsPage() {
       : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Participants</h1>
-          <p className="text-sm text-muted-foreground">
-            Suivez qui a répondu à vos évaluations et leurs résultats.
-          </p>
-        </div>
-        {participants.length > 0 && <ParticipantsExportButtons participants={participants} />}
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Participants"
+        subtitle="Suivez qui a répondu à vos évaluations et leurs résultats."
+        actions={
+          participants.length > 0 ? <ParticipantsExportButtons participants={participants} /> : undefined
+        }
+      />
 
       {participants.length === 0 ? (
         <EmptyStateCard
@@ -59,96 +85,36 @@ export default async function ParticipantsPage() {
         />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-lg font-semibold">{participants.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <CheckCircle2 className="size-5 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Terminé</p>
-                  <p className="text-lg font-semibold">{completed.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10">
-                  <Clock className="size-5 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">En cours</p>
-                  <p className="text-lg font-semibold">{inProgress.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
-                  <AlertOctagon className="size-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Abandonné</p>
-                  <p className="text-lg font-semibold">{abandoned.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10">
-                  <TrendingUp className="size-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Score moyen</p>
-                  <p className="text-lg font-semibold">{avgScore !== null ? `${avgScore}%` : "—"}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Target className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Taux de réussite</p>
-                  <p className="text-lg font-semibold">{passRate !== null ? `${passRate}%` : "—"}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Clock className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Temps moyen</p>
-                  <p className="text-lg font-semibold">{avgTime !== null ? formatDuration(avgTime) : "—"}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Section title="Statistiques" description="Vue d'ensemble des participations">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StatItem icon={Users} iconColor="bg-primary/10 text-primary" label="Total" value={String(participants.length)} />
+              <StatItem icon={CheckCircle2} iconColor="bg-emerald-500/10 text-emerald-500" label="Terminé" value={String(completed.length)} />
+              <StatItem icon={Clock} iconColor="bg-amber-500/10 text-amber-500" label="En cours" value={String(inProgress.length)} />
+              <StatItem icon={AlertOctagon} iconColor="bg-destructive/10 text-destructive" label="Abandonné" value={String(abandoned.length)} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatItem icon={TrendingUp} iconColor="bg-blue-500/10 text-blue-500" label="Score moyen" value={avgScore !== null ? `${avgScore}%` : "—"} />
+              <StatItem icon={Target} iconColor="bg-primary/10 text-primary" label="Taux de réussite" value={passRate !== null ? `${passRate}%` : "—"} />
+              <StatItem icon={Clock} iconColor="bg-primary/10 text-primary" label="Temps moyen" value={avgTime !== null ? formatDuration(avgTime) : "—"} />
+            </div>
+          </Section>
 
-          <ParticipantsTimelineChart trend={trend} />
+          <Section title="Tendances" description="Évolution sur les 14 derniers jours">
+            <ParticipantsTimelineChart trend={trend} />
+          </Section>
 
-          <ParticipantsCharts
-            completed={completed.length}
-            inProgress={inProgress.length}
-            abandoned={abandoned.length}
-            avgScore={avgScore}
-          />
+          <Section title="Répartition" description="Distribution par statut et performance">
+            <ParticipantsCharts
+              completed={completed.length}
+              inProgress={inProgress.length}
+              abandoned={abandoned.length}
+              avgScore={avgScore}
+            />
+          </Section>
 
-          <ParticipantsView participants={participants} />
+          <Section title="Tous les participants" description="Liste complète des tentatives">
+            <ParticipantsView participants={participants} />
+          </Section>
         </>
       )}
     </div>

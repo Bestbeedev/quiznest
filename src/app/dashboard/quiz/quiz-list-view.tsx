@@ -3,6 +3,7 @@
 import { ListChecks } from "lucide-react";
 
 import { DataTable } from "@/components/shared/data-table";
+import { PageHeader } from "@/components/shared/page-header";
 import { quizColumns } from "@/features/quiz/components/quiz-columns";
 import { NewQuizDialog } from "@/features/quiz/components/new-quiz-dialog";
 import { QuizGrid } from "@/features/quiz/components/quiz-grid";
@@ -35,21 +36,16 @@ export function QuizListView({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Quiz</h1>
-          <p className="text-sm text-muted-foreground">
-            {quizzes.length} quiz{quizzes.length !== 1 ? "s" : ""}
-            {quizLimit !== null && (
-              <span className="text-muted-foreground"> / {quizLimit} max</span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <QuizViewToggle />
-          <NewQuizDialog />
-        </div>
-      </div>
+      <PageHeader
+        title="Quiz"
+        subtitle={`${quizzes.length} quiz${quizzes.length !== 1 ? "s" : ""}${quizLimit !== null ? ` / ${quizLimit} max` : ""}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <QuizViewToggle />
+            <NewQuizDialog />
+          </div>
+        }
+      />
 
       {isFree && (
         <UpgradeBanner

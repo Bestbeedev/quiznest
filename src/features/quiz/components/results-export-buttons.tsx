@@ -1,35 +1,14 @@
 "use client";
 
-import { FileDown, FileSpreadsheet } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 
-import { Button } from "@/components/ui/button";
+import { ExportMenu } from "@/components/shared/export-menu";
 import { formatDuration } from "@/lib/format";
+import { PARTICIPANT_STATUS_LABELS, downloadBlob, toCsvValue } from "@/lib/export-utils";
 import type { Participant } from "@/generated/prisma/client";
 
 type QuestionStat = { id: string; title: string; successRate: number | null };
-
-const STATUS_LABELS: Record<string, string> = {
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminé",
-  ABANDONED: "Abandonné",
-};
-
-function toCsvValue(value: string | number) {
-  const str = String(value);
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-}
-
-function downloadBlob(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
 
 export function ResultsExportButtons({
   quizTitle,
@@ -53,7 +32,7 @@ export function ResultsExportButtons({
     const rows = participants.map((p) => [
       p.name,
       p.email ?? "",
-      STATUS_LABELS[p.status] ?? p.status,
+      PARTICIPANT_STATUS_LABELS[p.status] ?? p.status,
       p.status === "COMPLETED" ? String(p.percentage) : "",
       p.status === "COMPLETED" ? (p.passed ? "Réussi" : "Échoué") : "",
       new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(p.startedAt),
@@ -96,16 +75,5 @@ export function ResultsExportButtons({
     doc.save(`${quizTitle}-rapport.pdf`);
   };
 
-  return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5">
-        <FileSpreadsheet className="size-3.5" />
-        Export CSV
-      </Button>
-      <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5">
-        <FileDown className="size-3.5" />
-        Export PDF
-      </Button>
-    </div>
-  );
+  return <ExportMenu formats={["csv", "pdf"]} onExport={(f) => (f === "csv" ? exportCsv() : exportPdf())} />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HelpCircle, BarChart3, Users, Settings } from "lucide-react";
+import { HelpCircle, BarChart3, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -9,7 +9,6 @@ const NAV_ITEMS = [
   { value: "questions", label: "Questions", icon: HelpCircle, description: "Créer et gérer les questions" },
   { value: "participants", label: "Participants", icon: Users, description: "Suivre les réponses" },
   { value: "results", label: "Résultats", icon: BarChart3, description: "Statistiques et analyses" },
-  { value: "settings", label: "Paramètres", icon: Settings, description: "Configuration du quiz" },
 ] as const;
 
 type QuizTab = (typeof NAV_ITEMS)[number]["value"];
@@ -18,17 +17,16 @@ interface QuizDetailNavProps {
   questions: React.ReactNode;
   participants: React.ReactNode;
   results: React.ReactNode;
-  settings: React.ReactNode;
+  settingsTrigger: React.ReactNode;
 }
 
-export function QuizDetailNav({ questions, participants, results, settings }: QuizDetailNavProps) {
+export function QuizDetailNav({ questions, participants, results, settingsTrigger }: QuizDetailNavProps) {
   const [active, setActive] = useState<QuizTab>("questions");
 
   const content: Record<QuizTab, React.ReactNode> = {
     questions,
     participants,
     results,
-    settings,
   };
 
   return (
@@ -62,6 +60,7 @@ export function QuizDetailNav({ questions, participants, results, settings }: Qu
               </button>
             );
           })}
+          {settingsTrigger}
         </div>
       </nav>
 

@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDuration } from "@/lib/format";
+import { PARTICIPANT_PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
 import type { ParticipantStatus } from "@/generated/prisma/client";
 
 type AnswerDetail = {
@@ -50,12 +51,6 @@ type HistoryAttempt = {
 };
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" });
-
-const STATUS_LABELS: Record<ParticipantStatus, string> = {
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminé",
-  ABANDONED: "Abandonné",
-};
 
 export function ParticipantAnswersDialog({
   quizId,
@@ -112,7 +107,7 @@ export function ParticipantAnswersDialog({
               </div>
               <div className="rounded-lg border p-2.5 text-center">
                 <Badge variant={participant.status === "COMPLETED" ? (participant.passed ? "default" : "outline") : "secondary"}>
-                  {STATUS_LABELS[participant.status]}
+                  {PARTICIPANT_STATUS_LABELS[participant.status]}
                 </Badge>
                 <p className="mt-1 text-[11px] text-muted-foreground">Statut</p>
               </div>
@@ -159,7 +154,7 @@ export function ParticipantAnswersDialog({
                           Tentative {attempt.attempt} — {dateFormatter.format(new Date(attempt.startedAt))}
                         </span>
                         <span className="flex items-center gap-1.5">
-                          {attempt.status === "COMPLETED" ? `${attempt.percentage}%` : STATUS_LABELS[attempt.status]}
+                          {attempt.status === "COMPLETED" ? `${attempt.percentage}%` : PARTICIPANT_STATUS_LABELS[attempt.status]}
                           {attempt.status === "COMPLETED" &&
                             (attempt.passed ? (
                               <CheckCircle2 className="size-3.5 text-primary" />
