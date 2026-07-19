@@ -60,7 +60,7 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
               </button>
             );
           })}
-          {settingsTrigger}
+          <div key="settings">{settingsTrigger}</div>
         </div>
       </nav>
 
