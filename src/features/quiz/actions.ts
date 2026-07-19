@@ -14,6 +14,7 @@ import * as questionService from "@/lib/services/question";
 import { getParticipantAnswers } from "@/lib/services/participation";
 import { logAudit } from "@/lib/services/audit-log";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
+import { canUseFeature } from "@/lib/services/feature-gate";
 import type { AuditAction } from "@/generated/prisma/client";
 
 async function logQuizAction(
@@ -254,6 +255,11 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
     return { error: "La génération de questions par IA est actuellement désactivée." };
   }
 
+  const featureCheck = await canUseFeature(organization.id, "AI_GENERATION");
+  if (!featureCheck.allowed) {
+    return { error: featureCheck.reason ?? "Fonctionnalité non disponible sur votre plan." };
+  }
+
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(rawJson);
@@ -284,6 +290,11 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
   const platformSettings = await getPlatformSettings();
   if (!platformSettings.aiGeneration) {
     return { error: "La génération de questions par IA est actuellement désactivée." };
+  }
+
+  const featureCheck = await canUseFeature(organization.id, "AI_GENERATION");
+  if (!featureCheck.allowed) {
+    return { error: featureCheck.reason ?? "Fonctionnalité non disponible sur votre plan." };
   }
 
   const parsed = aiImportQuestionSchema.safeParse(rawQuestion);

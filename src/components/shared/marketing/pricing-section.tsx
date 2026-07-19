@@ -1,20 +1,15 @@
 import Link from "next/link";
 import { CheckIcon, Sparkles } from "lucide-react";
 
-import { PRICING_PLANS } from "@/constants/marketing";
+import { listPublicPlans } from "@/lib/services/plan";
+import { formatCurrency } from "@/lib/format";
 import { Reveal } from "@/components/shared/reveal";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-const PLAN_ICONS = ["", "sparkles", "crown"] as const;
-const PLAN_BADGES = [
-  null,
-  { text: "Recommandé", variant: "default" as const },
-  { text: "Sur mesure", variant: "secondary" as const },
-] as const;
+export async function PricingSection() {
+  const plans = await listPublicPlans();
 
-export function PricingSection() {
   return (
     <section id="tarifs" className="scroll-mt-20 bg-muted/30">
       <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
@@ -30,14 +25,14 @@ export function PricingSection() {
           </div>
         </Reveal>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {PRICING_PLANS.map((plan, i) => {
-            const badge = PLAN_BADGES[i];
-            const isHighlighted = plan.highlighted;
+        <div className="mt-12 grid gap-6 lg:grid-cols-4">
+          {plans.map((plan, i) => {
+            const isHighlighted = plan.isPromoted;
+            const marketingFeatures = Array.isArray(plan.features) ? (plan.features as string[]) : [];
 
             return (
               <Reveal
-                key={plan.name}
+                key={plan.slug}
                 delay={0.1 + i * 0.15}
                 direction={i === 1 ? "scale" : i === 0 ? "left" : "right"}
               >
@@ -52,7 +47,7 @@ export function PricingSection() {
                     <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
                   )}
 
-                  {badge && (
+                  {plan.badge && (
                     <div
                       className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold ${
                         isHighlighted
@@ -61,7 +56,7 @@ export function PricingSection() {
                       }`}
                     >
                       {isHighlighted && <Sparkles className="size-3" />}
-                      {badge.text}
+                      {plan.badge}
                     </div>
                   )}
 
@@ -72,11 +67,15 @@ export function PricingSection() {
                     </p>
                     <div className="mt-4 flex items-baseline gap-1">
                       <span className="text-4xl font-bold tracking-tight">
-                        {plan.price === "0" ? "Gratuit" : `€${plan.price}`}
+                        {plan.price === null
+                          ? "Sur devis"
+                          : plan.price === 0
+                            ? "Gratuit"
+                            : formatCurrency(plan.price, plan.currency)}
                       </span>
-                      {plan.price !== "0" && (
+                      {plan.price !== null && plan.price > 0 && (
                         <span className="text-sm text-muted-foreground">
-                          /mois
+                          /{plan.interval === "YEAR" ? "an" : "mois"}
                         </span>
                       )}
                     </div>
@@ -88,7 +87,7 @@ export function PricingSection() {
                         Inclus
                       </p>
                       <ul className="flex-1 space-y-2.5">
-                        {plan.features.map((feature) => (
+                        {marketingFeatures.map((feature) => (
                           <li
                             key={feature}
                             className="flex items-start gap-2.5 text-sm"
@@ -104,7 +103,7 @@ export function PricingSection() {
                         variant={isHighlighted ? "default" : "outline"}
                         className="w-full transition-all hover:scale-[1.02] active:scale-100"
                       >
-                        {plan.price === "0"
+                        {plan.price === 0
                           ? "Commencer gratuitement"
                           : "Choisir ce plan"}
                       </Button>

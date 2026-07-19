@@ -3,12 +3,14 @@ import { Suspense } from "react";
 import { UserX } from "lucide-react";
 import { RegisterForm } from "@/features/authentication/components/register-form";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
+import { redirectIfAuthenticated } from "@/lib/auth/redirect-if-auth";
 
 export const metadata: Metadata = {
   title: "Créer un compte — QuizNest",
 };
 
 export default async function RegisterPage() {
+  await redirectIfAuthenticated();
   const settings = await getPlatformSettings();
 
   if (!settings.allowSignups) {

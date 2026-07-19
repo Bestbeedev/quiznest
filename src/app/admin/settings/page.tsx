@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Activity, Building2, Database, ListChecks, ShieldCheck, Users } from "lucide-react";
+import { Activity, Building2, ListChecks, ShieldCheck, Users } from "lucide-react";
 
 import { getPlatformStats } from "@/lib/services/admin";
 import { getRevenueStats, getSubscriptionStatsByPlan } from "@/lib/services/billing";
+import { getPlatformSettings, checkDatabaseHealth } from "@/lib/services/platform-settings";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { StatCard } from "@/components/shared/stat-card";
@@ -11,16 +12,21 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
 import { AdminSettingsNav } from "@/features/admin/components/admin-settings-nav";
+import { MaintenanceModeCard } from "@/features/admin/components/maintenance-mode-card";
+import { FeatureFlagsCard } from "@/features/admin/components/feature-flags-card";
+import { NotificationSettingsCard } from "@/features/admin/components/notification-settings-card";
 
 export const metadata: Metadata = {
   title: "Paramètres — Admin QuizNest",
 };
 
 export default async function AdminSettingsPage() {
-  const [stats, revenue, planStats] = await Promise.all([
+  const [stats, revenue, planStats, platformSettings, dbHealth] = await Promise.all([
     getPlatformStats(),
     getRevenueStats(),
     getSubscriptionStatsByPlan(),
+    getPlatformSettings(),
+    checkDatabaseHealth(),
   ]);
 
   const totalSubs = planStats.reduce((s, p) => s + p.subscriberCount, 0);
@@ -84,6 +90,33 @@ export default async function AdminSettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+            </Section>
+
+            <Section title="Santé de la base de données" description="Vérification en direct.">
+              <Card>
+                <CardContent className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground">Connexion PostgreSQL</span>
+                    <span className="text-sm font-medium">{dbHealth.healthy ? "Opérationnelle" : "Indisponible"}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">{dbHealth.latencyMs} ms</span>
+                    <Badge variant={dbHealth.healthy ? "default" : "destructive"}>
+                      {dbHealth.healthy ? "OK" : "Erreur"}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </Section>
+
+            <Section
+              title="Mode maintenance"
+              description="Bloque l'application pour tous les utilisateurs sauf les super-admins."
+            >
+              <MaintenanceModeCard
+                maintenanceMode={platformSettings.maintenanceMode}
+                maintenanceMessage={platformSettings.maintenanceMessage}
+              />
             </Section>
           </div>
         }
@@ -165,29 +198,29 @@ export default async function AdminSettingsPage() {
         }
         features={
           <div className="flex flex-col gap-6">
-            <Section title="Feature Flags" description="Activer ou désactiver des fonctionnalités de la plateforme.">
-              <Card>
-                <CardContent className="flex flex-col divide-y">
-                  {[
-                    { name: "Génération IA", description: "Permettre la génération de questions par IA", enabled: true },
-                    { name: "Exports CSV/Excel", description: "Permettre l'export des données en CSV et Excel", enabled: true },
-                    { name: "Analytics avancés", description: "Statistiques détaillées pour les quiz", enabled: true },
-                    { name: "Mode maintenance", description: "Désactiver l'accès public au site", enabled: false },
-                    { name: "Nouveaux inscriptions", description: "Permettre la création de nouveaux comptes", enabled: true },
-                    { name: "Facturation", description: "Activer le module de paiement", enabled: false },
-                  ].map((flag) => (
-                    <div key={flag.name} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{flag.name}</p>
-                        <p className="text-xs text-muted-foreground">{flag.description}</p>
-                      </div>
-                      <Badge variant={flag.enabled ? "default" : "outline"}>
-                        {flag.enabled ? "Activé" : "Désactivé"}
-                      </Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+            <Section
+              title="Feature Flags"
+              description="Interrupteurs plateforme globaux — le Feature Gate par plan (/admin/plans) reste la source de vérité pour l'accès par organisation."
+            >
+              <FeatureFlagsCard
+                settings={{
+                  aiGeneration: platformSettings.aiGeneration,
+                  exportsEnabled: platformSettings.exportsEnabled,
+                  allowSignups: platformSettings.allowSignups,
+                  billingEnabled: platformSettings.billingEnabled,
+                }}
+              />
+            </Section>
+          </div>
+        }
+        notifications={
+          <div className="flex flex-col gap-6">
+            <Section title="Notifications" description="Alertes email envoyées à l'équipe QuizNest.">
+              <NotificationSettingsCard
+                notificationEmail={platformSettings.notificationEmail}
+                notifyOnNewOrganization={platformSettings.notifyOnNewOrganization}
+                notifyOnNewSubscription={platformSettings.notifyOnNewSubscription}
+              />
             </Section>
           </div>
         }

@@ -2,18 +2,36 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { NAV_LINKS } from "@/constants/marketing";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Logo } from "@/components/shared/logo";
+import { useSession, signOut } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
+
+function UserAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+      {initials}
+    </span>
+  );
+}
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { data: session } = useSession();
+
+  const isLoggedIn = !!session;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -48,19 +66,49 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          <Link href="/login" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
-            Connexion
-          </Link>
-          <Link
-            href="/register"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "group gap-1.5 transition-all hover:scale-105 active:scale-100",
-            )}
-          >
-            Essayer gratuitement
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "gap-1.5",
+                )}
+              >
+                <LayoutDashboard className="size-4" />
+                Dashboard
+              </Link>
+              <div className="flex items-center gap-2">
+                <UserAvatar name={session.user.name} />
+                <button
+                  type="button"
+                  onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.reload() } })}
+                  className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <LogOut className="size-4" />
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+              >
+                Connexion
+              </Link>
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({ size: "sm" }),
+                  "group gap-1.5 transition-all hover:scale-105 active:scale-100",
+                )}
+              >
+                Essayer gratuitement
+                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
@@ -98,21 +146,53 @@ export function SiteHeader() {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-2">
-                <Link
-                  href="/login"
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Connexion
-                </Link>
-                <Link
-                  href="/register"
-                  className={cn(buttonVariants({ size: "sm" }), "group gap-1.5")}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Essayer gratuitement
-                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                {isLoggedIn ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className={cn(
+                        buttonVariants({ variant: "default", size: "sm" }),
+                        "gap-1.5",
+                      )}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <LayoutDashboard className="size-4" />
+                      Dashboard
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        signOut({ fetchOptions: { onSuccess: () => window.location.reload() } });
+                      }}
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "gap-1.5",
+                      )}
+                    >
+                      <LogOut className="size-4" />
+                      Déconnexion
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      Connexion
+                    </Link>
+                    <Link
+                      href="/register"
+                      className={cn(buttonVariants({ size: "sm" }), "group gap-1.5")}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      Essayer gratuitement
+                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.nav>

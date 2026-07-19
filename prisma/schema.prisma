@@ -389,14 +389,71 @@ model Plan {
   questionLimit    Int?    @map("question_limit")
   storageLimitMb   Int?    @map("storage_limit_mb")
 
+  /// Free-text marketing bullet points shown on pricing cards — display only,
+  /// never used for access control. Real entitlements live in `PlanFeature`.
   features Json @default("[]")
 
+  description String?
+  badge       String?
+  color       String?
+  icon        String?
+  displayOrder Int     @default(0) @map("display_order")
+  isActive     Boolean @default(true) @map("is_active")
+  isPromoted   Boolean @default(false) @map("is_promoted")
+  trialDays    Int?    @map("trial_days")
+
+  /// Optional commercial window — a plan can be scheduled (e.g. a launch
+  /// promo) without code changes; outside this window it's excluded from
+  /// public pricing surfaces but still valid for existing subscribers.
+  availableFrom  DateTime? @map("available_from")
+  availableUntil DateTime? @map("available_until")
+
+  planFeatures  PlanFeature[]
   subscriptions Subscription[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("plans")
+}
+
+/// Feature Gate's source of truth: every access decision must resolve through
+/// this table (via lib/services/feature-gate.ts), never by comparing a plan
+/// slug/name directly — see Prompt-Archi.md "FEATURE GATE".
+enum FeatureKey {
+  AI_GENERATION
+  AI_IMPORT
+  QUESTION_BANK
+  CERTIFICATES
+  EXPORT_PDF
+  EXPORT_EXCEL
+  EXPORT_CSV
+  ADVANCED_ANALYTICS
+  CUSTOM_BRANDING
+  CUSTOM_DOMAIN
+  WEBHOOKS
+  API_ACCESS
+  MULTI_TEAM
+  LIVE_MONITORING
+  EMAIL_NOTIFICATIONS
+  SMS_NOTIFICATIONS
+  WHITE_LABEL
+}
+
+model PlanFeature {
+  id      String     @id @default(cuid())
+  planId  String     @map("plan_id")
+  feature FeatureKey
+  enabled Boolean    @default(true)
+  /// Optional numeric quota for this feature on this plan (e.g. AI_GENERATION
+  /// = 20 questions/month). Null = unlimited when `enabled`. Consumption
+  /// tracking against this limit is a later phase (see project roadmap).
+  limit   Int?
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, feature])
+  @@map("plan_features")
 }
 
 model Subscription {

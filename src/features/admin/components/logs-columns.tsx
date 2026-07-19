@@ -17,6 +17,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   QUIZ_ARCHIVED: "Quiz archivé",
   QUIZ_DUPLICATED: "Quiz dupliqué",
   QUIZ_DELETED: "Quiz supprimé",
+  PLATFORM_SETTINGS_UPDATED: "Paramètres plateforme modifiés",
 };
 
 export const logsColumns: ColumnDef<LogRow>[] = [

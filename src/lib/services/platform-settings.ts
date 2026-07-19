@@ -9,9 +9,11 @@ const SETTINGS_ID = "singleton";
  * lib/db/tenant.ts) — this is read on nearly every page render for the
  * maintenance gate, so it must stay a single indexed primary-key lookup. */
 export const getPlatformSettings = cache(async () => {
-  const existing = await prisma.platformSettings.findUnique({ where: { id: SETTINGS_ID } });
-  if (existing) return existing;
-  return prisma.platformSettings.create({ data: { id: SETTINGS_ID } });
+  return prisma.platformSettings.upsert({
+    where: { id: SETTINGS_ID },
+    create: { id: SETTINGS_ID, updatedAt: new Date() },
+    update: {},
+  });
 });
 
 export async function updatePlatformSettings(input: UpdatePlatformSettingsInput, updatedBy: string) {

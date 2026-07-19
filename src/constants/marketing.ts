@@ -203,55 +203,6 @@ export const FAQ_ITEMS: { question: string; answer: string }[] = [
   },
 ];
 
-export const PRICING_PLANS = [
-  {
-    name: "Free",
-    price: "0",
-    description: "Pour démarrer et tester la plateforme.",
-    features: [
-      "3 quiz",
-      "50 participants par quiz",
-      "10 questions par quiz",
-      "100 Mo de stockage",
-      "Export PDF",
-      "Support communautaire",
-    ],
-    highlighted: false,
-  },
-  {
-    name: "Professional",
-    price: "—",
-    description: "Pour les organisations qui évaluent régulièrement.",
-    features: [
-      "Quiz illimités",
-      "Participants illimités",
-      "IA Premium (génération illimitée)",
-      "Tous les types de questions",
-      "Exports PDF, Excel & CSV",
-      "Statistiques avancées",
-      "Minutage & sessions",
-      "Support prioritaire",
-    ],
-    highlighted: true,
-  },
-  {
-    name: "Enterprise",
-    price: "—",
-    description: "Pour les grandes organisations et le multi-équipes.",
-    features: [
-      "Multi-équipes & sous-comptes",
-      "API complète & Webhooks",
-      "White Label & domaine personnalisé",
-      "SSO (SAML, OIDC)",
-      "Audit logs",
-      "SLA garanti",
-      "Support 24/7 dédié",
-      "Onboarding accompagné",
-    ],
-    highlighted: false,
-  },
-] as const;
-
 export const DEMO_TABS = [
   {
     id: "dashboard",

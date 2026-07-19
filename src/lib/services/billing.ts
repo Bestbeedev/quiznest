@@ -1,76 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
+import { ensureDefaultPlans, getFreePlan } from "@/lib/services/plan";
 
-/** Free plan limits mirror the numbers already shown on /dashboard/billing.
- * Professional/Enterprise have no defined price yet (sur devis) — we never
- * invent a figure, the UI shows "Prix à définir" until product/pricing sets one. */
-const PLAN_SEEDS = [
-  {
-    slug: "free",
-    name: "Free",
-    price: 0,
-    quizLimit: 3,
-    participantLimit: 50,
-    questionLimit: 10,
-    storageLimitMb: 100,
-    features: ["3 quiz", "50 participants", "10 questions par quiz", "100 Mo de stockage"],
-  },
-  {
-    slug: "professional",
-    name: "Professional",
-    price: null,
-    quizLimit: null,
-    participantLimit: null,
-    questionLimit: null,
-    storageLimitMb: null,
-    features: [
-      "Quiz illimités",
-      "Participants illimités",
-      "IA Premium",
-      "Exports avancés",
-      "Statistiques avancées",
-      "Support prioritaire",
-    ],
-  },
-  {
-    slug: "enterprise",
-    name: "Enterprise",
-    price: null,
-    quizLimit: null,
-    participantLimit: null,
-    questionLimit: null,
-    storageLimitMb: null,
-    features: ["Multi-équipes", "API complète", "White Label", "SSO", "Infrastructure dédiée", "Support 24/7"],
-  },
-] as const;
-
-/** Idempotent — upserts the 3 known plans by slug. Safe to call on every
- * admin page load; avoids needing a separate seed command. */
-async function ensureDefaultPlans() {
-  await Promise.all(
-    PLAN_SEEDS.map((seed) =>
-      prisma.plan.upsert({
-        where: { slug: seed.slug },
-        update: {},
-        create: {
-          slug: seed.slug,
-          name: seed.name,
-          price: seed.price,
-          quizLimit: seed.quizLimit,
-          participantLimit: seed.participantLimit,
-          questionLimit: seed.questionLimit,
-          storageLimitMb: seed.storageLimitMb,
-          features: seed.features,
-        },
-      }),
-    ),
-  );
-}
-
-export async function getFreePlan() {
-  await ensureDefaultPlans();
-  return prisma.plan.findUniqueOrThrow({ where: { slug: "free" } });
-}
+export { getFreePlan };
 
 /** Enrolls a freshly created organization on the Free plan, TRIALING —
  * mirrors Organization.status default (TRIAL). Called once at org creation. */
