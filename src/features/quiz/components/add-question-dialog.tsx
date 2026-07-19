@@ -34,6 +34,7 @@ const TYPE_LABELS = {
 const DEFAULT_VALUES: CreateQuestionInput = {
   title: "",
   type: "SINGLE_CHOICE",
+  difficulty: "MEDIUM",
   points: 1,
   explanation: "",
   category: "",
@@ -48,7 +49,10 @@ export type QuestionForEdit = {
   id: string;
   title: string;
   type: CreateQuestionInput["type"];
+  difficulty?: string | null;
   points: number;
+  hint?: string | null;
+  timeLimit?: number | null;
   explanation: string | null;
   category: string | null;
   tags: string[];
@@ -78,7 +82,10 @@ export function AddQuestionDialog({
     ? {
         title: question.title,
         type: question.type,
+        difficulty: (question.difficulty as "EASY" | "MEDIUM" | "HARD") ?? "MEDIUM",
         points: question.points,
+        hint: question.hint ?? "",
+        timeLimit: question.timeLimit ?? undefined,
         explanation: question.explanation ?? "",
         category: question.category ?? "",
         tags: question.tags,

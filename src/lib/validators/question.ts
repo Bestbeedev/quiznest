@@ -1,15 +1,20 @@
 import { z } from "zod";
 
-export const questionTypeSchema = z.enum(["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE"]);
+export const questionTypeSchema = z.enum(["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]);
+
+export const questionDifficultySchema = z.enum(["EASY", "MEDIUM", "HARD"]);
 
 export const createQuestionSchema = z
   .object({
     title: z.string().min(1).max(500),
     type: questionTypeSchema,
+    difficulty: questionDifficultySchema.default("MEDIUM"),
     points: z.coerce.number().int().min(1).max(100),
-    explanation: z.string().max(1000).optional().or(z.literal("")),
-    category: z.string().max(100).optional().or(z.literal("")),
-    tags: z.array(z.string().min(1).max(50)).max(10).optional(),
+    timeLimit: z.coerce.number().int().min(1).max(3600).optional().nullable(),
+    hint: z.string().max(500).optional().nullable(),
+    explanation: z.string().max(1000).optional().or(z.literal("")).nullable(),
+    category: z.string().max(100).optional().or(z.literal("")).nullable(),
+    tags: z.array(z.string().min(1).max(50)).max(10).optional().nullable(),
     choices: z
       .array(
         z.object({

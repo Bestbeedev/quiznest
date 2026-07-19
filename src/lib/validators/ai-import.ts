@@ -1,12 +1,24 @@
 import { z } from "zod";
 
-const importTypeSchema = z.enum(["single_choice", "multiple_choice", "true_false"]);
+const importTypeSchema = z.enum([
+  "single_choice",
+  "multiple_choice",
+  "true_false",
+  "short_answer",
+]);
+
+const importDifficultySchema = z.enum(["easy", "medium", "hard"]).default("medium");
 
 const importQuestionSchema = z
   .object({
     type: importTypeSchema,
     question: z.string().min(1).max(500),
+    difficulty: importDifficultySchema,
     points: z.coerce.number().int().min(1).max(100).default(1),
+    category: z.string().max(100).optional(),
+    tags: z.array(z.string().max(50)).max(10).optional(),
+    hint: z.string().max(500).optional(),
+    timeLimit: z.coerce.number().int().min(1).max(3600).optional(),
     explanation: z.string().max(1000).optional(),
     choices: z
       .array(
@@ -15,11 +27,34 @@ const importQuestionSchema = z
           correct: z.boolean(),
         }),
       )
-      .min(2),
+      .min(2)
+      .optional(),
+    acceptedAnswers: z.array(z.string().min(1).max(300)).min(1).optional(),
   })
-  .refine((data) => data.choices.some((choice) => choice.correct), {
-    message: "Chaque question doit avoir au moins une bonne réponse.",
-  });
+  .refine(
+    (data) => {
+      if (data.type === "short_answer") {
+        return !data.choices || data.choices.length === 0;
+      }
+      return data.choices && data.choices.length >= 2;
+    },
+    {
+      message:
+        "Les questions à choix doivent avoir au moins 2 choix. Les questions 'short_answer' ne doivent pas avoir de choix.",
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.type === "short_answer") {
+        return data.acceptedAnswers && data.acceptedAnswers.length > 0;
+      }
+      return data.choices && data.choices.some((c) => c.correct);
+    },
+    {
+      message:
+        "Les questions 'short_answer' doivent avoir au moins une réponse acceptée. Les questions à choix doivent avoir au moins une bonne réponse.",
+    },
+  );
 
 export const aiImportSchema = z.object({
   questions: z.array(importQuestionSchema).min(1).max(50),
@@ -31,14 +66,41 @@ const TYPE_MAP = {
   single_choice: "SINGLE_CHOICE",
   multiple_choice: "MULTIPLE_CHOICE",
   true_false: "TRUE_FALSE",
+  short_answer: "SHORT_ANSWER",
+} as const;
+
+const DIFFICULTY_MAP = {
+  easy: "EASY",
+  medium: "MEDIUM",
+  hard: "HARD",
 } as const;
 
 export function toCreateQuestionInputs(input: AiImportInput) {
-  return input.questions.map((question) => ({
-    title: question.question,
-    type: TYPE_MAP[question.type],
-    points: question.points,
-    explanation: question.explanation ?? "",
-    choices: question.choices.map((choice) => ({ text: choice.text, isCorrect: choice.correct })),
-  }));
+  return input.questions.map((question) => {
+    const choices =
+      question.type === "short_answer"
+        ? (question.acceptedAnswers ?? []).map((text, i) => ({
+            text,
+            isCorrect: true,
+            order: i,
+          }))
+        : (question.choices ?? []).map((choice, i) => ({
+            text: choice.text,
+            isCorrect: choice.correct,
+            order: i,
+          }));
+
+    return {
+      title: question.question,
+      type: TYPE_MAP[question.type],
+      difficulty: DIFFICULTY_MAP[question.difficulty],
+      points: question.points,
+      category: question.category ?? null,
+      tags: question.tags ?? [],
+      hint: question.hint ?? null,
+      timeLimit: question.timeLimit ?? null,
+      explanation: question.explanation ?? "",
+      choices,
+    };
+  });
 }
