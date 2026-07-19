@@ -1,8 +1,12 @@
-import { BarChart3, Clock, Percent, Users } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { BarChart3, ChevronDown, ChevronLeft, ChevronRight, Clock, Percent, Users } from "lucide-react";
 
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ChartLineInteractive, ChartTooltipDefault } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
 import { QuestionHeatmap } from "@/features/quiz/components/question-heatmap";
@@ -14,6 +18,8 @@ import type { Participant } from "@/generated/prisma/client";
 type QuestionStat = { id: string; title: string; successRate: number | null };
 type ScoreBucket = { bucket: string; count: number };
 type AttemptsPoint = { date: string; tentatives: number };
+
+const PAGE_SIZE = 15;
 
 export function ResultsTab({
   quizTitle,
@@ -36,6 +42,12 @@ export function ResultsTab({
   questionStats: QuestionStat[];
   attemptsTrend: AttemptsPoint[];
 }) {
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [page, setPage] = useState(0);
+
+  const totalPages = Math.ceil(questionStats.length / PAGE_SIZE);
+  const paged = questionStats.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
   if (totalCompleted === 0) {
     return (
       <EmptyStateCard
@@ -94,35 +106,77 @@ export function ResultsTab({
         />
       </div>
 
+      <AiSummaryCard />
+
       <QuestionHeatmap questionStats={questionStats} />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Réussite par question</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3">
-            {questionStats.map((question) => (
-              <div key={question.id}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="font-medium">{question.title}</span>
-                  <span className="text-muted-foreground">
-                    {question.successRate === null ? "—" : `${question.successRate}%`}
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${question.successRate ?? 0}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+        <CardHeader className="cursor-pointer select-none" onClick={() => setBreakdownOpen(!breakdownOpen)}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <CardTitle className="text-base">Réussite par question</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {questionStats.length} question{questionStats.length !== 1 ? "s" : ""}
+                {breakdownOpen && totalPages > 1 && ` — page ${page + 1}/${totalPages}`}
+              </p>
+            </div>
+            <Button type="button" variant="ghost" size="icon-sm" className="shrink-0">
+              {breakdownOpen ? <ChevronDown className="size-4 rotate-180" /> : <ChevronDown className="size-4" />}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </CardHeader>
+        {breakdownOpen && (
+          <CardContent>
+            <div className="flex flex-col gap-3">
+              {paged.map((question) => (
+                <div key={question.id}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="min-w-0 truncate font-medium">{question.title}</span>
+                    <span className="shrink-0 pl-2 text-muted-foreground">
+                      {question.successRate === null ? "—" : `${question.successRate}%`}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${question.successRate ?? 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
-      <AiSummaryCard />
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  Précédent
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, questionStats.length)} sur{" "}
+                  {questionStats.length}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Suivant
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
     </div>
   );
 }

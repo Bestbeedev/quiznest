@@ -495,7 +495,7 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
                 <div
                   key={row.index}
                   className={cn(
-                    "flex items-center gap-2.5 overflow-hidden rounded-lg h-full border p-4 text-sm",
+                    "flex items-center gap-2.5 overflow-hidden rounded-lg h-full border p-8 text-sm",
                     row.status === "error" && "border-destructive/30 bg-destructive/5",
                   )}
                 >
