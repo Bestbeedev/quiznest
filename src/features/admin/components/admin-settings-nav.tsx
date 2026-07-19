@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Database, Flag, Globe, Server } from "lucide-react";
+import { Bell, Database, Flag, Globe, Server } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { value: "system", label: "Système", icon: Server, description: "Informations plateforme" },
+  { value: "system", label: "Système", icon: Server, description: "Statut, maintenance, santé" },
   { value: "plans", label: "Plans", icon: Globe, description: "Gestion des abonnements" },
   { value: "features", label: "Fonctionnalités", icon: Flag, description: "Feature flags" },
+  { value: "notifications", label: "Notifications", icon: Bell, description: "Alertes administrateur" },
   { value: "database", label: "Base de données", icon: Database, description: "Status et santé" },
 ] as const;
 
@@ -18,16 +19,18 @@ interface AdminSettingsNavProps {
   system: React.ReactNode;
   plans: React.ReactNode;
   features: React.ReactNode;
+  notifications: React.ReactNode;
   database: React.ReactNode;
 }
 
-export function AdminSettingsNav({ system, plans, features, database }: AdminSettingsNavProps) {
+export function AdminSettingsNav({ system, plans, features, notifications, database }: AdminSettingsNavProps) {
   const [active, setActive] = useState<AdminSettingsTab>("system");
 
   const content: Record<AdminSettingsTab, React.ReactNode> = {
     system,
     plans,
     features,
+    notifications,
     database,
   };
 

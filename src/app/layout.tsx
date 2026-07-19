@@ -3,6 +3,8 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { checkMaintenanceGate } from "@/lib/maintenance";
+import { MaintenancePage } from "@/components/shared/maintenance-page";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -19,11 +21,13 @@ export const metadata: Metadata = {
   description: "Créez, partagez et analysez vos évaluations en ligne.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gate = await checkMaintenanceGate();
+
   return (
     <html
       lang="fr"
@@ -32,7 +36,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          {children}
+          {gate.blocked ? <MaintenancePage message={gate.message} /> : children}
           <Toaster position="top-right" />
         </ThemeProvider>
       </body>

@@ -13,6 +13,7 @@ import * as quizService from "@/lib/services/quiz";
 import * as questionService from "@/lib/services/question";
 import { getParticipantAnswers } from "@/lib/services/participation";
 import { logAudit } from "@/lib/services/audit-log";
+import { getPlatformSettings } from "@/lib/services/platform-settings";
 import type { AuditAction } from "@/generated/prisma/client";
 
 async function logQuizAction(
@@ -248,6 +249,11 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
   const organization = await requireActiveOrganization();
   await requireOrgRole(organization.id, session.user.id, "EDITOR");
 
+  const platformSettings = await getPlatformSettings();
+  if (!platformSettings.aiGeneration) {
+    return { error: "La génération de questions par IA est actuellement désactivée." };
+  }
+
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(rawJson);
@@ -274,6 +280,11 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
   const session = await requireAuth();
   const organization = await requireActiveOrganization();
   await requireOrgRole(organization.id, session.user.id, "EDITOR");
+
+  const platformSettings = await getPlatformSettings();
+  if (!platformSettings.aiGeneration) {
+    return { error: "La génération de questions par IA est actuellement désactivée." };
+  }
 
   const parsed = aiImportQuestionSchema.safeParse(rawQuestion);
   if (!parsed.success) {

@@ -3,6 +3,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { dash } from "@better-auth/infra";
 import { prisma } from "@/lib/db/client";
+import { sendEmail } from "@/lib/email/resend";
+import { buildResetPasswordEmail } from "@/emails/reset-password";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -10,6 +12,11 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    resetPasswordTokenExpiresIn: 3600,
+    sendResetPassword: async ({ user, url }) => {
+      const { subject, html, text } = buildResetPasswordEmail({ name: user.name, url });
+      await sendEmail({ to: user.email, subject, html, text });
+    },
   },
   socialProviders: {
     google: {

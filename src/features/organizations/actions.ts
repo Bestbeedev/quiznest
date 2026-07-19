@@ -6,6 +6,9 @@ import { requireAuth } from "@/lib/auth/require-auth";
 import { createOrganizationSchema } from "@/lib/validators/organization";
 import { createOrganizationForUser } from "@/lib/services/organization";
 import { logAudit } from "@/lib/services/audit-log";
+import { getPlatformSettings } from "@/lib/services/platform-settings";
+import { sendEmail } from "@/lib/email/resend";
+import { buildNewOrganizationNotificationEmail } from "@/emails/new-organization-notification";
 import { ValidationError } from "@/lib/errors";
 
 export async function createOrganizationAction(input: unknown) {
@@ -36,6 +39,18 @@ export async function createOrganizationAction(input: unknown) {
     ipAddress: headerList.get("x-forwarded-for"),
     userAgent: headerList.get("user-agent"),
   });
+
+  const platformSettings = await getPlatformSettings();
+  if (platformSettings.notifyOnNewOrganization && platformSettings.notificationEmail) {
+    const { subject, html, text } = buildNewOrganizationNotificationEmail({
+      organizationName: parsed.data.name,
+      organizationSlug: parsed.data.slug,
+      ownerEmail: session.user.email,
+    });
+    await sendEmail({ to: platformSettings.notificationEmail, subject, html, text }).catch((error) =>
+      console.error("[notifications] failed to send new-organization email", error),
+    );
+  }
 
   redirect("/dashboard");
 }

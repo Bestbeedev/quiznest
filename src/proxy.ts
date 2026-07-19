@@ -20,6 +20,7 @@ export default function proxy(req: NextRequest) {
   }
 
   const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", nextUrl.pathname);
   if (tenantSlug) {
     requestHeaders.set("x-tenant-slug", tenantSlug);
   }

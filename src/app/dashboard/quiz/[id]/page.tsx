@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getQuiz } from "@/lib/services/quiz";
+import { getPlatformSettings } from "@/lib/services/platform-settings";
 import {
   listParticipants,
   getQuizResultsSummary,
@@ -35,10 +36,11 @@ export default async function QuizDetailPage({
     notFound();
   }
 
-  const [participants, resultsSummary, attemptsTrend] = await Promise.all([
+  const [participants, resultsSummary, attemptsTrend, platformSettings] = await Promise.all([
     listParticipants(organization.id, id),
     getQuizResultsSummary(organization.id, id),
     getQuizAttemptsTrend(organization.id, id),
+    getPlatformSettings(),
   ]);
 
   return (
@@ -65,7 +67,14 @@ export default async function QuizDetailPage({
       />
 
       <QuizDetailNav
-        questions={<QuestionsTab quizId={quiz.id} quizTitle={quiz.title} questions={quiz.questions} />}
+        questions={
+          <QuestionsTab
+            quizId={quiz.id}
+            quizTitle={quiz.title}
+            questions={quiz.questions}
+            aiGenerationEnabled={platformSettings.aiGeneration}
+          />
+        }
         participants={<ParticipantsTab quizId={quiz.id} participants={participants} />}
         results={
           <ResultsTab

@@ -34,10 +34,12 @@ export function QuestionsTab({
   quizId,
   quizTitle,
   questions,
+  aiGenerationEnabled,
 }: {
   quizId: string;
   quizTitle: string;
   questions: QuestionWithChoices[];
+  aiGenerationEnabled: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -75,7 +77,7 @@ export function QuestionsTab({
           {questions.length} question{questions.length !== 1 ? "s" : ""}
         </p>
         <div className="flex items-center gap-2">
-          <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
+          {aiGenerationEnabled && <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />}
           <AddQuestionDialog quizId={quizId} />
         </div>
       </div>

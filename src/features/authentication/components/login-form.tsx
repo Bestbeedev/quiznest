@@ -142,7 +142,15 @@ export function LoginForm() {
                 </Field>
 
                 <Field data-invalid={!!errors.password}>
-                  <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                  <div className="flex items-center justify-between">
+                    <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                    >
+                      Oublié ?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input

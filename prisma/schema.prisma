@@ -453,6 +453,32 @@ enum AuditAction {
   QUIZ_ARCHIVED
   QUIZ_DUPLICATED
   QUIZ_DELETED
+  PLATFORM_SETTINGS_UPDATED
+}
+
+// --- Platform settings ------------------------------------------------------
+
+/// Singleton row (fixed id) holding platform-wide configuration editable from
+/// /admin/settings — maintenance mode, feature flags, notification routing.
+model PlatformSettings {
+  id String @id @default("singleton")
+
+  maintenanceMode    Boolean @default(false) @map("maintenance_mode")
+  maintenanceMessage String? @map("maintenance_message")
+
+  allowSignups   Boolean @default(true) @map("allow_signups")
+  aiGeneration   Boolean @default(true) @map("ai_generation_enabled")
+  exportsEnabled Boolean @default(true) @map("exports_enabled")
+  billingEnabled Boolean @default(false) @map("billing_enabled")
+
+  notificationEmail       String?  @map("notification_email")
+  notifyOnNewOrganization Boolean  @default(false) @map("notify_on_new_organization")
+  notifyOnNewSubscription Boolean  @default(false) @map("notify_on_new_subscription")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@map("platform_settings")
 }
 
 model AuditLog {
