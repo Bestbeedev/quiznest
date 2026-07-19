@@ -52,7 +52,7 @@ export function ChartRadarLabelCustom({
             />
             <PolarAngleAxis
               dataKey={angleKey}
-              tick={({ x, y, textAnchor, index, ...props }) => {
+              tick={({ x, y, textAnchor, index, verticalAnchor, ...props }) => {
                 const entry = data[index]
                 if (!entry) return null
                 const yValue = typeof y === "number" ? y : 0
