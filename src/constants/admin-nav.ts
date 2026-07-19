@@ -12,15 +12,45 @@ import {
   Wallet,
 } from "lucide-react";
 
-export const ADMIN_NAV: { label: string; href: string; icon: LucideIcon; exact?: boolean }[] = [
-  { label: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard, exact: true },
-  { label: "Organisations", href: "/admin/organizations", icon: Building2 },
-  { label: "Utilisateurs", href: "/admin/users", icon: Users },
-  { label: "Plans", href: "/admin/plans", icon: Tag },
-  { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
-  { label: "Paiements", href: "/admin/payments", icon: Wallet },
-  { label: "Revenus", href: "/admin/revenue", icon: TrendingUp },
-  { label: "Logs", href: "/admin/logs", icon: ScrollText },
-  { label: "Activité", href: "/admin/activity", icon: Activity },
-  { label: "Paramètres", href: "/admin/settings", icon: Settings },
+export type NavItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  exact?: boolean;
+};
+
+export type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+export const ADMIN_NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Plateforme",
+    items: [
+      { label: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard, exact: true },
+      { label: "Organisations", href: "/admin/organizations", icon: Building2 },
+      { label: "Utilisateurs", href: "/admin/users", icon: Users },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { label: "Plans", href: "/admin/plans", icon: Tag },
+      { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
+      { label: "Paiements", href: "/admin/payments", icon: Wallet },
+      { label: "Revenus", href: "/admin/revenue", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Système",
+    items: [
+      { label: "Logs", href: "/admin/logs", icon: ScrollText },
+      { label: "Activité", href: "/admin/activity", icon: Activity },
+      { label: "Paramètres", href: "/admin/settings", icon: Settings },
+    ],
+  },
 ];
+
+/** Flat list kept for backward compatibility (e.g. mobile nav that doesn't need groups). */
+export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);

@@ -10,9 +10,7 @@ export function AdminShell({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <nav className="h-screen shrink-0 flex flex-col">
-        <AdminSidebar user={user} />
-      </nav>
+      <AdminSidebar user={user} />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminHeader user={user} />
