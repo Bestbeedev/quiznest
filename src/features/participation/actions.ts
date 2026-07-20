@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { startAttemptSchema, submitAttemptSchema } from "@/lib/validators/participation";
 import * as participationService from "@/lib/services/participation";
+import { getOrganizationSubscription } from "@/lib/services/billing";
+import { getOrgParticipantStats } from "@/lib/services/participation";
+import { getEffectiveParticipantLimit } from "@/lib/services/limits";
 import { AppError } from "@/lib/errors";
 
 export async function startAttemptAction(accessCode: string, input: unknown) {
@@ -15,6 +18,18 @@ export async function startAttemptAction(accessCode: string, input: unknown) {
   const parsed = startAttemptSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
+  }
+
+  const subscription = await getOrganizationSubscription(quiz.organizationId);
+  const participantLimit = await getEffectiveParticipantLimit(
+    quiz.organizationId,
+    subscription?.plan.participantLimit ?? null,
+  );
+  if (participantLimit !== null) {
+    const { totalParticipants } = await getOrgParticipantStats(quiz.organizationId);
+    if (totalParticipants >= participantLimit) {
+      return { error: "Ce quiz a atteint sa limite de participants pour le moment. Réessayez plus tard." };
+    }
   }
 
   const headerList = await headers();

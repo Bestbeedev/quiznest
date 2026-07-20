@@ -39,6 +39,8 @@ export default async function AdminPlansPage() {
     trialDays: plan.trialDays,
     availableFrom: plan.availableFrom,
     availableUntil: plan.availableUntil,
+    promoPrice: plan.promoPrice,
+    promoEndsAt: plan.promoEndsAt,
     features: plan.features,
     planFeatures: plan.planFeatures,
     subscriberCount: plan._count.subscriptions,

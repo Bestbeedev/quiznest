@@ -15,6 +15,9 @@ import { getParticipantAnswers } from "@/lib/services/participation";
 import { logAudit } from "@/lib/services/audit-log";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
 import { canUseFeature } from "@/lib/services/feature-gate";
+import { incrementFeatureUsage } from "@/lib/services/feature-usage";
+import { getOrganizationSubscription } from "@/lib/services/billing";
+import { getEffectiveQuizLimit } from "@/lib/services/limits";
 import type { AuditAction } from "@/generated/prisma/client";
 
 async function logQuizAction(
@@ -42,6 +45,17 @@ export async function createQuizAction(input: unknown) {
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
+  }
+
+  const subscription = await getOrganizationSubscription(organization.id);
+  const quizLimit = await getEffectiveQuizLimit(organization.id, subscription?.plan.quizLimit ?? null);
+  if (quizLimit !== null) {
+    const quizStats = await quizService.getQuizStats(organization.id);
+    if (quizStats.total >= quizLimit) {
+      return {
+        error: `Limite de ${quizLimit} quiz atteinte pour votre plan. Passez à un plan supérieur ou achetez des quiz supplémentaires.`,
+      };
+    }
   }
 
   const quiz = await quizService.createQuiz(organization.id, session.user.id, parsed.data);
@@ -274,6 +288,11 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
 
   const inputs = toCreateQuestionInputs(parsed.data);
   await questionService.importQuestions(organization.id, quizId, inputs);
+  // Bulk import checks the gate once up front rather than per-question, so a
+  // single large batch can slightly overshoot a monthly cap — the per-question
+  // flow (importAiQuestionAction, what the AI wizard actually uses) doesn't
+  // have this gap since it re-checks before every item.
+  await incrementFeatureUsage(organization.id, "AI_GENERATION", inputs.length);
   revalidatePath(`/dashboard/quiz/${quizId}`);
   return { success: true, count: inputs.length };
 }
@@ -304,6 +323,7 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
 
   const input = toCreateQuestionInput(parsed.data);
   const created = await questionService.addQuestion(organization.id, quizId, input);
+  await incrementFeatureUsage(organization.id, "AI_GENERATION");
   revalidatePath(`/dashboard/quiz/${quizId}`);
 
   return {

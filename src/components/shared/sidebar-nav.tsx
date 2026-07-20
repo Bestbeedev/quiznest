@@ -6,6 +6,11 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { NavGroup, NavItem } from "@/constants/admin-nav";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function NavItemLink({
   item,
@@ -18,11 +23,10 @@ function NavItemLink({
   collapsed: boolean;
   active: boolean;
 }) {
-  return (
+  const link = (
     <Link
       href={item.href}
       onClick={onNavigate}
-      title={collapsed ? item.label : undefined}
       className={cn(
         "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         collapsed && "size-11 justify-center px-0",
@@ -37,6 +41,19 @@ function NavItemLink({
       {!collapsed && item.label}
     </Link>
   );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger render={<div />}>{link}</TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8}>
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return link;
 }
 
 export function SidebarNav({

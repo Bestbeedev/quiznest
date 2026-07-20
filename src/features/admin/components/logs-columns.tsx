@@ -18,6 +18,8 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   QUIZ_DUPLICATED: "Quiz dupliqué",
   QUIZ_DELETED: "Quiz supprimé",
   PLATFORM_SETTINGS_UPDATED: "Paramètres plateforme modifiés",
+  PAYMENT_SUCCEEDED: "Paiement réussi",
+  SUBSCRIPTION_UPGRADED: "Abonnement mis à niveau",
 };
 
 export const logsColumns: ColumnDef<LogRow>[] = [

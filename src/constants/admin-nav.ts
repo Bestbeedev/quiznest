@@ -1,12 +1,16 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  Banknote,
   Building2,
   CreditCard,
+  IdCard,
   LayoutDashboard,
+  PackagePlus,
   ScrollText,
   Settings,
   Tag,
+  Ticket,
   TrendingUp,
   Users,
   Wallet,
@@ -38,8 +42,12 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Plans", href: "/admin/plans", icon: Tag },
       { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
-      { label: "Paiements", href: "/admin/payments", icon: Wallet },
+      { label: "Paiements", href: "/admin/payments", icon: Banknote },
       { label: "Revenus", href: "/admin/revenue", icon: TrendingUp },
+      { label: "Coupons", href: "/admin/coupons", icon: Ticket },
+      { label: "Wallet", href: "/admin/wallet", icon: Wallet },
+      { label: "Pay-as-you-go", href: "/admin/addons", icon: PackagePlus },
+      { label: "Pass", href: "/admin/passes", icon: IdCard },
     ],
   },
   {

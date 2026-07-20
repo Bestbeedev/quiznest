@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
 import { ensureDefaultPlans, getFreePlan } from "@/lib/services/plan";
+import { expireLapsedSubscription } from "@/lib/services/payment";
 
 export { getFreePlan };
 
@@ -19,11 +20,15 @@ export async function createDefaultSubscription(organizationId: string) {
 }
 
 /** The org's own current plan + limits — every org has one from creation
- * (`createDefaultSubscription`), so this is safe to call unconditionally. */
+ * (`createDefaultSubscription`), so this is safe to call unconditionally.
+ * Lazily reverts a lapsed paid/trial period to Free on read (no cron infra
+ * yet — same pattern as `ensureDefaultPlans`'s idempotent-on-read seeding). */
 export async function getOrganizationSubscription(organizationId: string) {
+  await expireLapsedSubscription(organizationId);
+
   return prisma.subscription.findUnique({
     where: { organizationId },
-    include: { plan: true },
+    include: { plan: { include: { planFeatures: true } } },
   });
 }
 

@@ -66,6 +66,10 @@ export default async function QuizDetailPage({
     getPlatformSettings(),
   ]);
 
+  const aiGeneration = !platformSettings.aiGeneration
+    ? { allowed: false, reason: "Fonctionnalité désactivée par la plateforme." }
+    : { allowed: true };
+
   return (
     <div className="flex flex-col gap-6">
       <Breadcrumb>
@@ -95,7 +99,7 @@ export default async function QuizDetailPage({
             quizId={quiz.id}
             quizTitle={quiz.title}
             questions={quiz.questions}
-            aiGenerationEnabled={platformSettings.aiGeneration}
+            aiGeneration={aiGeneration}
           />
         }
         participants={<ParticipantsTab quizId={quiz.id} participants={participants} />}

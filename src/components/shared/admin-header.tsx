@@ -21,17 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { initials } from "@/lib/utils";
 
 type SessionUser = { name: string; email: string };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export function AdminHeader({ user }: { user: SessionUser }) {
   const router = useRouter();
@@ -48,7 +40,6 @@ export function AdminHeader({ user }: { user: SessionUser }) {
       {/* Mobile nav sheet */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent side="left" className="flex w-72 flex-col p-0">
-          {/* Mobile: header */}
           <div className="flex items-center gap-2.5 border-b px-4 py-3.5">
             <a href="/admin" className="flex items-center gap-2">
               <div className="flex size-8 items-center justify-center rounded-xl bg-foreground text-background">
@@ -61,12 +52,10 @@ export function AdminHeader({ user }: { user: SessionUser }) {
             </a>
           </div>
 
-          {/* Mobile: nav groups */}
           <div className="flex-1 overflow-y-auto px-3 py-4">
             <SidebarNav groups={ADMIN_NAV_GROUPS} onNavigate={() => setMobileNavOpen(false)} />
           </div>
 
-          {/* Mobile: footer */}
           <div className="border-t p-4">
             <div className="flex items-center gap-2.5 px-1">
               <Avatar className="size-8">
@@ -130,7 +119,7 @@ export function AdminHeader({ user }: { user: SessionUser }) {
         <Menu className="size-5" />
       </Button>
 
-      {/* Desktop: page context */}
+      {/* Desktop: badge */}
       <div className="hidden items-center gap-2.5 md:flex">
         <Badge variant="secondary" className="gap-1.5 rounded-lg px-2 py-0.5 text-[11px]">
           <ShieldAlert className="size-3" />
@@ -139,7 +128,7 @@ export function AdminHeader({ user }: { user: SessionUser }) {
       </div>
 
       {/* Right side */}
-      <div className="ml-auto flex items-center gap-1.5">
+      <div className="ml-auto flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
@@ -160,25 +149,6 @@ export function AdminHeader({ user }: { user: SessionUser }) {
         <div className="mx-1 h-5 w-px bg-border" />
 
         <ThemeToggle />
-
-        <div className="mx-1 h-5 w-px bg-border" />
-
-        {/* User dropdown-style button */}
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted"
-          onClick={() => router.push("/admin/settings")}
-        >
-          <Avatar className="size-7">
-            <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
-              {initials(user.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="hidden flex-col text-left sm:flex">
-            <span className="text-xs font-medium leading-tight">{user.name}</span>
-            <span className="text-[10px] text-muted-foreground">{user.email}</span>
-          </div>
-        </button>
 
         <div className="mx-1 h-5 w-px bg-border" />
 

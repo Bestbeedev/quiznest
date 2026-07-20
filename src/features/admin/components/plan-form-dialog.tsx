@@ -49,6 +49,8 @@ export type PlanForEdit = {
   trialDays: number | null;
   availableFrom: Date | string | null;
   availableUntil: Date | string | null;
+  promoPrice: number | null;
+  promoEndsAt: Date | string | null;
   features: string[] | unknown;
   planFeatures: { feature: FeatureKey; enabled: boolean; limit: number | null }[];
 };
@@ -91,6 +93,8 @@ function defaultValuesFor(plan?: PlanForEdit): PlanInput {
     trialDays: plan?.trialDays ?? null,
     availableFrom: plan?.availableFrom ? new Date(plan.availableFrom) : null,
     availableUntil: plan?.availableUntil ? new Date(plan.availableUntil) : null,
+    promoPrice: plan?.promoPrice ?? null,
+    promoEndsAt: plan?.promoEndsAt ? new Date(plan.promoEndsAt) : null,
     marketingFeatures: Array.isArray(plan?.features) ? (plan.features as string[]) : [],
     features: ALL_FEATURES.map((feature) => ({
       feature,
@@ -306,6 +310,24 @@ export function PlanFormDialog({ plan, trigger }: { plan?: PlanForEdit; trigger?
                   type="date"
                   defaultValue={toDateInputValue(plan?.availableUntil)}
                   onChange={(e) => setValue("availableUntil", e.target.value ? new Date(e.target.value) : null)}
+                />
+              </Field>
+            </Field>
+
+            <Separator />
+            <p className="text-sm font-medium">Promotion (prix auto-appliqué, sans code)</p>
+            <Field orientation="responsive">
+              <Field>
+                <FieldLabel htmlFor="plan-promo-price">Prix promo (vide = pas de promo)</FieldLabel>
+                <Input id="plan-promo-price" type="number" min={0} {...register("promoPrice")} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="plan-promo-ends">Fin de la promo (optionnel)</FieldLabel>
+                <Input
+                  id="plan-promo-ends"
+                  type="date"
+                  defaultValue={toDateInputValue(plan?.promoEndsAt)}
+                  onChange={(e) => setValue("promoEndsAt", e.target.value ? new Date(e.target.value) : null)}
                 />
               </Field>
             </Field>

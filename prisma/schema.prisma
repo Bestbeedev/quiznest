@@ -69,6 +69,12 @@ model Organization {
 
   subscription Subscription?
   payments     Payment[]
+  invoices     Invoice[]
+  featureUsage FeatureUsage[]
+  wallet             Wallet?
+  couponRedemptions  CouponRedemption[]
+  addOnPurchases     OrganizationAddOn[]
+  passes             OrganizationPass[]
   auditLogs    AuditLog[]
   invitations  Invitation[]
   apiKeys      ApiKey[]
@@ -408,6 +414,13 @@ model Plan {
   availableFrom  DateTime? @map("available_from")
   availableUntil DateTime? @map("available_until")
 
+  /// Auto-applied promotional pricing (no code required) — when set and not
+  /// expired, checkout charges `promoPrice` instead of `price` and pricing
+  /// surfaces show a strikethrough. Distinct from `Coupon`, which requires
+  /// the buyer to enter a code.
+  promoPrice  Int?      @map("promo_price")
+  promoEndsAt DateTime? @map("promo_ends_at")
+
   planFeatures  PlanFeature[]
   subscriptions Subscription[]
 
@@ -456,6 +469,23 @@ model PlanFeature {
   @@map("plan_features")
 }
 
+/// Consumption counter against a `PlanFeature.limit` — one row per
+/// organization/feature/calendar-month, incremented on use. A new month
+/// starts a new row (no cron reset needed) via `getFeatureUsage`.
+model FeatureUsage {
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  feature        FeatureKey
+  /// Calendar-month bucket, e.g. "2026-07".
+  period         String
+  count          Int        @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, feature, period])
+  @@map("feature_usage")
+}
+
 model Subscription {
   id             String @id @default(cuid())
   organizationId String @unique @map("organization_id")
@@ -491,14 +521,264 @@ model Payment {
   reference String?       @unique
   status    PaymentStatus @default(PENDING)
 
+  /// Intent data for what this payment is for, e.g. `{ "targetPlanId": "..." }`
+  /// for a plan upgrade — kept generic so wallet top-ups / pass / PAYG
+  /// purchases can reuse this same Payment row later without a schema change.
+  metadata Json?
+
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  invoice      Invoice?
+  walletTopUp       WalletTransaction? @relation("WalletTopUpPayment")
+  couponRedemption  CouponRedemption?
+  addOnPurchase     OrganizationAddOn?
+  passPurchase      OrganizationPass?
 
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([organizationId, status])
   @@index([createdAt])
   @@map("payments")
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String        @map("organization_id")
+  paymentId      String        @unique @map("payment_id")
+  number         String        @unique
+  amount         Int
+  currency       String
+  status         PaymentStatus
+  issuedAt       DateTime      @default(now()) @map("issued_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payment      Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("invoices")
+}
+
+enum WebhookProvider {
+  FEDAPAY
+}
+
+/// Generic webhook engine log (Prompt-Archi.md "WEBHOOKS") — every inbound
+/// provider event is recorded here before/regardless of whether it's acted
+/// on, so nothing is silently lost and events are replay-debuggable.
+model WebhookEvent {
+  id        String          @id @default(cuid())
+  provider  WebhookProvider
+  eventType String          @map("event_type")
+  reference String?
+  payload   Json
+  processed Boolean         @default(false)
+  error     String?
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@index([provider, reference])
+  @@map("webhook_events")
+}
+
+// --- Coupons ----------------------------------------------------------------
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+/// Buyer-entered discount code — auto-applied `Plan.promoPrice` is a separate,
+/// simpler mechanism (see Plan model) for when no code should be required.
+model Coupon {
+  id       String     @id @default(cuid())
+  code     String     @unique
+  type     CouponType
+  /// Percentage (1-100) for PERCENTAGE, whole-unit amount for FIXED.
+  value    Int
+  currency String? // only meaningful for FIXED
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  maxRedemptions  Int?
+  redemptionCount Int  @default(0)
+  isActive        Boolean @default(true)
+
+  /// Empty = applies to every plan.
+  planIds String[] @default([])
+
+  redemptions CouponRedemption[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id             String @id @default(cuid())
+  couponId       String @map("coupon_id")
+  organizationId String @map("organization_id")
+  paymentId      String @unique @map("payment_id")
+
+  coupon       Coupon       @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payment      Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([couponId])
+  @@map("coupon_redemptions")
+}
+
+// --- Wallet -------------------------------------------------------------
+
+enum WalletTransactionType {
+  TOPUP
+  SPEND
+  REFUND
+}
+
+/// Independent of subscriptions (Prompt-Archi.md "WALLET") — a standing
+/// credit balance an org can spend on AI/exports/participants/certificates.
+model Wallet {
+  id             String   @id @default(cuid())
+  organizationId String   @unique @map("organization_id")
+  balance        Int      @default(0)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id       String                @id @default(cuid())
+  walletId String                @map("wallet_id")
+  type     WalletTransactionType
+  /// Always positive — direction is carried by `type`.
+  amount   Int
+  reason   String
+  paymentId String?              @unique @map("payment_id")
+
+  wallet  Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  payment Payment? @relation("WalletTopUpPayment", fields: [paymentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([walletId, createdAt])
+  @@map("wallet_transactions")
+}
+
+/// Super-admin-managed catalog of purchasable credit bundles.
+model CreditPack {
+  id           String  @id @default(cuid())
+  name         String
+  price        Int
+  currency     String  @default("XOF")
+  credits      Int
+  isActive     Boolean @default(true)
+  displayOrder Int     @default(0) @map("display_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("credit_packs")
+}
+
+// --- Pay-as-you-go --------------------------------------------------------
+
+enum AddOnEffect {
+  EXTRA_PARTICIPANTS
+  EXTRA_QUIZZES
+  EXTRA_QUESTIONS
+  EXTRA_AI_GENERATIONS
+  EXPORT_UNLOCK
+  CERTIFICATE_UNLOCK
+}
+
+/// Super-admin-managed one-time purchase catalog (Prompt-Archi.md "PAY AS YOU
+/// GO") — layered on top of a plan rather than replacing it.
+model AddOnProduct {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Int
+  currency    String      @default("XOF")
+  effect      AddOnEffect
+  /// Amount granted per purchase (e.g. 100 for "+100 participants"); null for
+  /// a one-off unlock effect like EXPORT_UNLOCK that isn't a quantity.
+  amount       Int?
+  isActive     Boolean @default(true)
+  isPromoted   Boolean @default(false)
+  displayOrder Int     @default(0) @map("display_order")
+
+  purchases OrganizationAddOn[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("addon_products")
+}
+
+model OrganizationAddOn {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+  productId      String @map("product_id")
+  /// Remaining consumable amount for metered add-ons (e.g. AI packs);
+  /// null for non-consumable unlocks or non-metered quantity boosts.
+  remaining Int?
+  paymentId String? @unique @map("payment_id")
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      AddOnProduct  @relation(fields: [productId], references: [id])
+  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, productId])
+  @@map("organization_addons")
+}
+
+// --- Pass -----------------------------------------------------------------
+
+/// Super-admin-managed time-boxed feature bundle (Prompt-Archi.md "PASS").
+model Pass {
+  id           String       @id @default(cuid())
+  name         String
+  description  String?
+  price        Int
+  currency     String       @default("XOF")
+  durationDays Int          @map("duration_days")
+  features     FeatureKey[] @default([])
+  isActive     Boolean      @default(true)
+  isPromoted   Boolean      @default(false)
+  displayOrder Int          @default(0) @map("display_order")
+
+  purchases OrganizationPass[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("passes")
+}
+
+model OrganizationPass {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  passId         String   @map("pass_id")
+  expiresAt      DateTime @map("expires_at")
+  paymentId      String?  @unique @map("payment_id")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  pass         Pass         @relation(fields: [passId], references: [id])
+  payment      Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, expiresAt])
+  @@map("organization_passes")
 }
 
 // --- Audit log ------------------------------------------------------------
@@ -511,6 +791,8 @@ enum AuditAction {
   QUIZ_DUPLICATED
   QUIZ_DELETED
   PLATFORM_SETTINGS_UPDATED
+  PAYMENT_SUCCEEDED
+  SUBSCRIPTION_UPGRADED
 }
 
 // --- Platform settings ------------------------------------------------------

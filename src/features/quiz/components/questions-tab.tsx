@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { deleteQuestionAction } from "@/features/quiz/actions";
 import { AddQuestionDialog, type QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
 import { AiGenerateDialog } from "@/features/quiz/components/ai-generate-dialog";
+import { FeatureLockNotice } from "@/components/shared/feature-lock";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,12 +35,12 @@ export function QuestionsTab({
   quizId,
   quizTitle,
   questions,
-  aiGenerationEnabled,
+  aiGeneration,
 }: {
   quizId: string;
   quizTitle: string;
   questions: QuestionWithChoices[];
-  aiGenerationEnabled: boolean;
+  aiGeneration: { allowed: boolean; reason?: string };
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -77,7 +78,11 @@ export function QuestionsTab({
           {questions.length} question{questions.length !== 1 ? "s" : ""}
         </p>
         <div className="flex items-center gap-2">
-          {aiGenerationEnabled && <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />}
+          {aiGeneration.allowed ? (
+            <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
+          ) : (
+            <FeatureLockNotice label="Générer avec l'IA" reason={aiGeneration.reason} />
+          )}
           <AddQuestionDialog quizId={quizId} />
         </div>
       </div>

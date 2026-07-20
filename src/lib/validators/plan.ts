@@ -31,6 +31,8 @@ export const planSchema = z.object({
   trialDays: z.coerce.number().int().min(0).nullable().optional(),
   availableFrom: z.coerce.date().nullable().optional(),
   availableUntil: z.coerce.date().nullable().optional(),
+  promoPrice: z.coerce.number().int().min(0).nullable().optional(),
+  promoEndsAt: z.coerce.date().nullable().optional(),
   marketingFeatures: z.array(z.string().min(1).max(150)).max(20).default([]),
   features: z.array(planFeatureInputSchema).default([]),
 });

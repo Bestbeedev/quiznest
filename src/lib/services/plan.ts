@@ -244,7 +244,18 @@ function planScalarData(input: PlanInput) {
     trialDays: input.trialDays ?? null,
     availableFrom: input.availableFrom ?? null,
     availableUntil: input.availableUntil ?? null,
+    promoPrice: input.promoPrice ?? null,
+    promoEndsAt: input.promoEndsAt ?? null,
   };
+}
+
+/** The price to actually charge right now — the promo price when one is set
+ * and hasn't expired, the regular price otherwise. */
+export function effectivePlanPrice(plan: { price: number | null; promoPrice: number | null; promoEndsAt: Date | null }) {
+  if (plan.promoPrice != null && (!plan.promoEndsAt || plan.promoEndsAt > new Date())) {
+    return plan.promoPrice;
+  }
+  return plan.price;
 }
 
 export async function createPlan(input: PlanInput) {

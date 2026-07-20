@@ -15,9 +15,7 @@ export function DashboardShell({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <nav className="h-screen shrink-0 flex flex-col">
-        <DashboardSidebar user={user} planName={planName} />
-      </nav>
+      <DashboardSidebar user={user} planName={planName} />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <DashboardHeader user={user} />

@@ -1,59 +1,26 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronsLeft, ChevronsRight, ShieldAlert } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, LogOut, ShieldAlert } from "lucide-react";
 
 import { signOut } from "@/lib/auth/client";
 import { SidebarNav } from "@/components/shared/sidebar-nav";
 import { ADMIN_NAV_GROUPS } from "@/constants/admin-nav";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
+import { cn, initials } from "@/lib/utils";
 
 const STORAGE_KEY = "quiznest:admin-sidebar-collapsed";
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-let collapsedListeners: Array<() => void> = [];
-
-function subscribeCollapsed(callback: () => void) {
-  collapsedListeners.push(callback);
-  return () => {
-    collapsedListeners = collapsedListeners.filter((listener) => listener !== callback);
-  };
-}
-
-function getCollapsedSnapshot() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === null ? true : stored === "true";
-}
-
-function getCollapsedServerSnapshot() {
-  return true;
-}
-
-function setCollapsedStore(value: boolean) {
-  localStorage.setItem(STORAGE_KEY, String(value));
-  collapsedListeners.forEach((listener) => listener());
-}
-
 export function AdminSidebar({ user }: { user: { name: string; email: string } }) {
   const router = useRouter();
-  const collapsed = useSyncExternalStore(
-    subscribeCollapsed,
-    getCollapsedSnapshot,
-    getCollapsedServerSnapshot,
-  );
-
-  const toggle = () => setCollapsedStore(!collapsed);
+  const { collapsed, toggle } = useSidebarCollapsed(STORAGE_KEY);
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,8 +38,8 @@ export function AdminSidebar({ user }: { user: { name: string; email: string } }
       {/* Header */}
       <div
         className={cn(
-          "flex items-center border-b",
-          collapsed ? "h-14 flex-col gap-2 py-2" : "h-14 justify-between px-4",
+          "flex h-14 shrink-0 items-center border-b",
+          collapsed ? "justify-center px-2" : "justify-between px-4",
         )}
       >
         <a
@@ -86,14 +53,17 @@ export function AdminSidebar({ user }: { user: { name: string; email: string } }
           <ShieldAlert className="size-4.5" />
           {!collapsed && <span className="text-sm font-bold tracking-tight">Admin</span>}
         </a>
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label={collapsed ? "Déplier la navigation" : "Replier la navigation"}
-          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          {collapsed ? <ChevronsRight className="size-4" /> : <ChevronsLeft className="size-4" />}
-        </button>
+
+        {!collapsed && (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label="Replier la navigation"
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ChevronsLeft className="size-4" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -101,43 +71,68 @@ export function AdminSidebar({ user }: { user: { name: string; email: string } }
         <SidebarNav groups={ADMIN_NAV_GROUPS} collapsed={collapsed} />
       </div>
 
-      {/* Footer: User info */}
+      {/* Footer: User info + toggle */}
       <div
         className={cn(
-          "flex flex-col gap-2 border-t py-3",
+          "flex shrink-0 flex-col gap-2 border-t py-3",
           collapsed ? "items-center px-2" : "px-3",
         )}
       >
         {collapsed ? (
           <>
-            <Avatar className="size-9" title={`${user.name} — ${user.email}`}>
-              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                {initials(user.name)}
-              </AvatarFallback>
-            </Avatar>
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Déconnexion"
-              aria-label="Déconnexion"
-              className="size-9 rounded-lg text-muted-foreground hover:text-destructive"
-              onClick={handleSignOut}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-4"
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Avatar className="size-9 cursor-default">
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                      {initials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                }
+              />
+              <TooltipContent side="right" sideOffset={8}>
+                {user.name}
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Déconnexion"
+                    className="size-9 rounded-lg text-muted-foreground hover:text-destructive"
+                    onClick={handleSignOut}
+                  />
+                }
               >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </Button>
+                <LogOut className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                Déconnexion
+              </TooltipContent>
+            </Tooltip>
+
+            <div className="h-px w-6 bg-border" />
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={toggle}
+                    aria-label="Déplier la navigation"
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  />
+                }
+              >
+                <ChevronsRight className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                Déplier
+              </TooltipContent>
+            </Tooltip>
           </>
         ) : (
           <div className="flex flex-col gap-1.5">
@@ -185,20 +180,7 @@ export function AdminSidebar({ user }: { user: { name: string; email: string } }
                 aria-label="Déconnexion"
                 onClick={handleSignOut}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="size-3.5"
-                >
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
+                <LogOut className="size-3.5" />
               </Button>
             </div>
           </div>
