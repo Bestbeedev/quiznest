@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
@@ -99,6 +100,7 @@ export default async function RootLayout({
             {gate.blocked ? <MaintenancePage message={gate.message} /> : children}
             <Toaster position="top-right" />
           </TooltipProvider>
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
