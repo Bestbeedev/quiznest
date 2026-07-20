@@ -27,7 +27,7 @@ export function ShopCard({
   actionLabel?: string;
 }) {
   return (
-    <Card className="flex flex-col">
+    <Card className="flex h-fit flex-col">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">{title}</CardTitle>

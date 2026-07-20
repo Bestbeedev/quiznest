@@ -6,6 +6,7 @@ import { requireSuperAdmin } from "@/lib/auth/require-super-admin";
 import { updatePlatformSettingsSchema } from "@/lib/validators/platform-settings";
 import { updatePlatformSettings } from "@/lib/services/platform-settings";
 import { logAudit } from "@/lib/services/audit-log";
+import { recoverPayment } from "@/lib/services/payment";
 
 export async function updatePlatformSettingsAction(input: unknown) {
   const session = await requireSuperAdmin();
@@ -29,4 +30,12 @@ export async function updatePlatformSettingsAction(input: unknown) {
   revalidatePath("/admin/settings");
   revalidatePath("/");
   return { success: true as const };
+}
+
+export async function recoverPaymentAction(paymentId: string) {
+  await requireSuperAdmin();
+  const result = await recoverPayment(paymentId);
+  revalidatePath("/admin");
+  revalidatePath("/dashboard/billing");
+  return result;
 }

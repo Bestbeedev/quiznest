@@ -24,10 +24,14 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 import { ROLE_LABELS, type MemberRole } from "@/constants/roles";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
+import { Lock, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const INVITABLE_ROLES: MemberRole[] = ["ADMIN", "MANAGER", "EDITOR", "VIEWER"];
 
-export function InviteMemberDialog() {
+export function InviteMemberDialog({ teamCheck }: { teamCheck?: FeatureCheckUI }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -43,6 +47,8 @@ export function InviteMemberDialog() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<InviteMemberInput>({ defaultValues: { role: "VIEWER" } });
+
+  const isGated = teamCheck && !teamCheck.allowed;
 
   const close = () => {
     setOpen(false);
@@ -83,10 +89,24 @@ export function InviteMemberDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
-      <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 h-8 text-sm font-medium text-primary-foreground hover:bg-primary/80">
-        <UserPlus className="size-4" />
-        Inviter
-      </DialogTrigger>
+      {isGated ? (
+        <div className="flex flex-col gap-1.5">
+          <Button variant="outline" disabled className="gap-1.5 text-muted-foreground">
+            <Lock className="size-4" />
+            Inviter
+          </Button>
+          <p className="text-xs text-muted-foreground">{teamCheck?.reason ?? "Équipes multiples non incluses dans votre plan."}</p>
+          <Link href="/dashboard/billing" className={cn("inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline")}>
+            <ArrowUpRight className="size-3" />
+            Débloquer
+          </Link>
+        </div>
+      ) : (
+        <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 h-8 text-sm font-medium text-primary-foreground hover:bg-primary/80">
+          <UserPlus className="size-4" />
+          Inviter
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Inviter un membre</DialogTitle>

@@ -4,6 +4,7 @@ import { Sparkles, Zap, FileText, Copy, CheckCircle2 } from "lucide-react";
 
 import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
+import { canUseFeature } from "@/lib/services/feature-gate";
 import { listQuizzes } from "@/lib/services/quiz";
 import { getOrganizationSubscription } from "@/lib/services/billing";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
+import type { FeatureKey } from "@/generated/prisma/client";
 
 export const metadata: Metadata = buildMetadata({
   title: "Génération IA de Questions",
@@ -22,13 +24,15 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function AiPage() {
   const organization = await requireActiveOrganization();
-  const [quizzes, subscription] = await Promise.all([
+  const [quizzes, subscription, aiCheck] = await Promise.all([
     listQuizzes(organization.id),
     getOrganizationSubscription(organization.id),
+    canUseFeature(organization.id, "AI_GENERATION" as FeatureKey),
   ]);
 
   const plan = subscription?.plan;
   const isFree = plan?.slug === "free";
+  const isGated = !aiCheck.allowed;
 
   return (
     <div className="flex flex-col gap-8">
@@ -37,7 +41,7 @@ export default async function AiPage() {
         subtitle="Générez des questions de quiz en quelques secondes avec l'intelligence artificielle."
       />
 
-      {isFree && (
+      {isGated && (
         <UpgradeBanner
           title="Débloquez l'IA Premium"
           description="Générez des questions automatiquement sans quitter la plateforme. Plus besoin de copier-coller dans ChatGPT."

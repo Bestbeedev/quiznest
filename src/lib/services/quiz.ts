@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db/client";
 import { NotFoundError } from "@/lib/errors";
 import { slugify } from "@/lib/utils/slug";
-import type { CreateQuizInput, UpdateQuizSettingsInput } from "@/lib/validators/quiz";
+import type { CreateQuizInput, UpdateQuizSettingsInput, UpdateQuizTitleInput } from "@/lib/validators/quiz";
 
 function generateAccessCode(): string {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -155,17 +155,33 @@ export async function getQuiz(organizationId: string, quizId: string) {
   });
 }
 
+export async function updateQuizTitle(
+  organizationId: string,
+  quizId: string,
+  input: UpdateQuizTitleInput,
+) {
+  await requireOwnedQuiz(organizationId, quizId);
+  const slug = await uniqueQuizSlug(organizationId, input.title);
+
+  return prisma.quiz.update({
+    where: { id: quizId },
+    data: { title: input.title, slug },
+  });
+}
+
 export async function updateQuizSettings(
   organizationId: string,
   quizId: string,
   input: UpdateQuizSettingsInput,
 ) {
   await requireOwnedQuiz(organizationId, quizId);
+  const slug = await uniqueQuizSlug(organizationId, input.title);
 
   return prisma.quiz.update({
     where: { id: quizId },
     data: {
       title: input.title,
+      slug,
       description: input.description || null,
       timeLimit: input.timeLimit ?? null,
       passingScore: input.passingScore,

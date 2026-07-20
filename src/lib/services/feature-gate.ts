@@ -22,9 +22,41 @@ export type FeatureCheck = {
    * when an active Pass is what's actually granting access — useful for UI
    * copy ("Inclus via votre Pass" vs "Inclus dans votre plan"). */
   source?: "plan" | "pass";
+  /** Rich, user-facing message explaining the denial with actionable guidance.
+   * Always includes quota details and what the user can do to unlock the feature. */
+  message?: string;
+  /** Which CTA to suggest: "upgrade" = upgrade plan, "pass" = buy a pass,
+   * "wallet" = use credits, or "none" when the feature is simply unavailable. */
+  cta?: "upgrade" | "pass" | "wallet" | "none";
 };
 
 const INACTIVE_STATUSES = new Set(["CANCELED", "PAST_DUE"]);
+
+/** Human-readable French labels for every FeatureKey — used in user-facing
+ * messages so we never expose raw enum values. */
+const FEATURE_LABELS: Record<FeatureKey, string> = {
+  AI_GENERATION: "Génération IA",
+  AI_IMPORT: "Import IA",
+  QUESTION_BANK: "Banque de questions",
+  CERTIFICATES: "Certificats",
+  EXPORT_PDF: "Export PDF",
+  EXPORT_EXCEL: "Export Excel",
+  EXPORT_CSV: "Export CSV",
+  ADVANCED_ANALYTICS: "Analyses avancées",
+  CUSTOM_BRANDING: "Personnalisation de marque",
+  CUSTOM_DOMAIN: "Domaine personnalisé",
+  WEBHOOKS: "Webhooks",
+  API_ACCESS: "Accès API",
+  MULTI_TEAM: "Équipes multiples",
+  LIVE_MONITORING: "Suivi en temps réel",
+  EMAIL_NOTIFICATIONS: "Notifications email",
+  SMS_NOTIFICATIONS: "Notifications SMS",
+  WHITE_LABEL: "White-label",
+};
+
+function featureLabel(feature: FeatureKey): string {
+  return FEATURE_LABELS[feature] ?? feature;
+}
 
 /**
  * Central authorization point for every plan-gated feature — every UI,
@@ -50,10 +82,22 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
   });
 
   if (!subscription) {
-    return { allowed: false, reason: "Aucun abonnement actif.", source: "plan" };
+    return {
+      allowed: false,
+      reason: "Aucun abonnement actif.",
+      message: "Aucun abonnement actif trouvé pour cette organisation. Souscrivez à un plan pour débloquer les fonctionnalités.",
+      cta: "upgrade",
+      source: "plan",
+    };
   }
   if (INACTIVE_STATUSES.has(subscription.status)) {
-    return { allowed: false, reason: "Votre abonnement n'est plus actif.", source: "plan" };
+    return {
+      allowed: false,
+      reason: "Votre abonnement n'est plus actif.",
+      message: `Votre abonnement "${subscription.plan.name}" est en statut ${subscription.status === "CANCELED" ? "annulé" : "en retard de paiement"}. Mettez à jour votre paiement ou souscrivez à un nouveau plan.`,
+      cta: "upgrade",
+      source: "plan",
+    };
   }
 
   const grant = subscription.plan.planFeatures[0];
@@ -61,6 +105,8 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
     return {
       allowed: false,
       reason: `Cette fonctionnalité n'est pas incluse dans le plan ${subscription.plan.name}.`,
+      message: `La fonctionnalité « ${featureLabel(feature)} » n'est pas incluse dans votre plan ${subscription.plan.name}. Passez au plan supérieur ou achetez un Pass pour y accéder.`,
+      cta: "upgrade",
       source: "plan",
     };
   }
@@ -77,12 +123,15 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
   const remaining = Math.max(effectiveLimit - used, 0);
 
   if (remaining <= 0) {
+    const hasPassOption = !passFeatures.has(feature);
     return {
       allowed: false,
       reason: `Quota mensuel atteint (${effectiveLimit}) pour cette fonctionnalité sur le plan ${subscription.plan.name}.`,
+      message: `Quota mensuel atteint : ${used}/${effectiveLimit} utilisations sur le plan ${subscription.plan.name}. ${hasPassOption ? "Achetez un Pack IA pour continuer, " : ""}upgradez votre plan pour un quota plus élevé, ou attendez le prochain mois.`,
       limit: effectiveLimit,
       used,
       remaining: 0,
+      cta: addOnEffect ? "pass" : "upgrade",
       source: "plan",
     };
   }

@@ -20,8 +20,13 @@ export const metadata: Metadata = buildMetadata({
   ],
 });
 
-export default async function RegisterPage() {
-  await redirectIfAuthenticated();
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  await redirectIfAuthenticated(callbackUrl);
   const settings = await getPlatformSettings();
 
   if (!settings.allowSignups) {

@@ -73,7 +73,8 @@ export function RegisterForm() {
       return;
     }
 
-    router.push(searchParams.get("callbackUrl") ?? "/dashboard");
+    const callbackUrl = searchParams.get("callbackUrl");
+    router.push(callbackUrl ? `/onboarding/organization?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/onboarding/organization");
     router.refresh();
   });
 

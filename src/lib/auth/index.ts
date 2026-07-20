@@ -32,6 +32,11 @@ export const auth = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://*.loca.lt",
+    "https://*.ngrok-free.app",
+  ],
   plugins: [
     dash(),
     // Must stay last: syncs Set-Cookie headers from auth.api.* calls into

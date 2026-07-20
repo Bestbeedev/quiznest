@@ -13,9 +13,12 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-fedapay-signature");
 
+  console.log("[webhook:fedapay] Received event", { hasSignature: !!signature, bodyLength: rawBody.length });
+
   const event = await paymentProvider.verifyWebhook(rawBody, signature);
 
   if (!event) {
+    console.log("[webhook:fedapay] Unverified event — FEDAPAY_WEBHOOK_SECRET missing or signature invalid");
     await prisma.webhookEvent.create({
       data: {
         provider: "FEDAPAY",
@@ -25,6 +28,20 @@ export async function POST(req: NextRequest) {
         error: "Signature invalide ou FEDAPAY_WEBHOOK_SECRET non configurée.",
       },
     });
+    return NextResponse.json({ received: true });
+  }
+
+  // Deduplication: skip if this exact event was already processed successfully
+  const existingEvent = await prisma.webhookEvent.findFirst({
+    where: {
+      provider: "FEDAPAY",
+      eventType: event.type,
+      reference: event.providerReference,
+      processed: true,
+    },
+  });
+
+  if (existingEvent) {
     return NextResponse.json({ received: true });
   }
 
@@ -40,6 +57,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await applyVerifiedPayment(event);
+    console.log("[webhook:fedapay] applyVerifiedPayment result", result, { status: event.status, type: event.type, ref: event.providerReference });
     await prisma.webhookEvent.update({
       where: { id: webhookEvent.id },
       data: { processed: result.applied },

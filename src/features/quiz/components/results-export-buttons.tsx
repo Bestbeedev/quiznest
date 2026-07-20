@@ -4,6 +4,7 @@ import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 
 import { ExportMenu } from "@/components/shared/export-menu";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
 import { formatDuration } from "@/lib/format";
 import { downloadBlob, toCsvValue } from "@/lib/export-utils";
 import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
@@ -19,6 +20,7 @@ export function ResultsExportButtons({
   passRate,
   averageTimeSpent,
   questionStats,
+  exportChecks,
 }: {
   quizTitle: string;
   participants: Participant[];
@@ -27,7 +29,12 @@ export function ResultsExportButtons({
   passRate: number | null;
   averageTimeSpent: number | null;
   questionStats: QuestionStat[];
+  exportChecks?: { csv?: FeatureCheckUI; pdf?: FeatureCheckUI };
 }) {
+  const disabledFormats: Record<string, string> = {};
+  if (exportChecks?.csv && !exportChecks.csv.allowed) disabledFormats.csv = exportChecks.csv.reason ?? "Fonctionnalité non incluse dans votre plan.";
+  if (exportChecks?.pdf && !exportChecks.pdf.allowed) disabledFormats.pdf = exportChecks.pdf.reason ?? "Fonctionnalité non incluse dans votre plan.";
+
   const exportCsv = () => {
     const header = ["Nom", "Email", "Statut", "Score (%)", "Résultat", "Démarré le", "Terminé le"];
     const rows = participants.map((p) => [
@@ -76,5 +83,5 @@ export function ResultsExportButtons({
     doc.save(`${quizTitle}-rapport.pdf`);
   };
 
-  return <ExportMenu formats={["csv", "pdf"]} onExport={(f) => (f === "csv" ? exportCsv() : exportPdf())} />;
+  return <ExportMenu formats={["csv", "pdf"]} disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined} onExport={(f) => (f === "csv" ? exportCsv() : exportPdf())} />;
 }

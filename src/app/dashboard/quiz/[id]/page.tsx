@@ -5,11 +5,13 @@ import { notFound } from "next/navigation";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getQuiz } from "@/lib/services/quiz";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
+import { canUseFeature } from "@/lib/services/feature-gate";
 import {
   listParticipants,
   getQuizResultsSummary,
   getQuizAttemptsTrend,
 } from "@/lib/services/participation";
+import type { FeatureKey } from "@/generated/prisma/client";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -59,16 +61,22 @@ export default async function QuizDetailPage({
     notFound();
   }
 
-  const [participants, resultsSummary, attemptsTrend, platformSettings] = await Promise.all([
+  const [participants, resultsSummary, attemptsTrend, platformSettings, csvCheck, excelCheck, pdfCheck, aiCheck] = await Promise.all([
     listParticipants(organization.id, id),
     getQuizResultsSummary(organization.id, id),
     getQuizAttemptsTrend(organization.id, id),
     getPlatformSettings(),
+    canUseFeature(organization.id, "EXPORT_CSV" as FeatureKey),
+    canUseFeature(organization.id, "EXPORT_EXCEL" as FeatureKey),
+    canUseFeature(organization.id, "EXPORT_PDF" as FeatureKey),
+    canUseFeature(organization.id, "AI_GENERATION" as FeatureKey),
   ]);
 
   const aiGeneration = !platformSettings.aiGeneration
-    ? { allowed: false, reason: "Fonctionnalité désactivée par la plateforme." }
-    : { allowed: true };
+    ? { allowed: false, reason: "Fonctionnalité désactivée par la plateforme.", cta: "none" as const }
+    : aiCheck.allowed
+      ? { allowed: true as const }
+      : { allowed: false, reason: aiCheck.reason, cta: aiCheck.cta, limit: aiCheck.limit, used: aiCheck.used, remaining: aiCheck.remaining };
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,6 +116,7 @@ export default async function QuizDetailPage({
             quizTitle={quiz.title}
             participants={participants}
             attemptsTrend={attemptsTrend}
+            exportChecks={{ csv: csvCheck, excel: excelCheck, pdf: pdfCheck }}
             {...resultsSummary}
           />
         }

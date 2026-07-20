@@ -3,12 +3,13 @@ import { prisma } from "@/lib/db/client";
 import { paymentProvider } from "@/lib/payments/provider";
 import type { VerifiedWebhookEvent } from "@/lib/payments/types";
 import { getPlanById, effectivePlanPrice } from "@/lib/services/plan";
-import { validateCoupon, redeemCoupon } from "@/lib/services/coupon";
-import { getCreditPackById, topUpWallet } from "@/lib/services/wallet";
-import { getAddOnProductById, grantAddOnPurchase } from "@/lib/services/addon";
-import { getPassById, grantPassPurchase } from "@/lib/services/pass";
+import { validateCoupon } from "@/lib/services/coupon";
+import { getCreditPackById } from "@/lib/services/wallet";
+import { getAddOnProductById } from "@/lib/services/addon";
+import { getPassById } from "@/lib/services/pass";
 import { logAudit } from "@/lib/services/audit-log";
 import { ValidationError } from "@/lib/errors";
+import { METERED_ADDON_EFFECTS } from "@/constants/addon-effects";
 import type { PlanInterval } from "@/generated/prisma/client";
 
 type CheckoutCustomer = { email: string; firstName?: string; lastName?: string };
@@ -24,12 +25,6 @@ function addInterval(date: Date, interval: PlanInterval) {
   if (interval === "YEAR") next.setFullYear(next.getFullYear() + 1);
   else next.setMonth(next.getMonth() + 1);
   return next;
-}
-
-async function nextInvoiceNumber(tx: typeof prisma) {
-  const year = new Date().getFullYear();
-  const count = await tx.invoice.count({ where: { number: { startsWith: `INV-${year}-` } } });
-  return `INV-${year}-${String(count + 1).padStart(6, "0")}`;
 }
 
 async function startCheckout(
@@ -168,20 +163,6 @@ export async function initiatePassCheckout(
   );
 }
 
-async function recordInvoice(tx: typeof prisma, payment: { id: string; organizationId: string; amount: number; currency: string }) {
-  const invoiceNumber = await nextInvoiceNumber(tx as typeof prisma);
-  await tx.invoice.create({
-    data: {
-      organizationId: payment.organizationId,
-      paymentId: payment.id,
-      number: invoiceNumber,
-      amount: payment.amount,
-      currency: payment.currency,
-      status: "SUCCEEDED",
-    },
-  });
-}
-
 /** Applies a provider-verified webhook event: idempotent (a Payment already
  * SUCCEEDED is left untouched even if the same event is redelivered), and
  * only ever acts on a Payment this app itself created (matched by the
@@ -193,8 +174,13 @@ export async function applyVerifiedPayment(event: VerifiedWebhookEvent) {
     return { applied: false as const };
   }
 
-  if (event.status !== "approved") {
+  if (event.status === "approved") {
+    // fall through to grant the purchase below
+  } else if (event.status === "declined" || event.status === "canceled") {
     await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
+    return { applied: true as const, succeeded: false as const };
+  } else {
+    // Transient status (pending, created, etc.) — wait for the next webhook
     return { applied: true as const, succeeded: false as const };
   }
 
@@ -205,61 +191,112 @@ export async function applyVerifiedPayment(event: VerifiedWebhookEvent) {
     return { applied: true as const, succeeded: true as const };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.payment.update({ where: { id: payment.id }, data: { status: "SUCCEEDED" } });
-    await recordInvoice(tx as typeof prisma, payment);
-  });
+  // --- Pre-read everything needed for the business logic (outside TX) ---
+  let plan: Awaited<ReturnType<typeof getPlanById>> | null = null;
+  let pack: Awaited<ReturnType<typeof getCreditPackById>> | null = null;
+  let addonProduct: Awaited<ReturnType<typeof getAddOnProductById>> | null = null;
+  let passData: Awaited<ReturnType<typeof getPassById>> | null = null;
 
   switch (metadata.purchaseType) {
-    case "subscription": {
-      const plan = await getPlanById(metadata.targetPlanId);
-      const now = new Date();
-
-      await prisma.subscription.upsert({
-        where: { organizationId: payment.organizationId },
-        create: {
-          organizationId: payment.organizationId,
-          planId: plan.id,
-          status: "ACTIVE",
-          startDate: now,
-          endDate: addInterval(now, plan.interval),
-          trialEnd: plan.trialDays ? new Date(now.getTime() + plan.trialDays * 86_400_000) : null,
-        },
-        update: {
-          planId: plan.id,
-          status: "ACTIVE",
-          startDate: now,
-          endDate: addInterval(now, plan.interval),
-          trialEnd: plan.trialDays ? new Date(now.getTime() + plan.trialDays * 86_400_000) : null,
-        },
-      });
-
-      if (metadata.couponId) {
-        await redeemCoupon(metadata.couponId, payment.organizationId, payment.id);
-      }
-
-      await logAudit({
-        action: "SUBSCRIPTION_UPGRADED",
-        organizationId: payment.organizationId,
-        resource: { planId: plan.id, planName: plan.name },
-      });
+    case "subscription":
+      plan = await getPlanById(metadata.targetPlanId);
       break;
-    }
-    case "wallet": {
-      const pack = await getCreditPackById(metadata.creditPackId);
-      await topUpWallet(payment.organizationId, pack.credits, `Recharge — ${pack.name}`, payment.id);
+    case "wallet":
+      pack = await getCreditPackById(metadata.creditPackId);
       break;
-    }
-    case "addon": {
-      await grantAddOnPurchase(payment.organizationId, metadata.productId, payment.id);
+    case "addon":
+      addonProduct = await getAddOnProductById(metadata.productId);
       break;
-    }
-    case "pass": {
-      await grantPassPurchase(payment.organizationId, metadata.passId, payment.id);
+    case "pass":
+      passData = await getPassById(metadata.passId);
       break;
-    }
   }
 
+  // --- Single atomic transaction: payment + invoice + business grant ---
+  await prisma.$transaction(async (tx) => {
+    await tx.payment.update({ where: { id: payment.id }, data: { status: "SUCCEEDED" } });
+
+    // Invoice
+    const year = new Date().getFullYear();
+    const invoiceCount = await tx.invoice.count({ where: { number: { startsWith: `INV-${year}-` } } });
+    const invoiceNumber = `INV-${year}-${String(invoiceCount + 1).padStart(6, "0")}`;
+    await tx.invoice.create({
+      data: {
+        organizationId: payment.organizationId,
+        paymentId: payment.id,
+        number: invoiceNumber,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: "SUCCEEDED",
+      },
+    });
+
+    // Business grant
+    switch (metadata.purchaseType) {
+      case "subscription": {
+        if (!plan) throw new ValidationError("Plan introuvable.");
+        const now = new Date();
+        await tx.subscription.upsert({
+          where: { organizationId: payment.organizationId },
+          create: {
+            organizationId: payment.organizationId,
+            planId: plan.id,
+            status: "ACTIVE",
+            startDate: now,
+            endDate: addInterval(now, plan.interval),
+            trialEnd: plan.trialDays ? new Date(now.getTime() + plan.trialDays * 86_400_000) : null,
+          },
+          update: {
+            planId: plan.id,
+            status: "ACTIVE",
+            startDate: now,
+            endDate: addInterval(now, plan.interval),
+            trialEnd: plan.trialDays ? new Date(now.getTime() + plan.trialDays * 86_400_000) : null,
+          },
+        });
+
+        if (metadata.couponId) {
+          await tx.coupon.update({ where: { id: metadata.couponId }, data: { redemptionCount: { increment: 1 } } });
+          await tx.couponRedemption.create({ data: { couponId: metadata.couponId, organizationId: payment.organizationId, paymentId: payment.id } });
+        }
+
+        break;
+      }
+      case "wallet": {
+        if (!pack) throw new ValidationError("Pack de crédits introuvable.");
+        const wallet = await tx.wallet.findUnique({ where: { organizationId: payment.organizationId } });
+        if (!wallet) throw new ValidationError("Wallet introuvable.");
+        await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: pack.credits } } });
+        await tx.walletTransaction.create({
+          data: { walletId: wallet.id, type: "TOPUP", amount: pack.credits, reason: `Recharge — ${pack.name}`, paymentId: payment.id },
+        });
+        break;
+      }
+      case "addon": {
+        if (!addonProduct) throw new ValidationError("Module introuvable.");
+        const isMetered = METERED_ADDON_EFFECTS.has(addonProduct.effect);
+        await tx.organizationAddOn.create({
+          data: {
+            organizationId: payment.organizationId,
+            productId: addonProduct.id,
+            remaining: isMetered ? addonProduct.amount : null,
+            paymentId: payment.id,
+          },
+        });
+        break;
+      }
+      case "pass": {
+        if (!passData) throw new ValidationError("Pass introuvable.");
+        const expiresAt = new Date(Date.now() + passData.durationDays * 86_400_000);
+        await tx.organizationPass.create({
+          data: { organizationId: payment.organizationId, passId: passData.id, expiresAt, paymentId: payment.id },
+        });
+        break;
+      }
+    }
+  });
+
+  // Audit log (fire-and-forget, outside transaction)
   await logAudit({
     action: "PAYMENT_SUCCEEDED",
     organizationId: payment.organizationId,
@@ -300,4 +337,139 @@ export async function getOrganizationInvoiceById(organizationId: string, invoice
     where: { id: invoiceId, organizationId },
     include: { payment: true, organization: true },
   });
+}
+
+/** Recovery: re-apply the business grant for a SUCCEEDED payment that somehow
+ * missed it (e.g. webhook verification failed, or the old non-atomic code path
+ * committed the payment but crashed before crediting wallet/subscription/etc).
+ * Only acts on payments whose grant is demonstrably missing. */
+export async function recoverPayment(paymentId: string) {
+  const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+  if (!payment) throw new ValidationError("Paiement introuvable.");
+  if (payment.status !== "SUCCEEDED") throw new ValidationError("Seuls les paiements SUCCEEDED peuvent être récupérés.");
+
+  const metadata = payment.metadata as CheckoutMetadata | null;
+  if (!metadata) return { recovered: false as const, reason: "Pas de métadonnées" };
+
+  // Check if grant already exists
+  let alreadyGranted = false;
+  switch (metadata.purchaseType) {
+    case "wallet": {
+      const walletTx = await prisma.walletTransaction.findUnique({ where: { paymentId: payment.id } });
+      alreadyGranted = !!walletTx;
+      break;
+    }
+    case "subscription": {
+      const sub = await prisma.subscription.findUnique({ where: { organizationId: payment.organizationId } });
+      alreadyGranted = !!sub && sub.planId === metadata.targetPlanId && sub.status === "ACTIVE";
+      break;
+    }
+    case "addon": {
+      const addon = await prisma.organizationAddOn.findUnique({ where: { paymentId: payment.id } });
+      alreadyGranted = !!addon;
+      break;
+    }
+    case "pass": {
+      const passPurchase = await prisma.organizationPass.findUnique({ where: { paymentId: payment.id } });
+      alreadyGranted = !!passPurchase;
+      break;
+    }
+  }
+
+  if (alreadyGranted) return { recovered: false as const, reason: "Le grant existe déjà" };
+
+  // Re-apply the grant inside a single atomic transaction
+  let plan: Awaited<ReturnType<typeof getPlanById>> | null = null;
+  let pack: Awaited<ReturnType<typeof getCreditPackById>> | null = null;
+  let addonProduct: Awaited<ReturnType<typeof getAddOnProductById>> | null = null;
+  let passData: Awaited<ReturnType<typeof getPassById>> | null = null;
+
+  switch (metadata.purchaseType) {
+    case "subscription":
+      plan = await getPlanById(metadata.targetPlanId);
+      break;
+    case "wallet":
+      pack = await getCreditPackById(metadata.creditPackId);
+      break;
+    case "addon":
+      addonProduct = await getAddOnProductById(metadata.productId);
+      break;
+    case "pass":
+      passData = await getPassById(metadata.passId);
+      break;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    switch (metadata.purchaseType) {
+      case "subscription": {
+        if (!plan) throw new ValidationError("Plan introuvable.");
+        const now = new Date();
+        await tx.subscription.upsert({
+          where: { organizationId: payment.organizationId },
+          create: {
+            organizationId: payment.organizationId,
+            planId: plan.id,
+            status: "ACTIVE",
+            startDate: now,
+            endDate: addInterval(now, plan.interval),
+            trialEnd: plan.trialDays ? new Date(now.getTime() + plan.trialDays * 86_400_000) : null,
+          },
+          update: {
+            planId: plan.id,
+            status: "ACTIVE",
+            startDate: now,
+            endDate: addInterval(now, plan.interval),
+            trialEnd: plan.trialDays ? new Date(now.getTime() + plan.trialDays * 86_400_000) : null,
+          },
+        });
+        if (metadata.couponId) {
+          const existingRedemption = await tx.couponRedemption.findUnique({ where: { paymentId: payment.id } });
+          if (!existingRedemption) {
+            await tx.coupon.update({ where: { id: metadata.couponId }, data: { redemptionCount: { increment: 1 } } });
+            await tx.couponRedemption.create({ data: { couponId: metadata.couponId, organizationId: payment.organizationId, paymentId: payment.id } });
+          }
+        }
+        break;
+      }
+      case "wallet": {
+        if (!pack) throw new ValidationError("Pack de crédits introuvable.");
+        const wallet = await tx.wallet.findUnique({ where: { organizationId: payment.organizationId } });
+        if (!wallet) throw new ValidationError("Wallet introuvable.");
+        await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: pack.credits } } });
+        await tx.walletTransaction.create({
+          data: { walletId: wallet.id, type: "TOPUP", amount: pack.credits, reason: `Recharge — ${pack.name}`, paymentId: payment.id },
+        });
+        break;
+      }
+      case "addon": {
+        if (!addonProduct) throw new ValidationError("Module introuvable.");
+        const isMetered = METERED_ADDON_EFFECTS.has(addonProduct.effect);
+        await tx.organizationAddOn.create({
+          data: {
+            organizationId: payment.organizationId,
+            productId: addonProduct.id,
+            remaining: isMetered ? addonProduct.amount : null,
+            paymentId: payment.id,
+          },
+        });
+        break;
+      }
+      case "pass": {
+        if (!passData) throw new ValidationError("Pass introuvable.");
+        const expiresAt = new Date(Date.now() + passData.durationDays * 86_400_000);
+        await tx.organizationPass.create({
+          data: { organizationId: payment.organizationId, passId: passData.id, expiresAt, paymentId: payment.id },
+        });
+        break;
+      }
+    }
+  });
+
+  await logAudit({
+    action: "PAYMENT_SUCCEEDED",
+    organizationId: payment.organizationId,
+    resource: { paymentId: payment.id, amount: payment.amount, currency: payment.currency, recovered: true },
+  });
+
+  return { recovered: true as const };
 }

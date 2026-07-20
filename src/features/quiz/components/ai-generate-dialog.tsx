@@ -12,13 +12,15 @@ import {
   XCircle,
   Loader2,
   Pencil,
+  ShoppingCart,
+  ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { importAiQuestionAction } from "@/features/quiz/actions";
 import { buildQuestionGenerationPrompt, type PromptOptions } from "@/lib/utils/ai-question-prompt";
 import { AddQuestionDialog, type QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +37,7 @@ import {
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const QUESTION_TYPES = [
   { value: "single_choice", label: "Choix unique" },
@@ -206,11 +209,30 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
   const runImport = async (rawQuestions: unknown[]) => {
     let succeeded = 0;
     let failed = 0;
+    let quotaError = false;
 
     for (let i = 0; i < rawQuestions.length; i++) {
       const result = await importAiQuestionAction(quizId, rawQuestions[i]);
-      if (result?.error) failed++;
-      else succeeded++;
+      if (result?.error) {
+        failed++;
+        // Stop the entire import if this is a feature/quota error — all subsequent
+        // questions would fail with the same error.
+        if (result.featureCheck && !result.featureCheck.allowed) {
+          quotaError = true;
+          setResults((prev) =>
+            prev.map((row, idx) =>
+              idx === i
+                ? { ...row, status: "error", message: result.error! }
+                : idx > i
+                  ? { ...row, status: "error", message: "Import annulé : quota atteint." }
+                  : row,
+            ),
+          );
+          break;
+        }
+      } else {
+        succeeded++;
+      }
 
       setResults((prev) =>
         prev.map((row, idx) =>
@@ -226,7 +248,16 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
     setStep("review");
     router.refresh();
 
-    if (failed === 0) {
+    if (quotaError) {
+      toast.error("Quota IA atteint. Upgradez votre plan ou achetez un Pack IA pour continuer.", {
+        action: (
+          <Link href="/dashboard/billing" className="underline text-sm font-medium">
+            Voir les plans
+          </Link>
+        ),
+        duration: 10_000,
+      });
+    } else if (failed === 0) {
       toast.success(`${succeeded} question(s) importée(s) avec succès.`);
     } else if (succeeded === 0) {
       toast.error(`Aucune question importée (${failed} échec(s)).`);
@@ -538,17 +569,39 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
             </div>
 
             {step === "review" && (
-              <DialogFooter>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    resetAll();
-                    setOpen(false);
-                  }}
-                >
-                  Terminer
-                </Button>
-              </DialogFooter>
+              <>
+                {results.some((r) => r.status === "error" && r.message?.includes("quota")) && (
+                  <Alert variant="destructive" className="py-2">
+                    <AlertDescription className="flex flex-col gap-2">
+                      <span className="font-medium">Quota IA mensuel atteint.</span>
+                      <span className="text-xs">
+                        Vous avez épuisé vos générations IA pour ce mois-ci. Achetez un Pack IA, passez au plan supérieur, ou attendez le prochain mois.
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Link href="/dashboard/passes" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-xs")}>
+                          <ShoppingCart className="size-3" />
+                          Acheter un Pack IA
+                        </Link>
+                        <Link href="/dashboard/billing" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-xs")}>
+                          <ArrowUpRight className="size-3" />
+                          Voir les plans
+                        </Link>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      resetAll();
+                      setOpen(false);
+                    }}
+                  >
+                    Terminer
+                  </Button>
+                </DialogFooter>
+              </>
             )}
           </div>
         )}

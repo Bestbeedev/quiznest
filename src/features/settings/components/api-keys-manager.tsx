@@ -14,6 +14,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Field, FieldError } from "@/components/ui/field";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
+import { Lock, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 type ApiKeyRow = {
   id: string;
@@ -24,7 +28,7 @@ type ApiKeyRow = {
   creator: { name: string };
 };
 
-export function ApiKeysManager({ apiKeys }: { apiKeys: ApiKeyRow[] }) {
+export function ApiKeysManager({ apiKeys, apiKeyCheck }: { apiKeys: ApiKeyRow[]; apiKeyCheck?: FeatureCheckUI }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -37,6 +41,8 @@ export function ApiKeysManager({ apiKeys }: { apiKeys: ApiKeyRow[] }) {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateApiKeyInput>();
+
+  const isGated = apiKeyCheck && !apiKeyCheck.allowed;
 
   const onSubmit = handleSubmit(async (values) => {
     const parsed = createApiKeySchema.safeParse(values);
@@ -73,30 +79,46 @@ export function ApiKeysManager({ apiKeys }: { apiKeys: ApiKeyRow[] }) {
         </AlertDescription>
       </Alert>
 
-      {newKey && (
-        <Alert>
-          <AlertDescription className="flex flex-col gap-2">
-            <span>Copiez cette clé maintenant — elle ne sera plus jamais affichée en entier :</span>
-            <div className="flex items-center gap-2">
-              <Input value={newKey} readOnly className="flex-1 font-mono text-xs" />
-              <Button type="button" variant="outline" size="icon" onClick={copyKey} aria-label="Copier la clé">
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
+      {isGated ? (
+        <div className="flex flex-col gap-2 rounded-md border border-dashed p-4">
+          <div className="flex items-center gap-2">
+            <Lock className="size-4 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">Accès API non disponible</p>
+          </div>
+          <p className="text-xs text-muted-foreground">{apiKeyCheck?.reason ?? "L'accès API n'est pas inclus dans votre plan actuel."}</p>
+          <Link href="/dashboard/billing" className={cn("inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline")}>
+            <ArrowUpRight className="size-3" />
+            Débloquer avec un plan payant
+          </Link>
+        </div>
+      ) : (
+        <>
+          {newKey && (
+            <Alert>
+              <AlertDescription className="flex flex-col gap-2">
+                <span>Copiez cette clé maintenant — elle ne sera plus jamais affichée en entier :</span>
+                <div className="flex items-center gap-2">
+                  <Input value={newKey} readOnly className="flex-1 font-mono text-xs" />
+                  <Button type="button" variant="outline" size="icon" onClick={copyKey} aria-label="Copier la clé">
+                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
 
-      <form onSubmit={onSubmit} noValidate className="flex items-end gap-2">
-        <Field className="flex-1" data-invalid={!!errors.name}>
-          <Input placeholder="Nom de la clé (ex: Intégration Zapier)" {...register("name")} />
-          <FieldError errors={[errors.name]} />
-        </Field>
-        <Button type="submit" disabled={isSubmitting} className="gap-1.5">
-          <KeyRound className="size-4" />
-          Générer
-        </Button>
-      </form>
+          <form onSubmit={onSubmit} noValidate className="flex items-end gap-2">
+            <Field className="flex-1" data-invalid={!!errors.name}>
+              <Input placeholder="Nom de la clé (ex: Intégration Zapier)" {...register("name")} />
+              <FieldError errors={[errors.name]} />
+            </Field>
+            <Button type="submit" disabled={isSubmitting} className="gap-1.5">
+              <KeyRound className="size-4" />
+              Générer
+            </Button>
+          </form>
+        </>
+      )}
 
       <div className="flex flex-col gap-2">
         {activeKeys.map((key) => (

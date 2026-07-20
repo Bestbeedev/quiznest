@@ -17,7 +17,8 @@ import * as organizationService from "@/lib/services/organization";
 import * as invitationService from "@/lib/services/invitation";
 import * as apiKeyService from "@/lib/services/api-key";
 import { AppError } from "@/lib/errors";
-import type { MemberRole } from "@/generated/prisma/client";
+import { canUseFeature } from "@/lib/services/feature-gate";
+import type { MemberRole, FeatureKey } from "@/generated/prisma/client";
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof AppError ? error.message : fallback;
@@ -93,6 +94,13 @@ export async function updateOrganizationAction(input: unknown) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
   }
 
+  if (parsed.data.primaryColor) {
+    const featureCheck = await canUseFeature(organization.id, "CUSTOM_BRANDING" as FeatureKey);
+    if (!featureCheck.allowed) {
+      return { error: featureCheck.message ?? featureCheck.reason ?? "La personnalisation de marque n'est pas incluse dans votre plan." };
+    }
+  }
+
   try {
     await organizationService.updateOrganization(organization.id, parsed.data);
   } catch (error) {
@@ -145,6 +153,11 @@ export async function inviteMemberAction(input: unknown) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
   }
 
+  const featureCheck = await canUseFeature(organization.id, "MULTI_TEAM" as FeatureKey);
+  if (!featureCheck.allowed) {
+    return { error: featureCheck.message ?? featureCheck.reason ?? "Cette fonctionnalité n'est pas incluse dans votre plan." };
+  }
+
   try {
     const invitation = await invitationService.createInvitation(
       organization.id,
@@ -184,6 +197,11 @@ export async function createApiKeyAction(input: unknown) {
   const parsed = createApiKeySchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
+  }
+
+  const featureCheck = await canUseFeature(organization.id, "API_ACCESS" as FeatureKey);
+  if (!featureCheck.allowed) {
+    return { error: featureCheck.message ?? featureCheck.reason ?? "Cette fonctionnalité n'est pas incluse dans votre plan." };
   }
 
   try {

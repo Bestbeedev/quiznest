@@ -5,6 +5,7 @@ import { autoTable } from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 import { ExportMenu } from "@/components/shared/export-menu";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
 import { downloadBlob, toCsvValue } from "@/lib/export-utils";
 import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
 import type { Participant } from "@/generated/prisma/client";
@@ -26,7 +27,18 @@ function toRows(participants: ExportRow[]) {
   }));
 }
 
-export function ParticipantsExportButtons({ participants }: { participants: ExportRow[] }) {
+export function ParticipantsExportButtons({
+  participants,
+  exportChecks,
+}: {
+  participants: ExportRow[];
+  exportChecks?: { csv?: FeatureCheckUI; excel?: FeatureCheckUI; pdf?: FeatureCheckUI };
+}) {
+  const disabledFormats: Record<string, string> = {};
+  if (exportChecks?.csv && !exportChecks.csv.allowed) disabledFormats.csv = exportChecks.csv.reason ?? "Fonctionnalité non incluse dans votre plan.";
+  if (exportChecks?.excel && !exportChecks.excel.allowed) disabledFormats.excel = exportChecks.excel.reason ?? "Fonctionnalité non incluse dans votre plan.";
+  if (exportChecks?.pdf && !exportChecks.pdf.allowed) disabledFormats.pdf = exportChecks.pdf.reason ?? "Fonctionnalité non incluse dans votre plan.";
+
   const exportCsv = () => {
     const rows = toRows(participants);
     const header = Object.keys(rows[0] ?? {});
@@ -76,6 +88,7 @@ export function ParticipantsExportButtons({ participants }: { participants: Expo
   return (
     <ExportMenu
       formats={["csv", "excel", "pdf"]}
+      disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined}
       onExport={(f) => {
         if (f === "csv") exportCsv();
         else if (f === "excel") exportExcel();

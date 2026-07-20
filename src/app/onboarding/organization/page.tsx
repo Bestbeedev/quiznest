@@ -21,12 +21,17 @@ const NEXT_STEPS = [
   { icon: Share2, title: "Partagez le lien", desc: "Vos participants répondent, vous suivez les résultats." },
 ];
 
-export default async function CreateOrganizationPage() {
+export default async function CreateOrganizationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
   await requireAuth();
   const organization = await getActiveOrganization();
+  const { callbackUrl } = await searchParams;
 
   if (organization) {
-    redirect("/dashboard");
+    redirect(callbackUrl ?? "/dashboard");
   }
 
   return (
@@ -54,7 +59,7 @@ export default async function CreateOrganizationPage() {
           </ul>
         </div>
 
-        <CreateOrganizationForm />
+        <CreateOrganizationForm callbackUrl={callbackUrl} />
       </div>
     </div>
   );

@@ -6,19 +6,20 @@ import { redirect } from "next/navigation";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { requireOrgRole } from "@/lib/auth/require-org-role";
-import { createQuizSchema, updateQuizSettingsSchema } from "@/lib/validators/quiz";
+import { createQuizSchema, updateQuizSettingsSchema, updateQuizTitleSchema } from "@/lib/validators/quiz";
 import { createQuestionSchema } from "@/lib/validators/question";
 import { aiImportSchema, aiImportQuestionSchema, toCreateQuestionInputs, toCreateQuestionInput } from "@/lib/validators/ai-import";
 import * as quizService from "@/lib/services/quiz";
 import * as questionService from "@/lib/services/question";
 import { getParticipantAnswers } from "@/lib/services/participation";
 import { logAudit } from "@/lib/services/audit-log";
+import { prisma } from "@/lib/db/client";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
+import { getOrganizationSubscription } from "@/lib/services/billing";
+import { getEffectiveQuizLimit, getEffectiveQuestionLimit } from "@/lib/services/limits";
 import { canUseFeature } from "@/lib/services/feature-gate";
 import { incrementFeatureUsage } from "@/lib/services/feature-usage";
-import { getOrganizationSubscription } from "@/lib/services/billing";
-import { getEffectiveQuizLimit } from "@/lib/services/limits";
-import type { AuditAction } from "@/generated/prisma/client";
+import type { AuditAction, FeatureKey } from "@/generated/prisma/client";
 
 async function logQuizAction(
   action: AuditAction,
@@ -35,6 +36,17 @@ async function logQuizAction(
     ipAddress: headerList.get("x-forwarded-for"),
     userAgent: headerList.get("user-agent"),
   });
+}
+
+async function checkQuestionLimit(organizationId: string): Promise<string | null> {
+  const subscription = await getOrganizationSubscription(organizationId);
+  const questionLimit = await getEffectiveQuestionLimit(organizationId, subscription?.plan.questionLimit ?? null);
+  if (questionLimit === null) return null;
+  const questionCount = await prisma.question.count({ where: { quiz: { organizationId, deletedAt: null } } });
+  if (questionCount >= questionLimit) {
+    return `Limite de ${questionLimit} question(s) atteinte pour votre plan. Passez à un plan supérieur ou achetez un Pack de questions.`;
+  }
+  return null;
 }
 
 export async function createQuizAction(input: unknown) {
@@ -75,6 +87,22 @@ export async function updateQuizSettingsAction(quizId: string, input: unknown) {
   }
 
   await quizService.updateQuizSettings(organization.id, quizId, parsed.data);
+  revalidatePath(`/dashboard/quiz/${quizId}`);
+  revalidatePath("/dashboard/quiz");
+  return { success: true };
+}
+
+export async function updateQuizTitleAction(quizId: string, input: unknown) {
+  const session = await requireAuth();
+  const organization = await requireActiveOrganization();
+  await requireOrgRole(organization.id, session.user.id, "EDITOR");
+  const parsed = updateQuizTitleSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
+  }
+
+  await quizService.updateQuizTitle(organization.id, quizId, parsed.data);
   revalidatePath(`/dashboard/quiz/${quizId}`);
   revalidatePath("/dashboard/quiz");
   return { success: true };
@@ -177,6 +205,9 @@ export async function addQuestionAction(quizId: string, input: unknown) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
   }
 
+  const limitError = await checkQuestionLimit(organization.id);
+  if (limitError) return { error: limitError };
+
   await questionService.addQuestion(organization.id, quizId, parsed.data);
   revalidatePath(`/dashboard/quiz/${quizId}`);
   return { success: true };
@@ -266,12 +297,21 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
 
   const platformSettings = await getPlatformSettings();
   if (!platformSettings.aiGeneration) {
-    return { error: "La génération de questions par IA est actuellement désactivée." };
+    return { error: "La génération de questions par IA est actuellement désactivée par l'administrateur de la plateforme." };
   }
 
-  const featureCheck = await canUseFeature(organization.id, "AI_GENERATION");
+  const featureCheck = await canUseFeature(organization.id, "AI_GENERATION" as FeatureKey);
   if (!featureCheck.allowed) {
-    return { error: featureCheck.reason ?? "Fonctionnalité non disponible sur votre plan." };
+    return {
+      error: featureCheck.message ?? featureCheck.reason ?? "Quota de génération IA atteint.",
+      featureCheck: {
+        allowed: false,
+        limit: featureCheck.limit,
+        used: featureCheck.used,
+        remaining: featureCheck.remaining,
+        cta: featureCheck.cta,
+      },
+    };
   }
 
   let parsedJson: unknown;
@@ -287,12 +327,12 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
   }
 
   const inputs = toCreateQuestionInputs(parsed.data);
+
+  const limitError = await checkQuestionLimit(organization.id);
+  if (limitError) return { error: limitError };
+
   await questionService.importQuestions(organization.id, quizId, inputs);
-  // Bulk import checks the gate once up front rather than per-question, so a
-  // single large batch can slightly overshoot a monthly cap — the per-question
-  // flow (importAiQuestionAction, what the AI wizard actually uses) doesn't
-  // have this gap since it re-checks before every item.
-  await incrementFeatureUsage(organization.id, "AI_GENERATION", inputs.length);
+  await incrementFeatureUsage(organization.id, "AI_GENERATION" as FeatureKey, inputs.length);
   revalidatePath(`/dashboard/quiz/${quizId}`);
   return { success: true, count: inputs.length };
 }
@@ -308,12 +348,21 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
 
   const platformSettings = await getPlatformSettings();
   if (!platformSettings.aiGeneration) {
-    return { error: "La génération de questions par IA est actuellement désactivée." };
+    return { error: "La génération de questions par IA est actuellement désactivée par l'administrateur de la plateforme." };
   }
 
-  const featureCheck = await canUseFeature(organization.id, "AI_GENERATION");
+  const featureCheck = await canUseFeature(organization.id, "AI_GENERATION" as FeatureKey);
   if (!featureCheck.allowed) {
-    return { error: featureCheck.reason ?? "Fonctionnalité non disponible sur votre plan." };
+    return {
+      error: featureCheck.message ?? featureCheck.reason ?? "Quota de génération IA atteint.",
+      featureCheck: {
+        allowed: false,
+        limit: featureCheck.limit,
+        used: featureCheck.used,
+        remaining: featureCheck.remaining,
+        cta: featureCheck.cta,
+      },
+    };
   }
 
   const parsed = aiImportQuestionSchema.safeParse(rawQuestion);
@@ -321,9 +370,12 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
     return { error: parsed.error.issues[0]?.message ?? "Question invalide." };
   }
 
+  const limitError = await checkQuestionLimit(organization.id);
+  if (limitError) return { error: limitError };
+
   const input = toCreateQuestionInput(parsed.data);
   const created = await questionService.addQuestion(organization.id, quizId, input);
-  await incrementFeatureUsage(organization.id, "AI_GENERATION");
+  await incrementFeatureUsage(organization.id, "AI_GENERATION" as FeatureKey);
   revalidatePath(`/dashboard/quiz/${quizId}`);
 
   return {

@@ -25,7 +25,7 @@ export async function PricingSection() {
           </div>
         </Reveal>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-4">
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {plans.map((plan, i) => {
             const isHighlighted = plan.isPromoted;
             const marketingFeatures = Array.isArray(plan.features) ? (plan.features as string[]) : [];
@@ -98,7 +98,7 @@ export async function PricingSection() {
                         ))}
                       </ul>
                     </div>
-                    <Link href="/register" className="mt-6 block">
+                    <Link href={plan.price === 0 ? "/register" : `/register?callbackUrl=${encodeURIComponent(`/dashboard/billing?plan=${plan.slug}`)}`} className="mt-6 block">
                       <Button
                         variant={isHighlighted ? "default" : "outline"}
                         className="w-full transition-all hover:scale-[1.02] active:scale-100"

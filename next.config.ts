@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Pins the workspace root to this project — an unrelated pnpm-lock.yaml
   // in the user's home directory otherwise confuses Next's auto-detection.
+  allowedDevOrigins: ["*.loca.lt", "*.ngrok-free.app"],
   turbopack: {
     root: path.join(__dirname),
   },

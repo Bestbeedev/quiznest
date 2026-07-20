@@ -1,7 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/db/client";
+import { isEmailSuperAdmin } from "@/lib/auth/super-admin";
 import { getPlatformSettings } from "@/lib/services/platform-settings";
 
 /** Routes that must stay reachable even during maintenance: the admin space
@@ -24,14 +24,8 @@ export async function checkMaintenanceGate(): Promise<
   }
 
   const session = await auth.api.getSession({ headers: headerList });
-  if (session) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isSuperAdmin: true },
-    });
-    if (user?.isSuperAdmin) {
-      return { blocked: false };
-    }
+  if (session && isEmailSuperAdmin(session.user.email)) {
+    return { blocked: false };
   }
 
   return { blocked: true, message: settings.maintenanceMessage };

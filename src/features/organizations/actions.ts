@@ -11,7 +11,7 @@ import { sendEmail } from "@/lib/email/resend";
 import { buildNewOrganizationNotificationEmail } from "@/emails/new-organization-notification";
 import { ValidationError } from "@/lib/errors";
 
-export async function createOrganizationAction(input: unknown) {
+export async function createOrganizationAction(input: unknown, redirectTo?: string) {
   const session = await requireAuth();
   const parsed = createOrganizationSchema.safeParse(input);
 
@@ -52,5 +52,5 @@ export async function createOrganizationAction(input: unknown) {
     );
   }
 
-  redirect("/dashboard");
+  redirect(redirectTo || "/dashboard");
 }

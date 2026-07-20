@@ -6,52 +6,56 @@ import { Reveal } from "@/components/shared/reveal";
 type FeatureRow = {
   label: string;
   free: boolean | string;
+  starter: boolean | string;
   pro: boolean | string;
-  enterprise: boolean | string;
 };
 
 const COMPARISON_FEATURES: { category: string; rows: FeatureRow[] }[] = [
   {
     category: "Création de quiz",
     rows: [
-      { label: "Nombre de quiz", free: "3", pro: "Illimité", enterprise: "Illimité" },
-      { label: "Questions par quiz", free: "10", pro: "Illimité", enterprise: "Illimité" },
-      { label: "Types de questions", free: "QCM, Vrai/Faux", pro: "Tous types", enterprise: "Tous types" },
-      { label: "Génération par IA", free: "5 quiz/mois", pro: "Illimité", enterprise: "Illimité" },
-      { label: "Import CSV/JSON", free: true, pro: true, enterprise: true },
+      { label: "Nombre de quiz", free: "3", starter: "20", pro: "Illimité" },
+      { label: "Questions par quiz", free: "10", starter: "50", pro: "Illimité" },
+      { label: "Participants par quiz", free: "50", starter: "500", pro: "Illimité" },
+      { label: "Types de questions", free: "Tous types", starter: "Tous types", pro: "Tous types" },
+      { label: "Stockage", free: "100 Mo", starter: "500 Mo", pro: "5 Go" },
+    ],
+  },
+  {
+    category: "Intelligence artificielle",
+    rows: [
+      { label: "Génération de prompt IA", free: "10 / mois", starter: "100 / mois", pro: "Illimité" },
+      { label: "Import de questions IA", free: false, starter: true, pro: true },
+      { label: "Banque de questions", free: false, starter: true, pro: true },
     ],
   },
   {
     category: "Passation",
     rows: [
-      { label: "Participants par quiz", free: "50", pro: "Illimité", enterprise: "Illimité" },
-      { label: "Lien public / QR code", free: true, pro: true, enterprise: true },
-      { label: "Code d'accès", free: true, pro: true, enterprise: true },
-      { label: "Minutage & sessions", free: false, pro: true, enterprise: true },
-      { label: "Anti-triche", free: false, pro: true, enterprise: true },
-      { label: "Score de passage", free: false, pro: true, enterprise: true },
+      { label: "Lien public / QR code", free: true, starter: true, pro: true },
+      { label: "Code d'accès", free: true, starter: true, pro: true },
+      { label: "Score de passage", free: false, starter: true, pro: true },
     ],
   },
   {
-    category: "Analytics & rapports",
+    category: "Analytics & exports",
     rows: [
-      { label: "Statistiques de base", free: true, pro: true, enterprise: true },
-      { label: "Analytics avancés", free: false, pro: true, enterprise: true },
-      { label: "Export PDF", free: true, pro: true, enterprise: true },
-      { label: "Export Excel & CSV", free: false, pro: true, enterprise: true },
-      { label: "Rapports consolidés", free: false, pro: false, enterprise: true },
+      { label: "Statistiques de base", free: true, starter: true, pro: true },
+      { label: "Analytics avancés", free: false, starter: false, pro: true },
+      { label: "Export PDF", free: true, starter: true, pro: true },
+      { label: "Export Excel", free: false, starter: true, pro: true },
+      { label: "Export CSV", free: false, starter: false, pro: true },
+      { label: "Certificats", free: false, starter: false, pro: true },
     ],
   },
   {
-    category: "Organisation & sécurité",
+    category: "Équipe & sécurité",
     rows: [
-      { label: "Espace multi-tenant", free: false, pro: true, enterprise: true },
-      { label: "Rôles & permissions", free: false, pro: true, enterprise: true },
-      { label: "Multi-équipes", free: false, pro: false, enterprise: true },
-      { label: "SSO (SAML, OIDC)", free: false, pro: false, enterprise: true },
-      { label: "Audit logs", free: false, pro: false, enterprise: true },
-      { label: "API & Webhooks", free: false, pro: false, enterprise: true },
-      { label: "White Label", free: false, pro: false, enterprise: true },
+      { label: "Multi-équipes", free: false, starter: false, pro: true },
+      { label: "API & Webhooks", free: false, starter: false, pro: true },
+      { label: "Personnalisation de marque", free: false, starter: false, pro: true },
+      { label: "Notifications email", free: false, starter: false, pro: true },
+      { label: "Support prioritaire", free: false, starter: false, pro: true },
     ],
   },
 ];
@@ -90,7 +94,7 @@ export function ComparisonSection() {
 
         <Reveal delay={0.15}>
           <div className="mt-14 overflow-x-auto rounded-2xl border bg-card shadow-lg ring-1 ring-border">
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[580px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">
@@ -99,13 +103,13 @@ export function ComparisonSection() {
                   <th className="px-6 py-4 text-center text-sm font-semibold">
                     Free
                   </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold">
+                    Starter
+                  </th>
                   <th className="px-6 py-4 text-center">
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
                       Professional
                     </span>
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold">
-                    Enterprise
                   </th>
                 </tr>
               </thead>
@@ -132,10 +136,10 @@ export function ComparisonSection() {
                           <CellValue value={row.free} />
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <CellValue value={row.pro} />
+                          <CellValue value={row.starter} />
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <CellValue value={row.enterprise} />
+                          <CellValue value={row.pro} />
                         </td>
                       </tr>
                     ))}

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 
-export function CreateOrganizationForm() {
+export function CreateOrganizationForm({ callbackUrl }: { callbackUrl?: string }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [slugEdited, setSlugEdited] = useState(false);
 
@@ -43,7 +43,7 @@ export function CreateOrganizationForm() {
       return;
     }
 
-    const result = await createOrganizationAction(parsed.data);
+    const result = await createOrganizationAction(parsed.data, callbackUrl ?? undefined);
     if (result?.error) {
       setServerError(result.error);
       toast.error(result.error);

@@ -109,48 +109,10 @@ const DEFAULT_PLAN_SEEDS: {
       { feature: "ADVANCED_ANALYTICS" },
       { feature: "CERTIFICATES" },
       { feature: "EMAIL_NOTIFICATIONS" },
-    ],
-  },
-  {
-    slug: "enterprise",
-    name: "Enterprise",
-    description: "Pour les grandes organisations et le multi-équipes.",
-    price: null,
-    quizLimit: null,
-    participantLimit: null,
-    questionLimit: null,
-    storageLimitMb: null,
-    displayOrder: 3,
-    icon: "building2",
-    badge: "Sur mesure",
-    isPromoted: false,
-    trialDays: null,
-    marketingFeatures: [
-      "Tout Professional",
-      "Multi-équipes",
-      "API complète & Webhooks",
-      "White label & domaine personnalisé",
-      "Audit logs",
-      "Support 24/7",
-    ],
-    planFeatures: [
-      { feature: "AI_GENERATION" },
-      { feature: "AI_IMPORT" },
-      { feature: "QUESTION_BANK" },
-      { feature: "EXPORT_PDF" },
-      { feature: "EXPORT_EXCEL" },
-      { feature: "EXPORT_CSV" },
-      { feature: "ADVANCED_ANALYTICS" },
-      { feature: "CERTIFICATES" },
-      { feature: "EMAIL_NOTIFICATIONS" },
-      { feature: "SMS_NOTIFICATIONS" },
       { feature: "MULTI_TEAM" },
       { feature: "API_ACCESS" },
       { feature: "WEBHOOKS" },
-      { feature: "WHITE_LABEL" },
       { feature: "CUSTOM_BRANDING" },
-      { feature: "CUSTOM_DOMAIN" },
-      { feature: "LIVE_MONITORING" },
     ],
   },
 ];
@@ -251,12 +213,7 @@ function planScalarData(input: PlanInput) {
 
 /** The price to actually charge right now — the promo price when one is set
  * and hasn't expired, the regular price otherwise. */
-export function effectivePlanPrice(plan: { price: number | null; promoPrice: number | null; promoEndsAt: Date | null }) {
-  if (plan.promoPrice != null && (!plan.promoEndsAt || plan.promoEndsAt > new Date())) {
-    return plan.promoPrice;
-  }
-  return plan.price;
-}
+export { effectivePlanPrice } from "@/lib/utils/plan-price";
 
 export async function createPlan(input: PlanInput) {
   const existing = await prisma.plan.findUnique({ where: { slug: input.slug } });

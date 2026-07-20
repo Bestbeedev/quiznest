@@ -1,17 +1,36 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  HelpCircle,
+  Pencil,
+  Trash2,
+  LayoutGrid,
+  List,
+  Eye,
+  ChevronRight,
+  Timer,
+  Tag,
+  FolderOpen,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteQuestionAction } from "@/features/quiz/actions";
 import { AddQuestionDialog, type QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
 import { AiGenerateDialog } from "@/features/quiz/components/ai-generate-dialog";
-import { FeatureLockNotice } from "@/components/shared/feature-lock";
+import { FeatureLockNotice, type FeatureCheckUI } from "@/components/shared/feature-lock";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { Question, QuestionChoice } from "@/generated/prisma/client";
 
@@ -29,7 +48,20 @@ const TYPE_COLORS: Record<Question["type"], string> = {
   SHORT_ANSWER: "bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
 };
 
+const DIFFICULTY_LABELS: Record<string, string> = {
+  EASY: "Facile",
+  MEDIUM: "Moyen",
+  HARD: "Difficile",
+};
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  EASY: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  MEDIUM: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  HARD: "bg-red-500/10 text-red-600 dark:text-red-400",
+};
+
 type QuestionWithChoices = Question & { choices: QuestionChoice[] };
+type ViewMode = "list" | "grid";
 
 export function QuestionsTab({
   quizId,
@@ -40,19 +72,24 @@ export function QuestionsTab({
   quizId: string;
   quizTitle: string;
   questions: QuestionWithChoices[];
-  aiGeneration: { allowed: boolean; reason?: string };
+  aiGeneration: FeatureCheckUI;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [detailQuestion, setDetailQuestion] = useState<QuestionWithChoices | null>(null);
 
-  const handleDelete = (questionId: string) => {
-    startTransition(async () => {
-      await deleteQuestionAction(quizId, questionId);
-      router.refresh();
-      toast.success("Question supprimée.");
-    });
-  };
+  const handleDelete = useCallback(
+    (questionId: string) => {
+      startTransition(async () => {
+        await deleteQuestionAction(quizId, questionId);
+        router.refresh();
+        toast.success("Question supprimée.");
+      });
+    },
+    [quizId, router],
+  );
 
   const editingQuestion = questions.find((q) => q.id === editingId);
   const editableQuestion: QuestionForEdit | null = editingQuestion
@@ -81,11 +118,42 @@ export function QuestionsTab({
           {aiGeneration.allowed ? (
             <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
           ) : (
-            <FeatureLockNotice label="Générer avec l'IA" reason={aiGeneration.reason} />
+            <FeatureLockNotice label="Générer avec l'IA" reason={aiGeneration.reason} check={aiGeneration} />
           )}
           <AddQuestionDialog quizId={quizId} />
         </div>
       </div>
+
+      {questions.length > 0 && (
+        <div className="flex items-center gap-1 self-end rounded-lg border bg-muted/50 p-0.5">
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              viewMode === "list"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <List className="size-3.5" />
+            Liste
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              viewMode === "grid"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <LayoutGrid className="size-3.5" />
+            Grille
+          </button>
+        </div>
+      )}
 
       {questions.length === 0 ? (
         <Card>
@@ -94,7 +162,7 @@ export function QuestionsTab({
             <p className="text-sm text-muted-foreground">Aucune question pour le moment.</p>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === "list" ? (
         <div className="flex flex-col gap-2">
           {questions.map((question, index) => (
             <div
@@ -116,6 +184,11 @@ export function QuestionsTab({
                   <Badge variant="secondary" className="text-xs">
                     {question.points} pt{question.points !== 1 ? "s" : ""}
                   </Badge>
+                  {question.difficulty && (
+                    <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", DIFFICULTY_COLORS[question.difficulty])}>
+                      {DIFFICULTY_LABELS[question.difficulty]}
+                    </span>
+                  )}
                 </div>
                 {question.choices.length > 0 && (
                   <div className="mt-3 grid gap-1 sm:grid-cols-2">
@@ -139,29 +212,245 @@ export function QuestionsTab({
                 )}
               </div>
 
-              <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="flex shrink-0 items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => setEditingId(question.id)}
-                  aria-label="Modifier la question"
+                  onClick={() => setDetailQuestion(question)}
+                  aria-label="Voir le détail"
                 >
-                  <Pencil className="size-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={isPending}
-                  onClick={() => handleDelete(question.id)}
-                  aria-label="Supprimer la question"
-                >
-                  <Trash2 className="size-4 text-muted-foreground" />
-                </Button>
+                <div className="opacity-0 transition-opacity group-hover:opacity-100 flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setEditingId(question.id)}
+                    aria-label="Modifier la question"
+                  >
+                    <Pencil className="size-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={isPending}
+                    onClick={() => handleDelete(question.id)}
+                    aria-label="Supprimer la question"
+                  >
+                    <Trash2 className="size-4 text-muted-foreground" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
         </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {questions.map((question, index) => (
+            <button
+              key={question.id}
+              type="button"
+              onClick={() => setDetailQuestion(question)}
+              className="group flex flex-col gap-3 rounded-xl border bg-card p-4 text-left transition-all hover:border-primary/20 hover:shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold text-muted-foreground">
+                  {index + 1}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", TYPE_COLORS[question.type])}>
+                    {TYPE_LABELS[question.type]}
+                  </span>
+                </div>
+              </div>
+
+              <p className="line-clamp-2 text-sm font-medium group-hover:text-primary">
+                {question.title}
+              </p>
+
+              <div className="mt-auto flex flex-wrap items-center gap-1.5">
+                <Badge variant="secondary" className="text-xs">
+                  {question.points} pt{question.points !== 1 ? "s" : ""}
+                </Badge>
+                {question.difficulty && (
+                  <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", DIFFICULTY_COLORS[question.difficulty])}>
+                    {DIFFICULTY_LABELS[question.difficulty]}
+                  </span>
+                )}
+                {question.choices.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {question.choices.length} choix
+                  </span>
+                )}
+              </div>
+
+              {question.choices.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  {question.choices.slice(0, 3).map((choice) => (
+                    <div
+                      key={choice.id}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded px-2 py-1 text-xs",
+                        choice.isCorrect
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      <span>{choice.isCorrect ? "✓" : "—"}</span>
+                      <span className="truncate">{choice.text}</span>
+                    </div>
+                  ))}
+                  {question.choices.length > 3 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      +{question.choices.length - 3} autre{question.choices.length - 3 !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center gap-1 pt-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <ChevronRight className="size-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Voir le détail</span>
+              </div>
+            </button>
+          ))}
+        </div>
       )}
+
+      {/* Detail Sheet */}
+      <Sheet open={detailQuestion !== null} onOpenChange={(o) => !o && setDetailQuestion(null)}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {detailQuestion && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="pr-8">{detailQuestion.title}</SheetTitle>
+                <SheetDescription>Détail de la question {detailQuestion ? questions.findIndex((q) => q.id === detailQuestion.id) + 1 : ""}</SheetDescription>
+              </SheetHeader>
+
+              <div className="flex flex-col gap-5 px-6 pb-6 pt-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", TYPE_COLORS[detailQuestion.type])}>
+                    {TYPE_LABELS[detailQuestion.type]}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {detailQuestion.points} pt{detailQuestion.points !== 1 ? "s" : ""}
+                  </Badge>
+                  {detailQuestion.difficulty && (
+                    <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", DIFFICULTY_COLORS[detailQuestion.difficulty])}>
+                      {DIFFICULTY_LABELS[detailQuestion.difficulty]}
+                    </span>
+                  )}
+                  {detailQuestion.timeLimit && (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Timer className="size-3" />
+                      {detailQuestion.timeLimit}s
+                    </span>
+                  )}
+                </div>
+
+                {detailQuestion.choices.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">Réponses</p>
+                    <div className="flex flex-col gap-1.5">
+                      {detailQuestion.choices.map((choice, i) => (
+                        <div
+                          key={choice.id}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-lg border p-3 text-sm",
+                            choice.isCorrect
+                              ? "border-emerald-300 bg-emerald-500/10 dark:border-emerald-700"
+                              : "border-border",
+                          )}
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <span className={cn("flex-1", choice.isCorrect && "font-medium")}>{choice.text}</span>
+                          {choice.isCorrect && (
+                            <Badge variant="default" className="text-xs bg-emerald-600 hover:bg-emerald-600">
+                              Correcte
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {detailQuestion.explanation && (
+                  <>
+                    <Separator />
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">Explication</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{detailQuestion.explanation}</p>
+                    </div>
+                  </>
+                )}
+
+                {detailQuestion.hint && (
+                  <>
+                    <Separator />
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">Indice</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{detailQuestion.hint}</p>
+                    </div>
+                  </>
+                )}
+
+                {(detailQuestion.category || detailQuestion.tags.length > 0) && (
+                  <>
+                    <Separator />
+                    <div className="flex flex-col gap-2">
+                      {detailQuestion.category && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <FolderOpen className="size-3" />
+                          <span>{detailQuestion.category}</span>
+                        </div>
+                      )}
+                      {detailQuestion.tags.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Tag className="size-3 text-muted-foreground" />
+                          {detailQuestion.tags.map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDetailQuestion(null);
+                      setEditingId(detailQuestion.id);
+                    }}
+                  >
+                    <Pencil className="size-3.5" />
+                    Modifier
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => {
+                      handleDelete(detailQuestion.id);
+                      setDetailQuestion(null);
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                    Supprimer
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {editableQuestion && (
         <AddQuestionDialog

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { BarChart3, Clock, BarChart } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Clock, Lock, ArrowUpRight } from "lucide-react";
 
 import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { getOrgParticipantStats, listAllOrgParticipants } from "@/lib/services/participation";
 import { getQuizStats, listQuizzes } from "@/lib/services/quiz";
 import { listAllQuestions } from "@/lib/services/question";
-import { getOrganizationSubscription } from "@/lib/services/billing";
+import { canUseFeature } from "@/lib/services/feature-gate";
 import {
   computeScoreDistribution,
   computeScoreEvolution,
@@ -17,6 +18,7 @@ import {
 import { formatDuration } from "@/lib/format";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { DataTable } from "@/components/shared/data-table";
@@ -24,7 +26,8 @@ import { quizComparisonColumns } from "@/features/quiz/components/quiz-compariso
 import { userAnalysisColumns } from "@/features/quiz/components/user-analysis-columns";
 import { AnalyticsExportButtons } from "@/features/quiz/components/analytics-export-buttons";
 import { QuestionHeatmap } from "@/features/quiz/components/question-heatmap";
-import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
+import type { FeatureKey } from "@/generated/prisma/client";
+import { cn } from "@/lib/utils";
 import { AnalyticsCharts } from "./analytics-charts";
 import { ScoreDistributionChart } from "./score-distribution-chart";
 import { ScoreEvolutionChart } from "./score-evolution-chart";
@@ -40,18 +43,19 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function AnalyticsPage() {
   const organization = await requireActiveOrganization();
+  const featureCheck = await canUseFeature(organization.id, "ADVANCED_ANALYTICS" as FeatureKey);
+  const isGated = !featureCheck.allowed;
 
-  const [quizStats, participantStats, participants, quizzes, questions, subscription] = await Promise.all([
+  const [quizStats, participantStats, participants, quizzes, questions, csvCheck, excelCheck, pdfCheck] = await Promise.all([
     getQuizStats(organization.id),
     getOrgParticipantStats(organization.id),
     listAllOrgParticipants(organization.id),
     listQuizzes(organization.id),
     listAllQuestions(organization.id),
-    getOrganizationSubscription(organization.id),
+    canUseFeature(organization.id, "EXPORT_CSV" as FeatureKey),
+    canUseFeature(organization.id, "EXPORT_EXCEL" as FeatureKey),
+    canUseFeature(organization.id, "EXPORT_PDF" as FeatureKey),
   ]);
-
-  const plan = subscription?.plan;
-  const isFree = plan?.slug === "free";
 
   const hasData = quizStats.total > 0 && participantStats.totalParticipants > 0;
 
@@ -74,26 +78,39 @@ export default async function AnalyticsPage() {
         title="Analytics"
         subtitle="Distribution des scores, taux de réussite et évolution des participants."
         actions={
-          hasData && !isFree ? (
-            <AnalyticsExportButtons quizRows={quizComparison} userRows={userAnalysis} />
+          hasData && !isGated ? (
+            <AnalyticsExportButtons
+              quizRows={quizComparison}
+              userRows={userAnalysis}
+              exportChecks={{ csv: csvCheck, excel: excelCheck, pdf: pdfCheck }}
+            />
           ) : undefined
         }
       />
 
-      {isFree && (
-        <UpgradeBanner
-          title="Analytics avancés"
-          description="Accédez à des graphiques détaillés, l'export de données et des analyses approfondies de vos participants."
-          variant="card"
-          features={[
-            "Graphiques interactifs",
-            "Export PDF, Excel & CSV",
-            "Comparaison entre quiz",
-            "Analyse par participant",
-          ]}
-          icon={BarChart}
-          ctaLabel="Passer au Professional"
-        />
+      {isGated && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Lock className="size-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Aperçu des Analytics</p>
+                <p className="text-xs text-muted-foreground">
+                  Vous voyez les statistiques de synthèse. Les graphiques détaillés, l&apos;export et l&apos;analyse par participant sont réservés aux plans supérieurs.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/billing"
+              className={cn(buttonVariants({ variant: "default", size: "sm" }), "shrink-0 gap-1.5")}
+            >
+              <ArrowUpRight className="size-3.5" />
+              Débloquer
+            </Link>
+          </div>
+        </div>
       )}
 
       {!hasData ? (
@@ -196,42 +213,102 @@ export default async function AnalyticsPage() {
             </div>
           </Section>
 
-          <Section title="Graphiques" description="Tendances et répartitions">
-            <AnalyticsCharts
-              totalParticipants={participantStats.totalParticipants}
-              passRate={participantStats.passRate}
-              totalQuizzes={quizStats.total}
-              publishedQuizzes={quizStats.published}
-            />
-          </Section>
+          <div className={cn("relative", isGated && "pointer-events-none select-none")}>
+            <Section title="Graphiques" description="Tendances et répartitions">
+              <div className={cn(isGated && "blur-sm")}>
+                <AnalyticsCharts
+                  totalParticipants={participantStats.totalParticipants}
+                  passRate={participantStats.passRate}
+                  totalQuizzes={quizStats.total}
+                  publishedQuizzes={quizStats.published}
+                />
+              </div>
+            </Section>
+            {isGated && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Link
+                  href="/dashboard/billing"
+                  className={cn(buttonVariants({ variant: "default" }), "gap-1.5")}
+                >
+                  <Lock className="size-4" />
+                  Débloquer les graphiques
+                </Link>
+              </div>
+            )}
+          </div>
 
-          <Section title="Scores" description="Distribution et évolution des scores">
-            <div className="grid gap-4 lg:grid-cols-2">
-              <ScoreDistributionChart distribution={scoreDistribution} />
-              <ScoreEvolutionChart evolution={scoreEvolution} />
-            </div>
-            <QuizComparisonRadar rows={quizComparison} />
-          </Section>
+          <div className={cn("relative", isGated && "pointer-events-none select-none")}>
+            <Section title="Scores" description="Distribution et évolution des scores">
+              <div className={cn(isGated && "blur-sm")}>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <ScoreDistributionChart distribution={scoreDistribution} />
+                  <ScoreEvolutionChart evolution={scoreEvolution} />
+                </div>
+                <QuizComparisonRadar rows={quizComparison} />
+              </div>
+            </Section>
+            {isGated && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Link
+                  href="/dashboard/billing"
+                  className={cn(buttonVariants({ variant: "default" }), "gap-1.5")}
+                >
+                  <Lock className="size-4" />
+                  Débloquer les scores
+                </Link>
+              </div>
+            )}
+          </div>
 
-          <Section title="Questions" description="Performance par question">
-            {questions.length > 0 && <QuestionHeatmap questionStats={questions} />}
-            <QuestionDifficultyLists hardest={hardest} easiest={easiest} />
-          </Section>
+          <div className={cn("relative", isGated && "pointer-events-none select-none")}>
+            <Section title="Questions" description="Performance par question">
+              <div className={cn(isGated && "blur-sm")}>
+                {questions.length > 0 && <QuestionHeatmap questionStats={questions} />}
+                <QuestionDifficultyLists hardest={hardest} easiest={easiest} />
+              </div>
+            </Section>
+            {isGated && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Link
+                  href="/dashboard/billing"
+                  className={cn(buttonVariants({ variant: "default" }), "gap-1.5")}
+                >
+                  <Lock className="size-4" />
+                  Débloquer l&apos;analyse des questions
+                </Link>
+              </div>
+            )}
+          </div>
 
-          <Section title="Analyses détaillées" description="Données brutes par quiz et par participant">
-            <DataTable
-              columns={quizComparisonColumns}
-              data={quizComparison.map((r) => ({ ...r, id: r.quizId }))}
-              searchColumn="title"
-              searchPlaceholder="Rechercher un quiz..."
-            />
-            <DataTable
-              columns={userAnalysisColumns}
-              data={userAnalysis.map((r) => ({ ...r, id: r.key }))}
-              searchColumn="name"
-              searchPlaceholder="Rechercher un participant..."
-            />
-          </Section>
+          <div className={cn("relative", isGated && "pointer-events-none select-none")}>
+            <Section title="Analyses détaillées" description="Données brutes par quiz et par participant">
+              <div className={cn(isGated && "blur-sm")}>
+                <DataTable
+                  columns={quizComparisonColumns}
+                  data={quizComparison.map((r) => ({ ...r, id: r.quizId }))}
+                  searchColumn="title"
+                  searchPlaceholder="Rechercher un quiz..."
+                />
+                <DataTable
+                  columns={userAnalysisColumns}
+                  data={userAnalysis.map((r) => ({ ...r, id: r.key }))}
+                  searchColumn="name"
+                  searchPlaceholder="Rechercher un participant..."
+                />
+              </div>
+            </Section>
+            {isGated && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Link
+                  href="/dashboard/billing"
+                  className={cn(buttonVariants({ variant: "default" }), "gap-1.5")}
+                >
+                  <Lock className="size-4" />
+                  Débloquer les analyses détaillées
+                </Link>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

@@ -14,6 +14,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
+import { Lock, ArrowUpRight } from "lucide-react";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const TIMEZONES = [
   "UTC", "Africa/Abidjan", "Africa/Dakar", "Africa/Lagos", "Africa/Casablanca",
@@ -22,6 +26,7 @@ const TIMEZONES = [
 
 export function OrganizationSettingsForm({
   organization,
+  brandingCheck,
 }: {
   organization: {
     name: string;
@@ -31,6 +36,7 @@ export function OrganizationSettingsForm({
     language: string;
     primaryColor: string | null;
   };
+  brandingCheck?: FeatureCheckUI;
 }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -152,16 +158,36 @@ export function OrganizationSettingsForm({
 
         <Field data-invalid={!!errors.primaryColor}>
           <FieldLabel htmlFor="primaryColor">Couleur principale (branding)</FieldLabel>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={watch("primaryColor") || "#2857e5"}
-              onChange={(e) => setValue("primaryColor", e.target.value)}
-              className="size-8 shrink-0 cursor-pointer rounded-md border"
-              aria-label="Couleur principale"
-            />
-            <Input className="max-w-32" {...register("primaryColor")} />
-          </div>
+          {brandingCheck && !brandingCheck.allowed ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 rounded-md border border-dashed p-2 opacity-60">
+                <input
+                  type="color"
+                  value={organization.primaryColor || "#2857e5"}
+                  disabled
+                  className="size-8 shrink-0 cursor-not-allowed rounded-md border"
+                  aria-label="Couleur principale"
+                />
+                <Input value={organization.primaryColor ?? "#2857e5"} disabled className="max-w-32" />
+              </div>
+              <p className="text-xs text-muted-foreground">{brandingCheck.reason ?? "Personnalisation de marque non incluse dans votre plan."}</p>
+              <Link href="/dashboard/billing" className={cn("inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline")}>
+                <ArrowUpRight className="size-3" />
+                Débloquer avec un plan payant
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={watch("primaryColor") || "#2857e5"}
+                onChange={(e) => setValue("primaryColor", e.target.value)}
+                className="size-8 shrink-0 cursor-pointer rounded-md border"
+                aria-label="Couleur principale"
+              />
+              <Input className="max-w-32" {...register("primaryColor")} />
+            </div>
+          )}
           <FieldDescription>
             Enregistrée pour votre profil de marque — pas encore appliquée à l&apos;interface.
           </FieldDescription>

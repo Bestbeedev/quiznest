@@ -1,20 +1,21 @@
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-/** The visual vocabulary the Feature Gate renders as, per Prompt-Archi.md
- * "UI": Inclus / Limité (N) / Illimité / Verrouillé. Keep every feature-gated
- * surface in the app speaking through this one component so the states stay
- * visually consistent. */
+/** The visual vocabulary the Feature Gate renders as — Inclus / Limité (N) / Illimité / Verrouillé / Quota atteint.
+ * Keep every feature-gated surface in the app speaking through this one component. */
 export function FeatureStatusBadge({
   enabled,
   limit,
   remaining,
+  used,
 }: {
   enabled: boolean;
   limit?: number | null;
   /** This calendar month's remaining quota — omit when usage isn't tracked
    * for this feature yet, the badge then falls back to the static cap. */
   remaining?: number | null;
+  used?: number;
 }) {
   if (!enabled) {
     return (
@@ -26,9 +27,23 @@ export function FeatureStatusBadge({
   }
 
   if (limit != null) {
+    const quotaExhausted = remaining != null && remaining <= 0;
+
     return (
-      <Badge variant="secondary">
-        {remaining != null ? `${remaining}/${limit} restant${remaining !== 1 ? "s" : ""}` : `Limité · ${limit}/mois`}
+      <Badge
+        variant={quotaExhausted ? "destructive" : "secondary"}
+        className={cn("gap-1", quotaExhausted && "border-destructive/50")}
+      >
+        {quotaExhausted ? (
+          <>
+            <AlertTriangle className="size-3" />
+            Quota atteint ({used}/{limit})
+          </>
+        ) : remaining != null ? (
+          `${remaining}/${limit} restant${remaining !== 1 ? "s" : ""}`
+        ) : (
+          `Limité · ${limit}/mois`
+        )}
       </Badge>
     );
   }

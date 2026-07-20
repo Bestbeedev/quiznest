@@ -17,3 +17,9 @@ export const updateQuizSettingsSchema = z.object({
 
 export type CreateQuizInput = z.infer<typeof createQuizSchema>;
 export type UpdateQuizSettingsInput = z.infer<typeof updateQuizSettingsSchema>;
+
+export const updateQuizTitleSchema = z.object({
+  title: z.string().min(1).max(200),
+});
+
+export type UpdateQuizTitleInput = z.infer<typeof updateQuizTitleSchema>;

@@ -18,8 +18,13 @@ export const metadata: Metadata = buildMetadata({
   ],
 });
 
-export default async function LoginPage() {
-  await redirectIfAuthenticated();
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  await redirectIfAuthenticated(callbackUrl);
 
   return (
     <Suspense>

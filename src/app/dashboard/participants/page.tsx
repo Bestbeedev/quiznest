@@ -3,6 +3,7 @@ import { AlertOctagon, CheckCircle2, Clock, Target, TrendingUp, Users } from "lu
 
 import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
+import { canUseFeature } from "@/lib/services/feature-gate";
 import { listAllOrgParticipants, getOrgParticipantsTrend } from "@/lib/services/participation";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -13,6 +14,7 @@ import { ParticipantsCharts } from "./participants-charts";
 import { ParticipantsTimelineChart } from "./participants-timeline-chart";
 import { ParticipantsView } from "./participants-view";
 import { ParticipantsExportButtons } from "@/features/quiz/components/participants-export-buttons";
+import type { FeatureKey } from "@/generated/prisma/client";
 
 export const metadata: Metadata = buildMetadata({
   title: "Participants",
@@ -49,9 +51,12 @@ function StatItem({
 
 export default async function ParticipantsPage() {
   const organization = await requireActiveOrganization();
-  const [participants, trend] = await Promise.all([
+  const [participants, trend, csvCheck, excelCheck, pdfCheck] = await Promise.all([
     listAllOrgParticipants(organization.id),
     getOrgParticipantsTrend(organization.id),
+    canUseFeature(organization.id, "EXPORT_CSV" as FeatureKey),
+    canUseFeature(organization.id, "EXPORT_EXCEL" as FeatureKey),
+    canUseFeature(organization.id, "EXPORT_PDF" as FeatureKey),
   ]);
 
   const completed = participants.filter((p) => p.status === "COMPLETED");
@@ -77,7 +82,12 @@ export default async function ParticipantsPage() {
         title="Participants"
         subtitle="Suivez qui a répondu à vos évaluations et leurs résultats."
         actions={
-          participants.length > 0 ? <ParticipantsExportButtons participants={participants} /> : undefined
+          participants.length > 0 ? (
+            <ParticipantsExportButtons
+              participants={participants}
+              exportChecks={{ csv: csvCheck, excel: excelCheck, pdf: pdfCheck }}
+            />
+          ) : undefined
         }
       />
 

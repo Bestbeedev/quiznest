@@ -1,7 +1,9 @@
 "use client";
 
-import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
+import Link from "next/link";
+import { FileDown, FileSpreadsheet, FileText, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ExportFormat = "csv" | "excel" | "pdf";
 
@@ -14,15 +16,36 @@ const FORMAT_CONFIG: Record<ExportFormat, { label: string; icon: typeof FileText
 export function ExportMenu({
   formats,
   onExport,
+  disabledFormats,
 }: {
   formats: ExportFormat[];
   onExport: (format: ExportFormat) => void;
+  disabledFormats?: Partial<Record<ExportFormat, string>>;
 }) {
   return (
     <div className="flex items-center gap-2">
       {formats.map((format) => {
         const config = FORMAT_CONFIG[format];
         const Icon = config.icon;
+        const disabledReason = disabledFormats?.[format];
+        const isDisabled = !!disabledReason;
+
+        if (isDisabled) {
+          return (
+            <Button
+              key={format}
+              variant="outline"
+              size="sm"
+              disabled
+              className="gap-1.5 text-muted-foreground"
+              title={disabledReason}
+            >
+              <Lock className="size-3.5" />
+              {config.label}
+            </Button>
+          );
+        }
+
         return (
           <Button
             key={format}
@@ -36,6 +59,15 @@ export function ExportMenu({
           </Button>
         );
       })}
+      {disabledFormats && Object.keys(disabledFormats).length > 0 && (
+        <Link
+          href="/dashboard/billing"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Lock className="size-3" />
+          Débloquer
+        </Link>
+      )}
     </div>
   );
 }

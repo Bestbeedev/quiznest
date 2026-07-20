@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CheckCircle2, ListChecks, Percent, Rocket, Users, Sparkles, Zap } from "lucide-react";
+import { CheckCircle2, ListChecks, Percent, Rocket, Users } from "lucide-react";
 
 import { getActiveOrganization } from "@/lib/db/tenant";
 import { buildMetadata } from "@/constants/seo";
@@ -25,6 +25,7 @@ import {
 import { getOrgRecentActivity, type OrgActivityItem } from "@/lib/services/activity";
 import { getOrganizationRevenueStats, getOrganizationSubscription } from "@/lib/services/billing";
 import { getOrganizationMembers } from "@/lib/services/organization";
+import { getOrCreateWallet } from "@/lib/services/wallet";
 import { StatCard } from "@/components/shared/stat-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
@@ -38,7 +39,7 @@ import { QuizStatusPanel } from "@/features/dashboard/components/quiz-status-pan
 import { TopQuizzesList } from "@/features/dashboard/components/top-quizzes-list";
 import { LastUpdatedPill } from "@/features/dashboard/components/last-updated-pill";
 import { NotificationsBanner, type DashboardNotification } from "@/features/dashboard/components/notifications-banner";
-import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
+import { DashboardUpsellBanners } from "@/features/dashboard/components/dashboard-upsell-banners";
 import { ChartAreaInteractive, ChartDonutTotal } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
 
@@ -76,17 +77,19 @@ export default async function DashboardPage() {
     getTopQuizzesByParticipation(organization.id),
   ]);
 
-  const [activityResult, revenueResult, subscriptionResult, membersResult] = await Promise.allSettled([
+  const [activityResult, revenueResult, subscriptionResult, membersResult, walletResult] = await Promise.allSettled([
     getOrgRecentActivity(organization.id),
     getOrganizationRevenueStats(organization.id),
     getOrganizationSubscription(organization.id),
     getOrganizationMembers(organization.id),
+    getOrCreateWallet(organization.id),
   ]);
 
   const activity: OrgActivityItem[] = activityResult.status === "fulfilled" ? activityResult.value : [];
   const revenue = revenueResult.status === "fulfilled" ? revenueResult.value : null;
   const subscription = subscriptionResult.status === "fulfilled" ? subscriptionResult.value : null;
   const members = membersResult.status === "fulfilled" ? membersResult.value : [];
+  const walletBalance = walletResult.status === "fulfilled" ? walletResult.value.balance : 0;
 
   const notifications: DashboardNotification[] = [];
   const plan = subscription?.plan;
@@ -136,10 +139,6 @@ export default async function DashboardPage() {
       ? Math.round((participantStatusBreakdown.COMPLETED / totalTrackedParticipants) * 100)
       : null;
 
-  const isFree = plan?.slug === "free";
-  const quizLimit = plan?.quizLimit;
-  const approachingLimit = quizLimit !== null && quizLimit !== undefined && stats.total >= quizLimit * 0.8;
-
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -159,31 +158,14 @@ export default async function DashboardPage() {
 
       <NotificationsBanner notifications={notifications} />
 
-      {isFree && (
-        <UpgradeBanner
-          title="Passez au Professional"
-          description="Accédez à des fonctionnalités avancées pour tirer le meilleur parti de vos quiz."
-          variant="default"
-          features={[
-            "Quiz illimités",
-            "Participants illimités",
-            "IA Premium",
-            "Statistiques avancées",
-          ]}
-          icon={Sparkles}
-          ctaLabel="Voir les plans"
-        />
-      )}
-
-      {!isFree && approachingLimit && quizLimit !== null && quizLimit !== undefined && (
-        <UpgradeBanner
-          title="Vous approchez de votre limite"
-          description={`Vous avez utilisé ${stats.total} sur ${quizLimit} quiz. Passez à un plan supérieur pour continuer sans limite.`}
-          variant="compact"
-          icon={Zap}
-          ctaLabel="Upgrade"
-        />
-      )}
+      <DashboardUpsellBanners
+        planSlug={plan?.slug ?? "free"}
+        quizCount={stats.total}
+        quizLimit={plan?.quizLimit ?? null}
+        participantCount={participantStats.totalParticipants}
+        participantLimit={plan?.participantLimit ?? null}
+        walletBalance={walletBalance}
+      />
 
       <Section title="Actions rapides">
         <QuickActions />

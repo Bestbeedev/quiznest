@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { buildMetadata } from "@/constants/seo";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { requireActiveOrganization } from "@/lib/db/tenant";
+import { canUseFeature } from "@/lib/services/feature-gate";
 import { getOrganizationMembers } from "@/lib/services/organization";
 import { getNotificationPreferences, listUserSessions } from "@/lib/services/user";
 import { listPendingInvitations } from "@/lib/services/invitation";
@@ -23,6 +24,7 @@ import { PendingInvitationsList } from "@/features/settings/components/pending-i
 import { ApiKeysManager } from "@/features/settings/components/api-keys-manager";
 import { NotificationPreferencesForm } from "@/features/settings/components/notification-preferences-form";
 import type { MemberRole } from "@/constants/roles";
+import type { FeatureKey } from "@/generated/prisma/client";
 
 export const metadata: Metadata = buildMetadata({
   title: "Paramètres",
@@ -37,13 +39,16 @@ export default async function SettingsPage() {
   const organization = await requireActiveOrganization();
   const headerList = await headers();
 
-  const [user, members, preferences, sessionsResult, pendingInvitations, apiKeys] = await Promise.all([
+  const [user, members, preferences, sessionsResult, pendingInvitations, apiKeys, brandingCheck, teamCheck, apiKeyCheck] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: session.user.id } }),
     getOrganizationMembers(organization.id),
     getNotificationPreferences(session.user.id),
     listUserSessions(headerList),
     listPendingInvitations(organization.id),
     listApiKeys(organization.id),
+    canUseFeature(organization.id, "CUSTOM_BRANDING" as FeatureKey),
+    canUseFeature(organization.id, "MULTI_TEAM" as FeatureKey),
+    canUseFeature(organization.id, "API_ACCESS" as FeatureKey),
   ]);
 
   const currentMember = members.find((m) => m.userId === session.user.id);
@@ -111,6 +116,7 @@ export default async function SettingsPage() {
                   language: organization.language,
                   primaryColor: branding?.primaryColor ?? null,
                 }}
+                brandingCheck={brandingCheck}
               />
             </CardContent>
           </Card>
@@ -124,7 +130,7 @@ export default async function SettingsPage() {
                   {members.length} membre{members.length !== 1 ? "s" : ""}
                 </CardDescription>
               </div>
-              <InviteMemberDialog />
+              <InviteMemberDialog teamCheck={teamCheck} />
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <TeamMembersList
@@ -150,7 +156,7 @@ export default async function SettingsPage() {
               <CardDescription>Gérez les clés d&apos;accès de votre organisation.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ApiKeysManager apiKeys={apiKeys} />
+              <ApiKeysManager apiKeys={apiKeys} apiKeyCheck={apiKeyCheck} />
             </CardContent>
           </Card>
         }

@@ -10,6 +10,7 @@ import { QuestionAnalysis } from "@/features/quiz/components/question-analysis";
 import { AiSummaryCard } from "@/features/quiz/components/ai-summary-card";
 import { ResultsExportButtons } from "@/features/quiz/components/results-export-buttons";
 import { formatDuration } from "@/lib/format";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
 import type { Participant } from "@/generated/prisma/client";
 
 type QuestionStat = {
@@ -33,6 +34,7 @@ export function ResultsTab({
   scoreDistribution,
   questionStats,
   attemptsTrend,
+  exportChecks,
 }: {
   quizTitle: string;
   participants: Participant[];
@@ -43,6 +45,7 @@ export function ResultsTab({
   scoreDistribution: ScoreBucket[];
   questionStats: QuestionStat[];
   attemptsTrend: AttemptsPoint[];
+  exportChecks?: { csv?: FeatureCheckUI; excel?: FeatureCheckUI; pdf?: FeatureCheckUI };
 }) {
   if (totalCompleted === 0) {
     return (
@@ -65,6 +68,7 @@ export function ResultsTab({
           passRate={passRate}
           averageTimeSpent={averageTimeSpent}
           questionStats={questionStats}
+          exportChecks={exportChecks}
         />
       </div>
 

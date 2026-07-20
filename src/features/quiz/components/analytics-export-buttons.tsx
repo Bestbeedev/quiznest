@@ -5,16 +5,24 @@ import { autoTable } from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 import { ExportMenu } from "@/components/shared/export-menu";
+import type { FeatureCheckUI } from "@/components/shared/feature-lock";
 import { downloadBlob, toCsvTable } from "@/lib/export-utils";
 import type { QuizComparisonRow, UserAnalysisRow } from "@/lib/analytics";
 
 export function AnalyticsExportButtons({
   quizRows,
   userRows,
+  exportChecks,
 }: {
   quizRows: QuizComparisonRow[];
   userRows: UserAnalysisRow[];
+  exportChecks?: { csv?: FeatureCheckUI; excel?: FeatureCheckUI; pdf?: FeatureCheckUI };
 }) {
+  const disabledFormats: Record<string, string> = {};
+  if (exportChecks?.csv && !exportChecks.csv.allowed) disabledFormats.csv = exportChecks.csv.reason ?? "Fonctionnalité non incluse dans votre plan.";
+  if (exportChecks?.excel && !exportChecks.excel.allowed) disabledFormats.excel = exportChecks.excel.reason ?? "Fonctionnalité non incluse dans votre plan.";
+  if (exportChecks?.pdf && !exportChecks.pdf.allowed) disabledFormats.pdf = exportChecks.pdf.reason ?? "Fonctionnalité non incluse dans votre plan.";
+
   const quizTable = quizRows.map((r) => ({
     Quiz: r.title,
     Participants: r.participants,
@@ -86,6 +94,7 @@ export function AnalyticsExportButtons({
   return (
     <ExportMenu
       formats={["csv", "excel", "pdf"]}
+      disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined}
       onExport={(f) => {
         if (f === "csv") exportCsv();
         else if (f === "excel") exportExcel();
