@@ -190,7 +190,7 @@ export function AddQuestionDialog({
       {trigger ? (
         <DialogTrigger render={trigger} />
       ) : (
-        <DialogTrigger className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2 h-8 text-[13px] font-medium hover:bg-muted">
+        <DialogTrigger className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 h-9 text-[13px] font-medium hover:bg-muted">
           <Plus className="size-4" />
           Ajouter une question
         </DialogTrigger>
@@ -200,7 +200,7 @@ export function AddQuestionDialog({
           <DialogTitle>{isEdit ? "Modifier la question" : "Ajouter une question"}</DialogTitle>
           <DialogDescription>Choisissez un type puis renseignez la question et ses choix.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+        <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3">
           {serverError && (
             <Alert variant="destructive">
               <AlertDescription>{serverError}</AlertDescription>

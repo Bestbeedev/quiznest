@@ -109,20 +109,20 @@ export function QuestionsTab({
     : null;
 
   return (
-    <div className="flex flex-col gap-3 min-w-0 overflow-hidden">
-      {/* Header: count + actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[13px] text-muted-foreground">
-          {questions.length} question{questions.length !== 1 ? "s" : ""}
-        </p>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {aiGeneration.allowed ? (
-            <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
-          ) : (
-            <FeatureLockNotice label="Générer avec l'IA" reason={aiGeneration.reason} check={aiGeneration} />
-          )}
-          <AddQuestionDialog quizId={quizId} />
-        </div>
+    <div className="flex flex-col gap-3 min-w-0">
+      {/* Header: count */}
+      <p className="text-[13px] text-muted-foreground">
+        {questions.length} question{questions.length !== 1 ? "s" : ""}
+      </p>
+
+      {/* Actions: each on its own line on mobile */}
+      <div className="flex flex-col gap-1.5">
+        {aiGeneration.allowed ? (
+          <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
+        ) : (
+          <FeatureLockNotice label="Générer avec l'IA" reason={aiGeneration.reason} check={aiGeneration} />
+        )}
+        <AddQuestionDialog quizId={quizId} />
       </div>
 
       {/* View toggle */}

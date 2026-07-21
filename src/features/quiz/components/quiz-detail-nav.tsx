@@ -31,23 +31,23 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
   };
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:gap-8">
-      {/* Mobile: horizontal line tabs */}
-      <nav className="shrink-0 lg:hidden">
+    <div className="flex flex-col gap-3 lg:flex-row lg:gap-8">
+      {/* Mobile: tabs + settings button */}
+      <nav className="flex flex-col gap-2 shrink-0 lg:hidden">
         <Tabs
           value={active}
           onValueChange={(v) => setActive(v as QuizTab)}
         >
-          <TabsList variant="line" className="w-full overflow-x-auto">
+          <TabsList variant="line" className="w-full">
             {NAV_ITEMS.map((item) => (
-              <TabsTrigger key={item.value} value={item.value} className="gap-1.5">
-                <item.icon className="size-4 shrink-0" />
+              <TabsTrigger key={item.value} value={item.value} className="gap-1 text-[13px]">
+                <item.icon className="size-3.5 shrink-0" />
                 {item.label}
               </TabsTrigger>
             ))}
-            {settingsTrigger}
           </TabsList>
         </Tabs>
+        {settingsTrigger}
       </nav>
 
       {/* Desktop: vertical sidebar */}

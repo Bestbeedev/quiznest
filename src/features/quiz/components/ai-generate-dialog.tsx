@@ -307,7 +307,7 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
         setOpen(next);
       }}
     >
-      <DialogTrigger className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2 h-8 text-[13px] font-medium hover:bg-muted">
+      <DialogTrigger className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 h-9 text-[13px] font-medium hover:bg-muted">
         <Sparkles className="size-4" />
         Générer avec l&apos;IA
       </DialogTrigger>
@@ -575,16 +575,16 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
                     <AlertDescription className="flex flex-col gap-2">
                       <span className="font-medium text-[13px]">Quota IA mensuel atteint.</span>
                       <span className="text-[12px] leading-relaxed">
-                        Vous avez épuisé vos générations IA pour ce mois-ci.
+                        Vous avez épuisé vos générations IA pour ce mois-ci. Achetez un Pack IA, passez au plan supérieur, ou attendez le prochain mois.
                       </span>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <Link href="/dashboard/passes" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-[11px]")}>
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                        <Link href="/dashboard/passes" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-[11px] w-full sm:w-auto")}>
                           <ShoppingCart className="size-3" />
-                          Pack IA
+                          Acheter un Pack IA
                         </Link>
-                        <Link href="/dashboard/billing" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-[11px]")}>
+                        <Link href="/dashboard/billing" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-[11px] w-full sm:w-auto")}>
                           <ArrowUpRight className="size-3" />
-                          Plans
+                          Voir les plans
                         </Link>
                       </div>
                     </AlertDescription>
