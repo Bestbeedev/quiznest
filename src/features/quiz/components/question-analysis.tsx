@@ -91,7 +91,7 @@ export function QuestionAnalysis({ questionStats }: { questionStats: QuestionSta
         {heatmapOpen && (
           <CardContent>
             <div className="max-h-56 overflow-y-auto rounded-lg border p-3">
-              <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 lg:grid-cols-10">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-8 lg:grid-cols-10">
                 {questionStats.map((question, index) => (
                   <div
                     key={question.id}

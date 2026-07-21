@@ -148,7 +148,7 @@ export function DashboardUpsellBanners(props: Props) {
                 href={banner.href}
                 className={cn(
                   buttonVariants({ variant: "default", size: "sm" }),
-                  "shrink-0 gap-1.5",
+                  "shrink-0 gap-1.5 sm:w-auto w-full justify-center",
                 )}
               >
                 {banner.cta}

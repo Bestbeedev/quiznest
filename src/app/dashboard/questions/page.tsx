@@ -169,7 +169,7 @@ export default async function QuestionsPage() {
             )}
           </div>
 
-          <div className={cn("relative", isGated && "max-h-[520px] overflow-hidden")}>
+          <div className={cn("relative", isGated && "max-h-[50vh] overflow-hidden")}>
             <Section
               title="Toutes les questions"
               description={isGated ? `Aperçu : ${PREVIEW_QUESTION_COUNT} première(s) question(s)` : "Gestion et recherche"}

@@ -87,7 +87,7 @@ function HeroMockup() {
           </div>
         </div>
         <div className="grid grid-cols-4 gap-3 p-4 sm:p-6">
-          <div className="col-span-4 grid grid-cols-3 gap-3">
+          <div className="col-span-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               { label: "Quiz publiés", value: "24", change: "+12%", color: "from-primary/20 to-primary/5" },
               { label: "Participants", value: "1 284", change: "+8%", color: "from-violet-500/20 to-violet-500/5" },

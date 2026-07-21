@@ -64,7 +64,7 @@ export function SettingsNav({ profile, security, organization, team, api, prefer
                 />
                 <div className="min-w-0">
                   <p className={cn("truncate", isActive && "text-primary")}>{item.label}</p>
-                  <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+                  <p className="hidden truncate text-xs text-muted-foreground lg:block">{item.description}</p>
                 </div>
               </button>
             );

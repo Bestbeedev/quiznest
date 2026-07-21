@@ -172,7 +172,7 @@ export default async function DashboardPage() {
       </Section>
 
       <Section title="Aperçu" description="Statistiques clés de votre organisation">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Reveal>
             <StatCard icon={ListChecks} label="Quiz créés" value={String(stats.total)} trend={quizTrend ? { ...quizTrend, comparisonLabel: "vs semaine dernière" } : undefined} />
           </Reveal>
