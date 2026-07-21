@@ -307,7 +307,7 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
         setOpen(next);
       }}
     >
-      <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 h-8 text-sm font-medium hover:bg-muted">
+      <DialogTrigger className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2 h-8 text-[13px] font-medium hover:bg-muted">
         <Sparkles className="size-4" />
         Générer avec l&apos;IA
       </DialogTrigger>
@@ -526,7 +526,7 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
                 <div
                   key={row.index}
                   className={cn(
-                    "flex items-center gap-2.5 overflow-hidden rounded-lg h-full border p-8 text-sm",
+                    "flex items-center gap-2 overflow-hidden rounded-lg border p-2.5 sm:p-3 text-[13px]",
                     row.status === "error" && "border-destructive/30 bg-destructive/5",
                   )}
                 >
@@ -573,18 +573,18 @@ export function AiGenerateDialog({ quizId, quizTitle }: { quizId: string; quizTi
                 {results.some((r) => r.status === "error" && r.message?.includes("quota")) && (
                   <Alert variant="destructive" className="py-2">
                     <AlertDescription className="flex flex-col gap-2">
-                      <span className="font-medium">Quota IA mensuel atteint.</span>
-                      <span className="text-xs">
-                        Vous avez épuisé vos générations IA pour ce mois-ci. Achetez un Pack IA, passez au plan supérieur, ou attendez le prochain mois.
+                      <span className="font-medium text-[13px]">Quota IA mensuel atteint.</span>
+                      <span className="text-[12px] leading-relaxed">
+                        Vous avez épuisé vos générations IA pour ce mois-ci.
                       </span>
-                      <div className="flex items-center gap-2">
-                        <Link href="/dashboard/passes" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-xs")}>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Link href="/dashboard/passes" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-[11px]")}>
                           <ShoppingCart className="size-3" />
-                          Acheter un Pack IA
+                          Pack IA
                         </Link>
-                        <Link href="/dashboard/billing" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-xs")}>
+                        <Link href="/dashboard/billing" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-[11px]")}>
                           <ArrowUpRight className="size-3" />
-                          Voir les plans
+                          Plans
                         </Link>
                       </div>
                     </AlertDescription>

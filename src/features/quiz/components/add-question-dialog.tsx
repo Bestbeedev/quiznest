@@ -190,7 +190,7 @@ export function AddQuestionDialog({
       {trigger ? (
         <DialogTrigger render={trigger} />
       ) : (
-        <DialogTrigger className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 h-8 text-sm font-medium hover:bg-muted">
+        <DialogTrigger className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2 h-8 text-[13px] font-medium hover:bg-muted">
           <Plus className="size-4" />
           Ajouter une question
         </DialogTrigger>
