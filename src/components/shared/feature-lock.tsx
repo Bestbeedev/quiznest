@@ -59,7 +59,7 @@ export function FeatureLockNotice({
               )}
               {cta === "pass" && (
                 <Link
-                  href="/dashboard/passes"
+                  href="/dashboard/marketplace"
                   className={cn(buttonVariants({ variant: "default", size: "sm" }), "h-7 gap-1 text-xs")}
                 >
                   <ShoppingCart className="size-3" />

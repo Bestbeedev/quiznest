@@ -19,6 +19,8 @@ import { getOrganizationSubscription } from "@/lib/services/billing";
 import { getEffectiveQuizLimit, getEffectiveQuestionLimit } from "@/lib/services/limits";
 import { canUseFeature } from "@/lib/services/feature-gate";
 import { incrementFeatureUsage } from "@/lib/services/feature-usage";
+import { spendCredits, getOrCreateWallet } from "@/lib/services/wallet";
+import { CREDIT_COSTS } from "@/constants/credit-costs";
 import type { AuditAction, FeatureKey } from "@/generated/prisma/client";
 
 async function logQuizAction(
@@ -36,6 +38,27 @@ async function logQuizAction(
     ipAddress: headerList.get("x-forwarded-for"),
     userAgent: headerList.get("user-agent"),
   });
+}
+
+/**
+ * When a feature quota is exhausted, check if the org has enough wallet credits
+ * to pay-per-use. If so, deduct credits and return null (allow the action).
+ * Otherwise return an error message with wallet CTA.
+ */
+async function chargeCreditsOrDeny(
+  organizationId: string,
+  costKey: keyof typeof CREDIT_COSTS,
+  quantity: number,
+): Promise<string | null> {
+  const costPerUnit = CREDIT_COSTS[costKey];
+  const totalCost = costPerUnit * quantity;
+  const wallet = await getOrCreateWallet(organizationId);
+  if (wallet.balance < totalCost) {
+    const label = costKey === "AI_GENERATION" ? "génération IA" : costKey === "EXPORT" ? "export" : "certificat";
+    return `Solde insuffisant : ${label} coûte ${totalCost} crédit${totalCost !== 1 ? "s" : ""} mais vous n'en avez que ${wallet.balance}. Rechargez votre wallet.`;
+  }
+  await spendCredits(organizationId, totalCost, `Utilisation : ${costKey} (×${quantity})`);
+  return null;
 }
 
 async function checkQuestionLimit(organizationId: string): Promise<string | null> {
@@ -301,17 +324,22 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
   }
 
   const featureCheck = await canUseFeature(organization.id, "AI_GENERATION" as FeatureKey);
+  let paidByCredits = false;
   if (!featureCheck.allowed) {
-    return {
-      error: featureCheck.message ?? featureCheck.reason ?? "Quota de génération IA atteint.",
-      featureCheck: {
-        allowed: false,
-        limit: featureCheck.limit,
-        used: featureCheck.used,
-        remaining: featureCheck.remaining,
-        cta: featureCheck.cta,
-      },
-    };
+    const creditError = await chargeCreditsOrDeny(organization.id, "AI_GENERATION", 1);
+    if (creditError) {
+      return {
+        error: creditError,
+        featureCheck: {
+          allowed: false,
+          limit: featureCheck.limit,
+          used: featureCheck.used,
+          remaining: featureCheck.remaining,
+          cta: "wallet" as const,
+        },
+      };
+    }
+    paidByCredits = true;
   }
 
   let parsedJson: unknown;
@@ -332,7 +360,9 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
   if (limitError) return { error: limitError };
 
   await questionService.importQuestions(organization.id, quizId, inputs);
-  await incrementFeatureUsage(organization.id, "AI_GENERATION" as FeatureKey, inputs.length);
+  if (!paidByCredits) {
+    await incrementFeatureUsage(organization.id, "AI_GENERATION" as FeatureKey, inputs.length);
+  }
   revalidatePath(`/dashboard/quiz/${quizId}`);
   return { success: true, count: inputs.length };
 }
@@ -352,17 +382,22 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
   }
 
   const featureCheck = await canUseFeature(organization.id, "AI_GENERATION" as FeatureKey);
+  let paidByCredits = false;
   if (!featureCheck.allowed) {
-    return {
-      error: featureCheck.message ?? featureCheck.reason ?? "Quota de génération IA atteint.",
-      featureCheck: {
-        allowed: false,
-        limit: featureCheck.limit,
-        used: featureCheck.used,
-        remaining: featureCheck.remaining,
-        cta: featureCheck.cta,
-      },
-    };
+    const creditError = await chargeCreditsOrDeny(organization.id, "AI_GENERATION", 1);
+    if (creditError) {
+      return {
+        error: creditError,
+        featureCheck: {
+          allowed: false,
+          limit: featureCheck.limit,
+          used: featureCheck.used,
+          remaining: featureCheck.remaining,
+          cta: "wallet" as const,
+        },
+      };
+    }
+    paidByCredits = true;
   }
 
   const parsed = aiImportQuestionSchema.safeParse(rawQuestion);
@@ -375,7 +410,9 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
 
   const input = toCreateQuestionInput(parsed.data);
   const created = await questionService.addQuestion(organization.id, quizId, input);
-  await incrementFeatureUsage(organization.id, "AI_GENERATION" as FeatureKey);
+  if (!paidByCredits) {
+    await incrementFeatureUsage(organization.id, "AI_GENERATION" as FeatureKey);
+  }
   revalidatePath(`/dashboard/quiz/${quizId}`);
 
   return {

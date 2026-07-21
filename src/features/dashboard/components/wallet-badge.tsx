@@ -24,7 +24,7 @@ export function WalletBadge({ balance, collapsed }: WalletBadgeProps) {
         <TooltipTrigger
           render={
             <Link
-              href="/dashboard/billing"
+              href="/dashboard/wallet"
               className={cn(
                 "flex size-9 items-center justify-center rounded-lg transition-colors",
                 isLow
@@ -46,7 +46,7 @@ export function WalletBadge({ balance, collapsed }: WalletBadgeProps) {
 
   return (
     <Link
-      href="/dashboard/billing"
+      href="/dashboard/wallet"
       className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50"
     >
       <div

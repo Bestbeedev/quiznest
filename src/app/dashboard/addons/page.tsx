@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Puzzle, CheckCircle2, Clock, Infinity, ShoppingCart } from "lucide-react";
+import { Puzzle, CheckCircle2, Clock, Infinity, ShoppingCart, Plus, Unlock, RefreshCw } from "lucide-react";
 
 import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
@@ -47,10 +47,52 @@ export default async function AddonsPage() {
         }
       />
 
+      {/* Explainer Banner */}
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/[0.03] to-transparent">
+        <CardContent className="py-5">
+          <p className="mb-4 text-sm font-medium">Qu&apos;est-ce qu&apos;un module ?</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                icon: Plus,
+                title: "Quota additionnel",
+                color: "text-emerald-500",
+                bg: "bg-emerald-500/10",
+                description: "Ajoute des ressources supplémentaires à votre plan actuel — participants, quiz, questions, générations IA. Le quota s'ajoute à celui déjà inclus.",
+              },
+              {
+                icon: Unlock,
+                title: "Déverrouillage permanent",
+                color: "text-violet-500",
+                bg: "bg-violet-500/10",
+                description: "Débloque une fonctionnalité pour toujours sans changement de plan — exports (PDF, Excel, CSV) et certificats. Pas de limite de durée.",
+              },
+              {
+                icon: RefreshCw,
+                title: "Consommation progressive",
+                color: "text-amber-500",
+                bg: "bg-amber-500/10",
+                description: "Les modules à quota se consomment au fur et à mesure. Une fois le quota épuisé, vous pouvez en racheter un ou passer à un plan supérieur.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex gap-3">
+                <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", item.bg)}>
+                  <item.icon className={cn("size-4", item.color)} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{item.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Active Modules */}
       <Section
         title="Modules actifs"
-        description={activeAddOns.length > 0 ? `${activeAddOns.length} module${activeAddOns.length !== 1 ? "s" : ""} actif${activeAddOns.length !== 1 ? "s" : ""}` : "Aucun module actif."}
+        description={activeAddOns.length > 0 ? `${activeAddOns.length} module${activeAddOns.length !== 1 ? "s" : ""} en cours d'utilisation sur votre organisation.` : "Aucun module actif."}
       >
         {activeAddOns.length === 0 ? (
           <Card>
@@ -117,7 +159,7 @@ export default async function AddonsPage() {
       {exhaustedAddOns.length > 0 && (
         <Section
           title="Modules épuisés"
-          description="Ces modules ont utilisé tout leur quota. Rechargez pour continuer."
+          description="Ces modules ont utilisé tout leur quota. Leur effet n'est plus actif. Rachetez-en pour restaurer l'accès."
         >
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {exhaustedAddOns.map((addon) => {
@@ -206,7 +248,7 @@ export default async function AddonsPage() {
       {addOnProducts.length > 0 && (
         <Section
           title="Modules disponibles"
-          description="Achetez de nouveaux modules pour étendre votre plan."
+          description="Achetez un module pour étendre votre plan. Les modules à quota s'ajoutent à vos limites actuelles, les déverrouillages activent des fonctionnalités pour toujours."
         >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {addOnProducts.map((product) => {

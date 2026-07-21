@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { checkMaintenanceGate } from "@/lib/maintenance";
 import { MaintenancePage } from "@/components/shared/maintenance-page";
+import { CookieConsent } from "@/components/shared/cookie-consent";
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, DEFAULT_KEYWORDS, OG_IMAGE } from "@/constants/seo";
 
 const inter = Inter({
@@ -98,6 +99,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <TooltipProvider>
             {gate.blocked ? <MaintenancePage message={gate.message} /> : children}
+            <CookieConsent />
             <Toaster position="top-right" />
           </TooltipProvider>
           <Analytics />

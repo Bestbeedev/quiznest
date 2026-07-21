@@ -201,6 +201,26 @@ export const FAQ_ITEMS: { question: string; answer: string }[] = [
     answer:
       "Le plan Free est gratuit sans limite de durée. Vous pouvez tester toutes les fonctionnalités de base avant de passer à un plan supérieur.",
   },
+  {
+    question: "Comment fonctionnent les crédits ?",
+    answer:
+      "Les crédits sont une monnaie d'échange prépayée. Ils ne sont débités que lorsque votre plan ne couvre pas l'action — par exemple, si vous avez épuisé vos générations IA mensuelles. 1 crédit ≈ 1 XOF, et les crédits n'expirent jamais.",
+  },
+  {
+    question: "Quelle différence entre un module et un pass ?",
+    answer:
+      "Un module est un achat permanent qui ajoute des ressources (+100 participants) ou débloque une fonctionnalité pour toujours (exports). Un pass est un accès temporaire à des fonctionnalités premium pendant 30, 60 ou 90 jours — idéal pour des projets ponctuels.",
+  },
+  {
+    question: "Puis-je utiliser QuizNest gratuitement tout en achetant des fonctionnalités ?",
+    answer:
+      "Oui ! Le plan Free est gratuit. Si vous avez besoin de plus, vous pouvez acheter des modules ponctuels ou recharger votre wallet avec des crédits — sans changer de plan.",
+  },
+  {
+    question: "Comment appliquer un code promo ?",
+    answer:
+      "Lors du paiement d'un plan, cliquez sur « J'ai un code promo » et entrez votre code. La réduction est appliquée instantanément. Les codes promo sont distribués par email, lors de campagnes ou via des partenariats.",
+  },
 ];
 
 export const DEMO_TABS = [

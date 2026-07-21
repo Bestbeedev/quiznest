@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Zap, Wallet, Ticket, ArrowRight } from "lucide-react";
+import { Check, Zap, Wallet, Ticket, ArrowRight, Clock, Puzzle } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,8 +66,8 @@ type Props = {
   grantByFeature: Map<string, { feature: string; enabled: boolean; limit: number | null }>;
   featureCheckMap: Map<string, { allowed: boolean; limit?: number | null; used?: number; remaining?: number | null }>;
   walletBalance: number;
-  activePasses: { pass: { name: string }; expiresAt: Date }[];
-  orgAddOns: { product: { name: string }; remaining: number | null }[];
+  activePasses: { id: string; pass: { name: string; description: string | null; features: string[] }; expiresAt: Date }[];
+  orgAddOns: { id: string; product: { name: string; effect: string; amount: number | null }; remaining: number | null }[];
 };
 
 export function BillingOverviewTab({
@@ -180,6 +180,95 @@ export function BillingOverviewTab({
         </Card>
       </section>
 
+      {/* Active Passes + Add-ons Details */}
+      {(activePasses.length > 0 || orgAddOns.length > 0) && (
+        <section className="grid gap-4 lg:grid-cols-2">
+          {activePasses.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Ticket className="size-4 text-violet-500" />
+                  Pass actifs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {activePasses.map((purchase) => {
+                  const daysLeft = Math.max(0, Math.ceil((purchase.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                  return (
+                    <div key={purchase.id} className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{purchase.pass.name}</p>
+                        <Badge variant={daysLeft <= 7 ? "destructive" : "secondary"} className="gap-1 text-xs">
+                          <Clock className="size-3" />
+                          {daysLeft}j restant{daysLeft !== 1 ? "s" : ""}
+                        </Badge>
+                      </div>
+                      {purchase.pass.description && (
+                        <p className="mt-1 text-xs text-muted-foreground">{purchase.pass.description}</p>
+                      )}
+                      {purchase.pass.features.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {purchase.pass.features.map((f) => (
+                            <Badge key={f} variant="outline" className="text-[10px]">
+                              {FEATURE_LABELS[f as FeatureKey] ?? f}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {orgAddOns.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Puzzle className="size-4 text-amber-500" />
+                  Add-ons actifs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {orgAddOns.map((addon) => {
+                  const isMetered = addon.remaining !== null;
+                  const isExhausted = isMetered && addon.remaining !== null && addon.remaining <= 0;
+                  const isUnlock = addon.product.effect === "EXPORT_UNLOCK" || addon.product.effect === "CERTIFICATE_UNLOCK";
+                  return (
+                    <div key={addon.id} className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{addon.product.name}</p>
+                        {isUnlock ? (
+                          <Badge className="gap-1 text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                            <Check className="size-3" />
+                            Débloqué
+                          </Badge>
+                        ) : isMetered ? (
+                          <Badge
+                            variant={isExhausted ? "destructive" : "secondary"}
+                            className="gap-1 text-xs"
+                          >
+                            {addon.remaining} restant{addon.remaining !== 1 ? "s" : ""}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      {isMetered && !isUnlock && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {isExhausted
+                            ? "Quota épuisé — achetez un nouveau pack."
+                            : `${addon.product.amount ?? "?"} au total.`}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </section>
+      )}
+
       {/* Features */}
       <Section
         title="Fonctionnalités de votre plan"
@@ -214,7 +303,7 @@ export function BillingOverviewTab({
       <section id="plans" className="scroll-mt-20">
         <Section
           title="Plans"
-          description="Choisissez le plan qui correspond à vos besoins"
+          description="Choisissez le plan qui correspond à vos besoins. Lors du paiement, vous pouvez appliquer un code promo pour bénéficier d'une réduction."
         >
           <div className="grid gap-4 lg:grid-cols-3">
             {plans.map((planOption) => {

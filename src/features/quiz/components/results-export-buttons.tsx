@@ -8,6 +8,7 @@ import type { FeatureCheckUI } from "@/components/shared/feature-lock";
 import { formatDuration } from "@/lib/format";
 import { downloadBlob, toCsvValue } from "@/lib/export-utils";
 import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
+import { useExportWithCredits } from "@/features/quiz/hooks/use-export-with-credits";
 import type { Participant } from "@/generated/prisma/client";
 
 type QuestionStat = { id: string; title: string; successRate: number | null };
@@ -34,6 +35,8 @@ export function ResultsExportButtons({
   const disabledFormats: Record<string, string> = {};
   if (exportChecks?.csv && !exportChecks.csv.allowed) disabledFormats.csv = exportChecks.csv.reason ?? "Fonctionnalité non incluse dans votre plan.";
   if (exportChecks?.pdf && !exportChecks.pdf.allowed) disabledFormats.pdf = exportChecks.pdf.reason ?? "Fonctionnalité non incluse dans votre plan.";
+
+  const { chargeAndExport, loading, error, setError } = useExportWithCredits();
 
   const exportCsv = () => {
     const header = ["Nom", "Email", "Statut", "Score (%)", "Résultat", "Démarré le", "Terminé le"];
@@ -83,5 +86,19 @@ export function ResultsExportButtons({
     doc.save(`${quizTitle}-rapport.pdf`);
   };
 
-  return <ExportMenu formats={["csv", "pdf"]} disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined} onExport={(f) => (f === "csv" ? exportCsv() : exportPdf())} />;
+  return (
+    <div className="flex flex-col gap-2">
+      <ExportMenu
+        formats={["csv", "pdf"]}
+        disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined}
+        loading={loading}
+        onExport={(f) => {
+          const featureKey = f === "csv" ? "EXPORT_CSV" : "EXPORT_PDF";
+          const fn = f === "csv" ? exportCsv : exportPdf;
+          chargeAndExport(featureKey as never, fn);
+        }}
+      />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
 }

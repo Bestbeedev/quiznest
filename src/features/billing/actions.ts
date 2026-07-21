@@ -9,7 +9,11 @@ import {
   initiateAddOnCheckout,
   initiatePassCheckout,
 } from "@/lib/services/payment";
+import { canUseFeature } from "@/lib/services/feature-gate";
+import { spendCredits, getOrCreateWallet } from "@/lib/services/wallet";
+import { CREDIT_COSTS } from "@/constants/credit-costs";
 import { ValidationError } from "@/lib/errors";
+import type { FeatureKey } from "@/generated/prisma/client";
 
 async function checkoutContext() {
   const session = await requireAuth();
@@ -87,6 +91,37 @@ export async function initiatePassCheckoutAction(passId: string) {
       `${origin}/dashboard/billing`,
     );
     return { success: true as const, checkoutUrl };
+  } catch (error) {
+    return handleCheckoutError(error);
+  }
+}
+
+/**
+ * Pre-charge credits before a client-side export. The client calls this action,
+ * and only proceeds with the export if it returns success. If the feature is
+ * already allowed (plan/pass/addon), no credits are charged.
+ */
+export async function chargeExportCreditsAction(featureKey: FeatureKey) {
+  const session = await requireAuth();
+  const organization = await requireActiveOrganization();
+
+  try {
+    const check = await canUseFeature(organization.id, featureKey);
+    if (check.allowed) {
+      return { success: true as const, charged: false };
+    }
+
+    // Feature not allowed — try wallet credit fallback
+    const wallet = await getOrCreateWallet(organization.id);
+    const cost = CREDIT_COSTS.EXPORT;
+    if (wallet.balance < cost) {
+      return {
+        error: `Solde insuffisant : un export coûte ${cost} crédit${cost !== 1 ? "s" : ""} mais vous n'en avez que ${wallet.balance}. Rechargez votre wallet.`,
+      };
+    }
+
+    await spendCredits(organization.id, cost, `Export (${featureKey})`);
+    return { success: true as const, charged: true, amount: cost };
   } catch (error) {
     return handleCheckoutError(error);
   }

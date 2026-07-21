@@ -10,6 +10,7 @@ import { AiShowcaseSection } from "@/components/shared/marketing/ai-showcase-sec
 import { DemoSection } from "@/components/shared/marketing/demo-section";
 import { TestimonialsSection } from "@/components/shared/marketing/testimonials-section";
 import { PricingSection } from "@/components/shared/marketing/pricing-section";
+import { FlexibilitySection } from "@/components/shared/marketing/flexibility-section";
 import { ComparisonSection } from "@/components/shared/marketing/comparison-section";
 import { FaqSection } from "@/components/shared/marketing/faq-section";
 import { FinalCtaSection } from "@/components/shared/marketing/final-cta-section";
@@ -141,6 +142,7 @@ export default function HomePage() {
         <DemoSection />
         <TestimonialsSection />
         <PricingSection />
+        <FlexibilitySection />
         <ComparisonSection />
         <FaqSection />
         <FinalCtaSection />

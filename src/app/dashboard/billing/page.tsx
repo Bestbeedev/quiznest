@@ -63,7 +63,17 @@ export default async function BillingPage({
     listOrganizationPasses(organization.id),
   ]);
 
-  const activePasses = orgPasses.filter((p) => p.expiresAt > new Date());
+  const activePasses = orgPasses
+    .filter((p) => p.expiresAt > new Date())
+    .map((p) => ({
+      ...p,
+      pass: { ...p.pass, features: p.pass.features as string[] },
+    }));
+
+  const orgAddOnsEnriched = orgAddOns.map((a) => ({
+    ...a,
+    product: { ...a.product, effect: a.product.effect as string, amount: a.product.amount ?? null },
+  }));
   const currentPlanSlug = subscription?.plan.slug ?? "free";
   const plan = subscription?.plan;
 
@@ -123,7 +133,7 @@ export default async function BillingPage({
               featureCheckMap={featureCheckMap}
               walletBalance={wallet.balance}
               activePasses={activePasses}
-              orgAddOns={orgAddOns}
+              orgAddOns={orgAddOnsEnriched}
             />
           </TabsContent>
 

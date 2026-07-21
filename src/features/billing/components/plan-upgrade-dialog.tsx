@@ -112,12 +112,17 @@ export function PlanUpgradeDialog({
 
           {/* Coupon */}
           {showCoupon ? (
-            <Input
-              value={coupon}
-              onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-              placeholder="Code promo"
-              className="h-9 text-sm"
-            />
+            <div className="flex flex-col gap-1.5">
+              <Input
+                value={coupon}
+                onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+                placeholder="Code promo"
+                className="h-9 text-sm"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Entrez le code promo reçu par email ou lors d&apos;une promotion. La réduction sera appliquée au paiement.
+              </p>
+            </div>
           ) : (
             <button
               type="button"

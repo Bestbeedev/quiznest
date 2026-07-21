@@ -17,10 +17,12 @@ export function ExportMenu({
   formats,
   onExport,
   disabledFormats,
+  loading,
 }: {
   formats: ExportFormat[];
   onExport: (format: ExportFormat) => void;
   disabledFormats?: Partial<Record<ExportFormat, string>>;
+  loading?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -52,10 +54,11 @@ export function ExportMenu({
             variant="outline"
             size="sm"
             onClick={() => onExport(format)}
+            disabled={loading}
             className="gap-1.5"
           >
             <Icon className="size-3.5" />
-            {config.label}
+            {loading ? "..." : config.label}
           </Button>
         );
       })}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Coins, Puzzle, Ticket, ShoppingCart } from "lucide-react";
+import { Coins, Puzzle, Ticket, ShoppingCart, CreditCard, Layers, Clock } from "lucide-react";
 
 import { buildMetadata } from "@/constants/seo";
 import { requireActiveOrganization } from "@/lib/db/tenant";
@@ -13,6 +13,7 @@ import { CheckoutShopCard } from "@/features/billing/components/checkout-shop-ca
 import { ADDON_EFFECT_LABELS } from "@/constants/addon-effects";
 import { Section } from "@/components/shared/section";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = buildMetadata({
   title: "Marketplace",
@@ -37,6 +38,48 @@ export default async function MarketplacePage() {
         subtitle="Rechargez, étendez et personnalisez votre expérience QuizNest."
       />
 
+      {/* Explainer Banner */}
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/[0.03] to-transparent">
+        <CardContent className="py-5">
+          <p className="mb-4 text-sm font-medium">Comment fonctionne la marketplace ?</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                icon: Coins,
+                title: "Crédits (Wallet)",
+                color: "text-primary",
+                bg: "bg-primary/10",
+                description: "Rechargez votre wallet pour payer à l'usage. Les crédits sont débités uniquement lorsque votre plan ne couvre pas l'action (générations IA, exports, certificats).",
+              },
+              {
+                icon: Puzzle,
+                title: "Modules complémentaires",
+                color: "text-amber-500",
+                bg: "bg-amber-500/10",
+                description: "Achats ponctuels pour étendre votre plan sans le changer — participants supplémentaires, exports débloqués, certificats débloqués. Effet permanent ou quota additionnel.",
+              },
+              {
+                icon: Ticket,
+                title: "Pass temporaires",
+                color: "text-violet-500",
+                bg: "bg-violet-500/10",
+                description: "Accès premium pour une durée limitée (30, 60, 90 jours). Parfait pour des projets ponctuels nécessitant des fonctionnalités avancées temporairement.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex gap-3">
+                <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", item.bg)}>
+                  <item.icon className={cn("size-4", item.color)} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{item.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Wallet Quick Status */}
       <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <CardContent className="flex items-center gap-4 py-5">
@@ -56,7 +99,7 @@ export default async function MarketplacePage() {
       {/* ─── Crédits / Recharge ─── */}
       <Section
         title="Recharger votre wallet"
-        description="Achetez des crédits pour débloquer des fonctionnalités à l'usage — participants, quiz, IA, exports."
+        description="Les crédits servent de monnaie d'échange pour les actions hors-plan. 1 crédit ≈ 1 XOF. Utilisez-les uniquement si votre plan ne couvre pas l'action."
         action={
           <a href="/dashboard/wallet" className="text-xs font-medium text-primary underline underline-offset-4">
             Voir l&apos;historique
@@ -92,7 +135,7 @@ export default async function MarketplacePage() {
       {/* ─── Modules complémentaires ─── */}
       <Section
         title="Modules complémentaires"
-        description="Achats ponctuels pour étendre votre plan sans le changer — participants, exports, certificats."
+        description="Achats uniques qui s'ajoutent à votre plan. Certains ajoutent un quota (ex: +100 participants), d'autres débloquent une fonctionnalité pour toujours (ex: exports)."
         action={
           <a href="/dashboard/addons" className="text-xs font-medium text-primary underline underline-offset-4">
             Mes modules actifs
@@ -132,7 +175,7 @@ export default async function MarketplacePage() {
       {/* ─── Pass temporaires ─── */}
       <Section
         title="Pass temporaires"
-        description="Accès premium pour une durée limitée — parfaits pour des projets ponctuels."
+        description="Accès à des fonctionnalités premium pendant une durée définie (ex: analytics avancés, branding custom). Utile pour des missions ou projets spécifiques."
         action={
           <a href="/dashboard/billing" className="text-xs font-medium text-primary underline underline-offset-4">
             Voir les passes actifs

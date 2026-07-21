@@ -8,6 +8,7 @@ import { ExportMenu } from "@/components/shared/export-menu";
 import type { FeatureCheckUI } from "@/components/shared/feature-lock";
 import { downloadBlob, toCsvValue } from "@/lib/export-utils";
 import { PARTICIPANT_STATUS_LABELS } from "@/lib/constants";
+import { useExportWithCredits } from "@/features/quiz/hooks/use-export-with-credits";
 import type { Participant } from "@/generated/prisma/client";
 
 type ExportRow = Participant & { quiz: { title: string } };
@@ -38,6 +39,8 @@ export function ParticipantsExportButtons({
   if (exportChecks?.csv && !exportChecks.csv.allowed) disabledFormats.csv = exportChecks.csv.reason ?? "Fonctionnalité non incluse dans votre plan.";
   if (exportChecks?.excel && !exportChecks.excel.allowed) disabledFormats.excel = exportChecks.excel.reason ?? "Fonctionnalité non incluse dans votre plan.";
   if (exportChecks?.pdf && !exportChecks.pdf.allowed) disabledFormats.pdf = exportChecks.pdf.reason ?? "Fonctionnalité non incluse dans votre plan.";
+
+  const { chargeAndExport, loading, error, setError } = useExportWithCredits();
 
   const exportCsv = () => {
     const rows = toRows(participants);
@@ -86,14 +89,18 @@ export function ParticipantsExportButtons({
   };
 
   return (
-    <ExportMenu
-      formats={["csv", "excel", "pdf"]}
-      disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined}
-      onExport={(f) => {
-        if (f === "csv") exportCsv();
-        else if (f === "excel") exportExcel();
-        else exportPdf();
-      }}
-    />
+    <div className="flex flex-col gap-2">
+      <ExportMenu
+        formats={["csv", "excel", "pdf"]}
+        disabledFormats={Object.keys(disabledFormats).length > 0 ? disabledFormats : undefined}
+        loading={loading}
+        onExport={(f) => {
+          const featureMap: Record<string, string> = { csv: "EXPORT_CSV", excel: "EXPORT_EXCEL", pdf: "EXPORT_PDF" };
+          const fnMap: Record<string, () => void> = { csv: exportCsv, excel: exportExcel, pdf: exportPdf };
+          chargeAndExport(featureMap[f] as never, fnMap[f]);
+        }}
+      />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
   );
 }

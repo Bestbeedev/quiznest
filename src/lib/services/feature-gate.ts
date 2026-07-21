@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db/client";
 import { getFeatureUsage } from "@/lib/services/feature-usage";
 import { getActivePassFeatures } from "@/lib/services/pass";
-import { getAddOnBonus } from "@/lib/services/addon";
+import { getAddOnBonus, hasAddOnUnlock } from "@/lib/services/addon";
 import type { FeatureKey, AddOnEffect } from "@/generated/prisma/client";
 
 /** Pay-as-you-go packs that top up a metered feature's monthly quota rather
@@ -10,6 +10,15 @@ import type { FeatureKey, AddOnEffect } from "@/generated/prisma/client";
  * AI_GENERATION's limit without touching the plan. */
 const FEATURE_ADDON_BONUS: Partial<Record<FeatureKey, AddOnEffect>> = {
   AI_GENERATION: "EXTRA_AI_GENERATIONS",
+};
+
+/** One-time add-on unlocks that grant access to a feature entirely —
+ * e.g. buying EXPORT_UNLOCK grants access to all export formats. */
+const FEATURE_ADDON_UNLOCK: Partial<Record<FeatureKey, AddOnEffect>> = {
+  EXPORT_PDF: "EXPORT_UNLOCK",
+  EXPORT_EXCEL: "EXPORT_UNLOCK",
+  EXPORT_CSV: "EXPORT_UNLOCK",
+  CERTIFICATES: "CERTIFICATE_UNLOCK",
 };
 
 export type FeatureCheck = {
@@ -74,6 +83,15 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
   const passFeatures = await getActivePassFeatures(organizationId);
   if (passFeatures.has(feature)) {
     return { allowed: true, limit: null, source: "pass" };
+  }
+
+  // Check one-time add-on unlocks (e.g. EXPORT_UNLOCK, CERTIFICATE_UNLOCK)
+  const unlockEffect = FEATURE_ADDON_UNLOCK[feature];
+  if (unlockEffect) {
+    const unlocked = await hasAddOnUnlock(organizationId, unlockEffect);
+    if (unlocked) {
+      return { allowed: true, limit: null, source: "plan" };
+    }
   }
 
   const subscription = await prisma.subscription.findUnique({

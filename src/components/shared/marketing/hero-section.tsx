@@ -212,7 +212,7 @@ export function HeroSection() {
           className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
         >
           La plateforme nouvelle génération qui transforme vos évaluations en expériences interactives.
-          <span className="hidden sm:inline"> IA, analytics, multi-tenant — tout inclus.</span>
+          <span className="hidden sm:inline"> IA, analytics, flexibilité de paiement — tout inclus.</span>
         </motion.p>
 
         <motion.div
