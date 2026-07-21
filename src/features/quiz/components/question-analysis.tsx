@@ -170,7 +170,7 @@ export function QuestionAnalysis({ questionStats }: { questionStats: QuestionSta
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-3 flex items-center justify-between gap-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -179,10 +179,10 @@ export function QuestionAnalysis({ questionStats }: { questionStats: QuestionSta
                       onClick={(e) => { e.stopPropagation(); setGroupPageFn(diffKey, page - 1); }}
                     >
                       <ChevronLeft className="size-3.5" />
-                      Précédent
+                      <span className="hidden sm:inline">Précédent</span>
                     </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {page * GROUP_PAGE_SIZE + 1}–{Math.min((page + 1) * GROUP_PAGE_SIZE, questions.length)} sur{" "}
+                    <span className="text-[11px] text-muted-foreground">
+                      {page * GROUP_PAGE_SIZE + 1}–{Math.min((page + 1) * GROUP_PAGE_SIZE, questions.length)} /{" "}
                       {questions.length}
                     </span>
                     <Button
@@ -192,7 +192,7 @@ export function QuestionAnalysis({ questionStats }: { questionStats: QuestionSta
                       disabled={page >= totalPages - 1}
                       onClick={(e) => { e.stopPropagation(); setGroupPageFn(diffKey, page + 1); }}
                     >
-                      Suivant
+                      <span className="hidden sm:inline">Suivant</span>
                       <ChevronRight className="size-3.5" />
                     </Button>
                   </div>

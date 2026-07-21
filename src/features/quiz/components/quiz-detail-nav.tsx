@@ -41,7 +41,7 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
                 type="button"
                 onClick={() => setActive(item.value)}
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all",
+                  "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-all shrink-0 sm:shrink sm:w-auto",
                   isActive
                     ? "bg-primary/10 text-primary shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -55,7 +55,7 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
                 />
                 <div className="min-w-0">
                   <p className={cn("truncate", isActive && "text-primary")}>{item.label}</p>
-                  <p className="hidden truncate text-xs text-muted-foreground lg:block">{item.description}</p>
+                  <p className="hidden truncate text-[11px] text-muted-foreground lg:block">{item.description}</p>
                 </div>
               </button>
             );

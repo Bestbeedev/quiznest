@@ -58,12 +58,12 @@ export function QuizDetailHeader({
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-2 min-w-0">
         {editing ? (
           <input
             ref={inputRef}
-            className="text-2xl font-semibold tracking-tight bg-background border border-input rounded-md px-2 py-0.5 outline-none focus:ring-2 focus:ring-ring w-full min-w-[200px]"
+            className="text-lg sm:text-2xl font-semibold tracking-tight bg-background border border-input rounded-md px-2 py-0.5 outline-none focus:ring-2 focus:ring-ring w-full min-w-0 sm:min-w-[200px]"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commitTitle}
@@ -79,7 +79,7 @@ export function QuizDetailHeader({
           />
         ) : (
           <>
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate">{title}</h1>
             <button
               type="button"
               className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
@@ -96,16 +96,17 @@ export function QuizDetailHeader({
         )}
         <QuizStatusBadge status={status} />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {status === "PUBLISHED" && accessCode && <ShareQuizDialog accessCode={accessCode} />}
         {status === "DRAFT" && (
-          <Button disabled={isPending} onClick={() => run(() => publishQuizAction(quizId), "Quiz publié.")}>
+          <Button size="sm" disabled={isPending} onClick={() => run(() => publishQuizAction(quizId), "Quiz publié.")}>
             Publier
           </Button>
         )}
         {status === "PUBLISHED" && (
           <Button
             variant="outline"
+            size="sm"
             disabled={isPending}
             onClick={() => run(() => archiveQuizAction(quizId), "Quiz archivé.")}
           >

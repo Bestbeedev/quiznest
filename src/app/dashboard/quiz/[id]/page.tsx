@@ -79,7 +79,7 @@ export default async function QuizDetailPage({
       : { allowed: false, reason: aiCheck.reason, cta: aiCheck.cta, limit: aiCheck.limit, used: aiCheck.used, remaining: aiCheck.remaining };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>

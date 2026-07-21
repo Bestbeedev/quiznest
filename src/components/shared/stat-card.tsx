@@ -22,15 +22,15 @@ export function StatCard({
 }) {
   return (
     <Card className="overflow-hidden">
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-primary/10">
-            <Icon className="size-4 text-primary" />
+      <CardContent className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-primary/10">
+            <Icon className="size-3.5 text-primary" />
           </div>
-          <p className="truncate text-sm text-muted-foreground">{label}</p>
+          <p className="truncate text-[13px] text-muted-foreground">{label}</p>
         </div>
 
-        <p className={cn("text-2xl font-bold tracking-tight", muted && "text-muted-foreground")}>{value}</p>
+        <p className={cn("text-xl sm:text-2xl font-bold tracking-tight", muted && "text-muted-foreground")}>{value}</p>
 
         {trend ? (
           <p className="flex items-center gap-1 text-xs">

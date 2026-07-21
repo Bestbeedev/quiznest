@@ -72,10 +72,10 @@ export function ResultsTab({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Users} label="Tentatives terminées" value={String(totalCompleted)} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard icon={Users} label="Tentatives" value={String(totalCompleted)} />
         <StatCard icon={Percent} label="Score moyen" value={`${averageScore}%`} />
-        <StatCard icon={BarChart3} label="Taux de réussite" value={`${passRate}%`} />
+        <StatCard icon={BarChart3} label="Réussite" value={`${passRate}%`} />
         <StatCard
           icon={Clock}
           label="Temps moyen"
