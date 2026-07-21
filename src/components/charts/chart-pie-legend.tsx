@@ -13,6 +13,8 @@ import {
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
 
@@ -43,6 +45,10 @@ export function ChartPieLegend({
           className="mx-auto aspect-square max-h-[300px]"
         >
           <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel nameKey={nameKey} />}
+            />
             <Pie data={data} dataKey={dataKey} nameKey={nameKey} />
             <ChartLegend
               content={<ChartLegendContent nameKey={nameKey} />}

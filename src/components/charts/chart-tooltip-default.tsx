@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -59,6 +61,7 @@ export function ChartTooltipDefault({
               />
             ))}
             <ChartTooltip content={<ChartTooltipContent />} cursor={false} defaultIndex={1} />
+            <ChartLegend content={<ChartLegendContent />} />
           </BarChart>
         </ChartContainer>
       </CardContent>

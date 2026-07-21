@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -85,6 +87,10 @@ export function ChartRadialStacked({
                 }}
               />
             </PolarRadiusAxis>
+            <ChartLegend
+              content={<ChartLegendContent />}
+              className="-translate-y-1 flex-wrap gap-2 *:basis-1/3 *:justify-center"
+            />
           </RadialBarChart>
         </ChartContainer>
       </CardContent>

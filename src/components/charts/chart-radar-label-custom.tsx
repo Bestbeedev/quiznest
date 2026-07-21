@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -94,6 +96,7 @@ export function ChartRadarLabelCustom({
                 fillOpacity={0.6}
               />
             ))}
+            <ChartLegend content={<ChartLegendContent />} />
           </RadarChart>
         </ChartContainer>
       </CardContent>

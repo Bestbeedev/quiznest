@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -109,6 +111,7 @@ export function ChartLineInteractive({
               strokeWidth={2}
               dot={false}
             />
+            <ChartLegend content={<ChartLegendContent />} />
           </LineChart>
         </ChartContainer>
       </CardContent>

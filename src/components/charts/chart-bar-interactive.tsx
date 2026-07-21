@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -103,6 +105,7 @@ export function ChartBarInteractive({
               }
             />
             <Bar dataKey={activeChart} fill={`var(--color-${activeChart})`} />
+            <ChartLegend content={<ChartLegendContent />} />
           </BarChart>
         </ChartContainer>
       </CardContent>

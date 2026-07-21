@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
 
@@ -57,6 +59,10 @@ export function ChartRadialText({
             outerRadius={90}
             innerRadius={80}
           >
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel nameKey="name" />}
+            />
             <PolarGrid
               gridType="circle"
               radialLines={false}
