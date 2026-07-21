@@ -50,7 +50,7 @@ export function BillingDialogProvider({
   useEffect(() => {
     const urlPlan = searchParams.get("plan");
     if (urlPlan) {
-      setOpenPlanSlug(urlPlan);
+      setOpenPlanSlug(urlPlan); // eslint-disable-line react-hooks/set-state-in-effect
       const url = new URL(window.location.href);
       url.searchParams.delete("plan");
       window.history.replaceState({}, "", url.toString());

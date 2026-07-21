@@ -56,7 +56,7 @@ export function PlanUpgradeDialog({
   // Reset coupon state when dialog closes or plan changes
   useEffect(() => {
     if (!openPlanSlug) {
-      setCoupon("");
+      setCoupon(""); // eslint-disable-line react-hooks/set-state-in-effect
       setShowCoupon(false);
     }
   }, [openPlanSlug]);

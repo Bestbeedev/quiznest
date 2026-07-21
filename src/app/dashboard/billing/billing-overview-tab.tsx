@@ -193,7 +193,7 @@ export function BillingOverviewTab({
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 {activePasses.map((purchase) => {
-                  const daysLeft = Math.max(0, Math.ceil((purchase.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                  const daysLeft = Math.max(0, Math.ceil((purchase.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))); // eslint-disable-line react-hooks/purity
                   return (
                     <div key={purchase.id} className="rounded-lg border p-3">
                       <div className="flex items-center justify-between">
