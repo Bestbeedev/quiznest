@@ -99,7 +99,7 @@ export function DashboardSidebar({ user, planName, walletBalance }: { user: { na
             type="button"
             onClick={toggle}
             aria-label="Replier la navigation"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-lg p-1.5 text-muted-foreground mx-auto transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronsLeft className="size-4" />
           </button>

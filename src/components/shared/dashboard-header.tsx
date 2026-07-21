@@ -143,14 +143,14 @@ export function DashboardHeader({ user, planName, walletBalance }: { user: Sessi
         <Menu className="size-5" />
       </Button>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 lg:w-96">
         <GlobalSearch />
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <ThemeToggle />
         <NewQuizDialog>
-          <Button size="icon" className="hidden sm:inline-flex rounded-full" aria-label="Nouveau quiz" title="Nouveau quiz">
+          <Button size="icon" className=" sm:inline-flex rounded-full" aria-label="Nouveau quiz" title="Nouveau quiz">
             <Plus className="size-4" />
           </Button>
         </NewQuizDialog>
