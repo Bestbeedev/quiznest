@@ -714,6 +714,13 @@ model AddOnProduct {
   /// Amount granted per purchase (e.g. 100 for "+100 participants"); null for
   /// a one-off unlock effect like EXPORT_UNLOCK that isn't a quantity.
   amount       Int?
+  /// Which PlanFeature this add-on targets (e.g. AI_GENERATION, EXPORT_PDF).
+  /// When set, buying this add-on extends that feature's quota or grants access.
+  /// Replaces hardcoded FEATURE_ADDON_BONUS / FEATURE_ADDON_UNLOCK maps.
+  targetFeature FeatureKey? @map("target_feature")
+  /// Whether this is a one-time unlock (true) or a metered consumable (false).
+  /// Replaces hardcoded MATERED_ADDON_EFFECTS set.
+  isOneTime    Boolean     @default(false) @map("is_one_time")
   isActive     Boolean     @default(true)
   isPromoted   Boolean     @default(false)
   displayOrder Int         @default(0) @map("display_order")
@@ -817,6 +824,11 @@ model PlatformSettings {
   notificationEmail       String? @map("notification_email")
   notifyOnNewOrganization Boolean @default(false) @map("notify_on_new_organization")
   notifyOnNewSubscription Boolean @default(false) @map("notify_on_new_subscription")
+
+  /// Credit costs for pay-as-you-go (wallet fallback). Null = use hardcoded default.
+  creditCostAiGeneration Int? @map("credit_cost_ai_generation")
+  creditCostExport       Int? @map("credit_cost_export")
+  creditCostCertificate  Int? @map("credit_cost_certificate")
 
   updatedAt DateTime @updatedAt @map("updated_at")
   updatedBy String?  @map("updated_by")

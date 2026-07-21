@@ -20,8 +20,9 @@ import { getEffectiveQuizLimit, getEffectiveQuestionLimit } from "@/lib/services
 import { canUseFeature } from "@/lib/services/feature-gate";
 import { incrementFeatureUsage } from "@/lib/services/feature-usage";
 import { spendCredits, getOrCreateWallet } from "@/lib/services/wallet";
-import { CREDIT_COSTS } from "@/constants/credit-costs";
+import { getCreditCost } from "@/lib/services/credit-costs";
 import type { AuditAction, FeatureKey } from "@/generated/prisma/client";
+import type { CreditCostKey } from "@/constants/credit-costs";
 
 async function logQuizAction(
   action: AuditAction,
@@ -47,10 +48,10 @@ async function logQuizAction(
  */
 async function chargeCreditsOrDeny(
   organizationId: string,
-  costKey: keyof typeof CREDIT_COSTS,
+  costKey: CreditCostKey,
   quantity: number,
 ): Promise<string | null> {
-  const costPerUnit = CREDIT_COSTS[costKey];
+  const costPerUnit = await getCreditCost(costKey);
   const totalCost = costPerUnit * quantity;
   const wallet = await getOrCreateWallet(organizationId);
   if (wallet.balance < totalCost) {
@@ -61,11 +62,13 @@ async function chargeCreditsOrDeny(
   return null;
 }
 
-async function checkQuestionLimit(organizationId: string): Promise<string | null> {
+async function checkQuestionLimit(organizationId: string, quizId?: string): Promise<string | null> {
   const subscription = await getOrganizationSubscription(organizationId);
   const questionLimit = await getEffectiveQuestionLimit(organizationId, subscription?.plan.questionLimit ?? null);
   if (questionLimit === null) return null;
-  const questionCount = await prisma.question.count({ where: { quiz: { organizationId, deletedAt: null } } });
+  const questionCount = quizId
+    ? await prisma.question.count({ where: { quizId } })
+    : await prisma.question.count({ where: { quiz: { organizationId, deletedAt: null } } });
   if (questionCount >= questionLimit) {
     return `Limite de ${questionLimit} question(s) atteinte pour votre plan. Passez à un plan supérieur ou achetez un Pack de questions.`;
   }
@@ -228,7 +231,7 @@ export async function addQuestionAction(quizId: string, input: unknown) {
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide." };
   }
 
-  const limitError = await checkQuestionLimit(organization.id);
+  const limitError = await checkQuestionLimit(organization.id, quizId);
   if (limitError) return { error: limitError };
 
   await questionService.addQuestion(organization.id, quizId, parsed.data);
@@ -270,6 +273,8 @@ export async function duplicateQuestionAction(questionId: string, targetQuizId: 
   const session = await requireAuth();
   const organization = await requireActiveOrganization();
   await requireOrgRole(organization.id, session.user.id, "EDITOR");
+  const limitError = await checkQuestionLimit(organization.id, targetQuizId);
+  if (limitError) return { error: limitError };
   await questionService.duplicateQuestionToQuiz(organization.id, questionId, targetQuizId);
   revalidatePath("/dashboard/questions");
   revalidatePath(`/dashboard/quiz/${targetQuizId}`);
@@ -279,6 +284,8 @@ export async function moveQuestionAction(questionId: string, targetQuizId: strin
   const session = await requireAuth();
   const organization = await requireActiveOrganization();
   await requireOrgRole(organization.id, session.user.id, "EDITOR");
+  const limitError = await checkQuestionLimit(organization.id, targetQuizId);
+  if (limitError) return { error: limitError };
   await questionService.moveQuestionToQuiz(organization.id, questionId, targetQuizId);
   revalidatePath("/dashboard/questions");
   revalidatePath(`/dashboard/quiz/${targetQuizId}`);
@@ -297,6 +304,8 @@ export async function bulkMoveQuestionsAction(questionIds: string[], targetQuizI
   const session = await requireAuth();
   const organization = await requireActiveOrganization();
   await requireOrgRole(organization.id, session.user.id, "EDITOR");
+  const limitError = await checkQuestionLimit(organization.id, targetQuizId);
+  if (limitError) return { error: limitError };
   const moved = await questionService.bulkMoveQuestions(organization.id, questionIds, targetQuizId);
   revalidatePath("/dashboard/questions");
   revalidatePath(`/dashboard/quiz/${targetQuizId}`);
@@ -307,6 +316,8 @@ export async function bulkDuplicateQuestionsAction(questionIds: string[], target
   const session = await requireAuth();
   const organization = await requireActiveOrganization();
   await requireOrgRole(organization.id, session.user.id, "EDITOR");
+  const limitError = await checkQuestionLimit(organization.id, targetQuizId);
+  if (limitError) return { error: limitError };
   const duplicated = await questionService.bulkDuplicateQuestions(organization.id, questionIds, targetQuizId);
   revalidatePath("/dashboard/questions");
   revalidatePath(`/dashboard/quiz/${targetQuizId}`);
@@ -356,7 +367,7 @@ export async function importQuestionsFromJsonAction(quizId: string, rawJson: str
 
   const inputs = toCreateQuestionInputs(parsed.data);
 
-  const limitError = await checkQuestionLimit(organization.id);
+  const limitError = await checkQuestionLimit(organization.id, quizId);
   if (limitError) return { error: limitError };
 
   await questionService.importQuestions(organization.id, quizId, inputs);
@@ -405,7 +416,7 @@ export async function importAiQuestionAction(quizId: string, rawQuestion: unknow
     return { error: parsed.error.issues[0]?.message ?? "Question invalide." };
   }
 
-  const limitError = await checkQuestionLimit(organization.id);
+  const limitError = await checkQuestionLimit(organization.id, quizId);
   if (limitError) return { error: limitError };
 
   const input = toCreateQuestionInput(parsed.data);

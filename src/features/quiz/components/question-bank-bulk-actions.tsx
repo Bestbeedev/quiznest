@@ -30,15 +30,19 @@ export function QuestionBankBulkActions({
 
   const selectedIds = table.getSelectedRowModel().rows.map((row) => row.original.id);
 
-  const run = (
-    action: (ids: string[]) => Promise<{ count: number }>,
+  const run = async (
+    action: (ids: string[]) => Promise<{ count: number } | { error: string }>,
     message: (count: number) => string,
   ) => {
     startTransition(async () => {
       const result = await action(selectedIds);
       table.resetRowSelection();
       router.refresh();
-      toast.success(message(result.count));
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
+        toast.success(message(result.count));
+      }
     });
   };
 

@@ -1,7 +1,5 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
-import { METERED_ADDON_EFFECTS } from "@/constants/addon-effects";
-import { FEATURE_ADDON_BONUS } from "@/constants/feature-addon";
 import { decrementAddonRemaining } from "@/lib/services/addon";
 import type { FeatureKey } from "@/generated/prisma/client";
 
@@ -29,8 +27,11 @@ export async function incrementFeatureUsage(organizationId: string, feature: Fea
 
   // Decrement metered add-on remaining (e.g. EXTRA_AI_GENERATIONS) so the
   // bonus sum reflects actual consumption, not just initial purchase amount.
-  const addonEffect = FEATURE_ADDON_BONUS[feature];
-  if (addonEffect && METERED_ADDON_EFFECTS.has(addonEffect)) {
-    await decrementAddonRemaining(organizationId, addonEffect, by);
+  // Only non-one-time add-ons with remaining balance are affected.
+  const hasMeteredAddon = await prisma.organizationAddOn.findFirst({
+    where: { organizationId, product: { targetFeature: feature, isOneTime: false } },
+  });
+  if (hasMeteredAddon) {
+    await decrementAddonRemaining(organizationId, feature, by);
   }
 }

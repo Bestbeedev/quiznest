@@ -1,13 +1,12 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
 import { ValidationError } from "@/lib/errors";
-import { METERED_ADDON_EFFECTS } from "@/constants/addon-effects";
 import type { AddOnProductInput } from "@/lib/validators/addon-product";
-import type { AddOnEffect } from "@/generated/prisma/client";
+import type { AddOnEffect, FeatureKey } from "@/generated/prisma/client";
 
-export async function decrementAddonRemaining(organizationId: string, effect: AddOnEffect, quantity = 1) {
+export async function decrementAddonRemaining(organizationId: string, feature: FeatureKey, quantity = 1) {
   const purchase = await prisma.organizationAddOn.findFirst({
-    where: { organizationId, product: { effect }, remaining: { gt: 0 } },
+    where: { organizationId, product: { targetFeature: feature, isOneTime: false }, remaining: { gt: 0 } },
     orderBy: { createdAt: "asc" },
   });
   if (!purchase) return null;
@@ -43,6 +42,8 @@ function addOnScalarData(input: AddOnProductInput) {
     currency: input.currency,
     effect: input.effect,
     amount: input.amount ?? null,
+    targetFeature: input.targetFeature ?? null,
+    isOneTime: input.isOneTime,
     isActive: input.isActive,
     isPromoted: input.isPromoted,
     displayOrder: input.displayOrder,
@@ -69,13 +70,12 @@ export async function setAddOnProductActive(id: string, isActive: boolean) {
 
 export async function grantAddOnPurchase(organizationId: string, productId: string, paymentId?: string) {
   const product = await getAddOnProductById(productId);
-  const isMetered = METERED_ADDON_EFFECTS.has(product.effect);
 
   return prisma.organizationAddOn.create({
     data: {
       organizationId,
       productId,
-      remaining: isMetered ? product.amount : null,
+      remaining: product.isOneTime ? null : product.amount,
       paymentId,
     },
   });
@@ -89,26 +89,38 @@ export async function listOrganizationAddOns(organizationId: string) {
   });
 }
 
-/** Sum of remaining quantity boosts an org has for a given effect — e.g.
- * total extra AI generations left across every pack bought. For metered
- * add-ons, returns the sum of `remaining` (not the original `amount`).
- * Used to extend a plan's base numeric limit. */
-export async function getAddOnBonus(organizationId: string, effect: AddOnEffect) {
+/** Sum of remaining quantity boosts for a monthly feature quota (looked up by
+ * targetFeature). For metered add-ons, returns the sum of `remaining`.
+ * Used by canUseFeature for PlanFeature.limit extension. */
+export async function getAddOnBonus(organizationId: string, feature: FeatureKey) {
+  const purchases = await prisma.organizationAddOn.findMany({
+    where: { organizationId, product: { targetFeature: feature, isOneTime: false } },
+    include: { product: true },
+  });
+  return purchases.reduce((sum, purchase) => sum + (purchase.remaining ?? 0), 0);
+}
+
+/** Sum of cumulative limit boosts (looked up by AddOnEffect, e.g. EXTRA_QUIZZES).
+ * For metered effects, returns the sum of `remaining`; for non-metered, the sum
+ * of `amount`. Used by limits.ts for org-wide numeric limits. */
+export async function getAddOnBonusByEffect(organizationId: string, effect: AddOnEffect) {
   const purchases = await prisma.organizationAddOn.findMany({
     where: { organizationId, product: { effect } },
     include: { product: true },
   });
   return purchases.reduce((sum, purchase) => {
-    if (METERED_ADDON_EFFECTS.has(effect)) {
+    if (!purchase.product.isOneTime) {
       return sum + (purchase.remaining ?? 0);
     }
     return sum + (purchase.product.amount ?? 0);
   }, 0);
 }
 
-/** True if the org has purchased a non-metered unlock effect (e.g. export
- * access) at least once — unlocks don't expire or get consumed. */
-export async function hasAddOnUnlock(organizationId: string, effect: AddOnEffect) {
-  const count = await prisma.organizationAddOn.count({ where: { organizationId, product: { effect } } });
+/** True if the org has purchased a one-time unlock add-on targeting the given
+ * feature at least once — unlocks don't expire or get consumed. */
+export async function hasAddOnUnlock(organizationId: string, feature: FeatureKey) {
+  const count = await prisma.organizationAddOn.count({
+    where: { organizationId, product: { targetFeature: feature, isOneTime: true } },
+  });
   return count > 0;
 }

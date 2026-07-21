@@ -11,7 +11,7 @@ import {
 } from "@/lib/services/payment";
 import { canUseFeature } from "@/lib/services/feature-gate";
 import { spendCredits, getOrCreateWallet } from "@/lib/services/wallet";
-import { CREDIT_COSTS } from "@/constants/credit-costs";
+import { getCreditCost } from "@/lib/services/credit-costs";
 import { ValidationError } from "@/lib/errors";
 import type { FeatureKey } from "@/generated/prisma/client";
 
@@ -113,7 +113,7 @@ export async function chargeExportCreditsAction(featureKey: FeatureKey) {
 
     // Feature not allowed — try wallet credit fallback
     const wallet = await getOrCreateWallet(organization.id);
-    const cost = CREDIT_COSTS.EXPORT;
+    const cost = await getCreditCost("EXPORT");
     if (wallet.balance < cost) {
       return {
         error: `Solde insuffisant : un export coûte ${cost} crédit${cost !== 1 ? "s" : ""} mais vous n'en avez que ${wallet.balance}. Rechargez votre wallet.`,

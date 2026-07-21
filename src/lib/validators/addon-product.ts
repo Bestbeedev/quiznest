@@ -9,6 +9,26 @@ const addOnEffectKeys = [
   "CERTIFICATE_UNLOCK",
 ] as const;
 
+const featureKeys = [
+  "AI_GENERATION",
+  "AI_IMPORT",
+  "QUESTION_BANK",
+  "CERTIFICATES",
+  "EXPORT_PDF",
+  "EXPORT_EXCEL",
+  "EXPORT_CSV",
+  "ADVANCED_ANALYTICS",
+  "CUSTOM_BRANDING",
+  "CUSTOM_DOMAIN",
+  "WEBHOOKS",
+  "API_ACCESS",
+  "MULTI_TEAM",
+  "LIVE_MONITORING",
+  "EMAIL_NOTIFICATIONS",
+  "SMS_NOTIFICATIONS",
+  "WHITE_LABEL",
+] as const;
+
 export const addOnProductSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional().or(z.literal("")),
@@ -16,6 +36,8 @@ export const addOnProductSchema = z.object({
   currency: z.string().min(1).max(10).default("XOF"),
   effect: z.enum(addOnEffectKeys),
   amount: z.coerce.number().int().min(1).nullable().optional(),
+  targetFeature: z.enum(featureKeys).nullable().optional(),
+  isOneTime: z.boolean().default(false),
   isActive: z.boolean().default(true),
   isPromoted: z.boolean().default(false),
   displayOrder: z.coerce.number().int().min(0).default(0),

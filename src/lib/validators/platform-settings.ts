@@ -10,6 +10,9 @@ export const updatePlatformSettingsSchema = z.object({
   notificationEmail: z.union([z.email(), z.literal("")]).nullable().optional(),
   notifyOnNewOrganization: z.boolean().optional(),
   notifyOnNewSubscription: z.boolean().optional(),
+  creditCostAiGeneration: z.coerce.number().int().min(0).nullable().optional(),
+  creditCostExport: z.coerce.number().int().min(0).nullable().optional(),
+  creditCostCertificate: z.coerce.number().int().min(0).nullable().optional(),
 });
 
 export type UpdatePlatformSettingsInput = z.infer<typeof updatePlatformSettingsSchema>;

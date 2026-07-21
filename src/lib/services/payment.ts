@@ -9,7 +9,6 @@ import { getAddOnProductById } from "@/lib/services/addon";
 import { getPassById } from "@/lib/services/pass";
 import { logAudit } from "@/lib/services/audit-log";
 import { ValidationError } from "@/lib/errors";
-import { METERED_ADDON_EFFECTS } from "@/constants/addon-effects";
 import type { PlanInterval } from "@/generated/prisma/client";
 
 type CheckoutCustomer = { email: string; firstName?: string; lastName?: string };
@@ -274,12 +273,11 @@ export async function applyVerifiedPayment(event: VerifiedWebhookEvent) {
       }
       case "addon": {
         if (!addonProduct) throw new ValidationError("Module introuvable.");
-        const isMetered = METERED_ADDON_EFFECTS.has(addonProduct.effect);
         await tx.organizationAddOn.create({
           data: {
             organizationId: payment.organizationId,
             productId: addonProduct.id,
-            remaining: isMetered ? addonProduct.amount : null,
+            remaining: addonProduct.isOneTime ? null : addonProduct.amount,
             paymentId: payment.id,
           },
         });
@@ -443,12 +441,11 @@ export async function recoverPayment(paymentId: string) {
       }
       case "addon": {
         if (!addonProduct) throw new ValidationError("Module introuvable.");
-        const isMetered = METERED_ADDON_EFFECTS.has(addonProduct.effect);
         await tx.organizationAddOn.create({
           data: {
             organizationId: payment.organizationId,
             productId: addonProduct.id,
-            remaining: isMetered ? addonProduct.amount : null,
+            remaining: addonProduct.isOneTime ? null : addonProduct.amount,
             paymentId: payment.id,
           },
         });

@@ -8,7 +8,8 @@ import { toast } from "sonner";
 
 import { createAddOnProductAction, updateAddOnProductAction } from "@/features/admin/commerce-actions";
 import { addOnProductSchema, type AddOnProductInput } from "@/lib/validators/addon-product";
-import { ADDON_EFFECT_LABELS, METERED_ADDON_EFFECTS } from "@/constants/addon-effects";
+import { ADDON_EFFECT_LABELS } from "@/constants/addon-effects";
+import { FEATURE_LABELS } from "@/constants/features";
 import { applyZodErrors } from "@/lib/utils/zod-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
-import type { AddOnEffect } from "@/generated/prisma/client";
+import type { AddOnEffect, FeatureKey } from "@/generated/prisma/client";
 
 export type AddOnProductForEdit = Omit<AddOnProductInput, "description"> & {
   id: string;
@@ -47,6 +48,8 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
         currency: "XOF",
         effect: "EXTRA_PARTICIPANTS",
         amount: 100,
+        targetFeature: null,
+        isOneTime: false,
         isActive: true,
         isPromoted: false,
         displayOrder: 0,
@@ -63,7 +66,8 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
   } = useForm<AddOnProductInput>({ defaultValues });
 
   const effect = watch("effect");
-  const isMetered = METERED_ADDON_EFFECTS.has(effect as AddOnEffect);
+  const isOneTime = watch("isOneTime");
+  const targetFeature = watch("targetFeature");
 
   const close = () => {
     setOpen(false);
@@ -144,6 +148,29 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
               </Select>
             </Field>
 
+            <Field>
+              <FieldLabel>Feature cible</FieldLabel>
+              <Select
+                value={targetFeature ?? "__none__"}
+                onValueChange={(v) => setValue("targetFeature", v === "__none__" ? null : (v as FeatureKey))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Aucune (pas de mapping feature)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Aucune</SelectItem>
+                  {Object.entries(FEATURE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Lie ce module à une feature du plan. Quand défini, acheter ce module étend la quota de cette feature.
+              </p>
+            </Field>
+
             <Field orientation="responsive">
               <Field data-invalid={!!errors.price}>
                 <FieldLabel htmlFor="addon-price">Prix</FieldLabel>
@@ -154,7 +181,7 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
                 <FieldLabel htmlFor="addon-currency">Devise</FieldLabel>
                 <Input id="addon-currency" {...register("currency")} />
               </Field>
-              {isMetered && (
+              {!isOneTime && (
                 <Field data-invalid={!!errors.amount}>
                   <FieldLabel htmlFor="addon-amount">Quantité</FieldLabel>
                   <Input id="addon-amount" type="number" min={1} aria-invalid={!!errors.amount} {...register("amount")} />
@@ -177,7 +204,14 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
                 <Checkbox checked={watch("isPromoted")} onCheckedChange={(c) => setValue("isPromoted", c === true)} />
                 Mettre en avant
               </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={isOneTime} onCheckedChange={(c) => setValue("isOneTime", c === true)} />
+                Déverrouillage unique
+              </label>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              « Déverrouillage unique » = achat ponctuel qui donne un accès permanent. Sinon, c&apos;est un module consommable (quantité décrémentée à l&apos;utilisation).
+            </p>
           </FieldGroup>
 
           <DialogFooter>

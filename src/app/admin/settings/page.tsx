@@ -16,6 +16,7 @@ import { AdminSettingsNav } from "@/features/admin/components/admin-settings-nav
 import { MaintenanceModeCard } from "@/features/admin/components/maintenance-mode-card";
 import { FeatureFlagsCard } from "@/features/admin/components/feature-flags-card";
 import { NotificationSettingsCard } from "@/features/admin/components/notification-settings-card";
+import { CreditCostsCard } from "@/features/admin/components/credit-costs-card";
 
 export const metadata: Metadata = buildMetadata({
   title: "Paramètres",
@@ -213,6 +214,17 @@ export default async function AdminSettingsPage() {
                   allowSignups: platformSettings.allowSignups,
                   billingEnabled: platformSettings.billingEnabled,
                 }}
+              />
+            </Section>
+
+            <Section
+              title="Coûts en crédits (Wallet)"
+              description="Prix débité du wallet quand le quota plan est épuisé. Laissez vide pour la valeur par défaut."
+            >
+              <CreditCostsCard
+                creditCostAiGeneration={platformSettings.creditCostAiGeneration}
+                creditCostExport={platformSettings.creditCostExport}
+                creditCostCertificate={platformSettings.creditCostCertificate}
               />
             </Section>
           </div>

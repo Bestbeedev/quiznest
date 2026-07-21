@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
 import { Section } from "@/components/shared/section";
 import { CheckoutShopCard } from "@/features/billing/components/checkout-shop-card";
-import { CREDIT_COSTS, CREDIT_COST_LABELS, type CreditCostKey } from "@/constants/credit-costs";
+import { CREDIT_COST_LABELS, type CreditCostKey } from "@/constants/credit-costs";
+import { getAllCreditCosts } from "@/lib/services/credit-costs";
 
 export const metadata: Metadata = buildMetadata({
   title: "Wallet",
@@ -24,10 +25,11 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function WalletPage() {
   const organization = await requireActiveOrganization();
-  const [wallet, transactions, creditPacks] = await Promise.all([
+  const [wallet, transactions, creditPacks, creditCosts] = await Promise.all([
     getOrCreateWallet(organization.id),
     getWalletTransactions(organization.id, 50),
     listActiveCreditPacks(),
+    getAllCreditCosts(),
   ]);
 
   const totalTopUps = transactions.filter((t) => t.type === "TOPUP").reduce((sum, t) => sum + t.amount, 0);
@@ -167,7 +169,7 @@ export default async function WalletPage() {
                       <p className="text-sm">{CREDIT_COST_LABELS[key].label}</p>
                     </div>
                     <span className="text-sm font-semibold tabular-nums">
-                      {CREDIT_COSTS[key]} <span className="text-xs font-normal text-muted-foreground">crédit{CREDIT_COSTS[key] > 1 ? "s" : ""}</span>
+                      {creditCosts[key]} <span className="text-xs font-normal text-muted-foreground">crédit{creditCosts[key] > 1 ? "s" : ""}</span>
                     </span>
                   </div>
                 ))}

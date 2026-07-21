@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db/client";
 import { getFeatureUsage } from "@/lib/services/feature-usage";
 import { getActivePassFeatures } from "@/lib/services/pass";
 import { getAddOnBonus, hasAddOnUnlock } from "@/lib/services/addon";
-import { FEATURE_ADDON_BONUS, FEATURE_ADDON_UNLOCK } from "@/constants/feature-addon";
 import type { FeatureKey } from "@/generated/prisma/client";
 
 export type FeatureCheck = {
@@ -71,12 +70,9 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
   }
 
   // Check one-time add-on unlocks (e.g. EXPORT_UNLOCK, CERTIFICATE_UNLOCK)
-  const unlockEffect = FEATURE_ADDON_UNLOCK[feature];
-  if (unlockEffect) {
-    const unlocked = await hasAddOnUnlock(organizationId, unlockEffect);
-    if (unlocked) {
-      return { allowed: true, limit: null, source: "plan" };
-    }
+  const unlocked = await hasAddOnUnlock(organizationId, feature);
+  if (unlocked) {
+    return { allowed: true, limit: null, source: "plan" };
   }
 
   const subscription = await prisma.subscription.findUnique({
@@ -118,8 +114,7 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
     return { allowed: true, limit: null, source: "plan" };
   }
 
-  const addOnEffect = FEATURE_ADDON_BONUS[feature];
-  const bonus = addOnEffect ? await getAddOnBonus(organizationId, addOnEffect) : 0;
+  const bonus = await getAddOnBonus(organizationId, feature);
   const effectiveLimit = grant.limit + bonus;
 
   const used = await getFeatureUsage(organizationId, feature);
@@ -134,7 +129,7 @@ export async function canUseFeature(organizationId: string, feature: FeatureKey)
       limit: effectiveLimit,
       used,
       remaining: 0,
-      cta: addOnEffect ? "pass" : "upgrade",
+      cta: bonus > 0 ? "pass" : "upgrade",
       source: "plan",
     };
   }

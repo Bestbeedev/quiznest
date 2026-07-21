@@ -37,11 +37,15 @@ export function QuestionBankRowActions({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  const run = (action: () => Promise<void>, message: string) => {
+  const run = async (action: () => Promise<{ error?: string } | void>, message: string) => {
     startTransition(async () => {
-      await action();
+      const result = await action();
       router.refresh();
-      toast.success(message);
+      if (result && "error" in result && result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(message);
+      }
     });
   };
 

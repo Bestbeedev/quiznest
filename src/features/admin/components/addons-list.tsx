@@ -8,12 +8,13 @@ import { toast } from "sonner";
 import { deleteAddOnProductAction, setAddOnProductActiveAction } from "@/features/admin/commerce-actions";
 import { AddOnFormDialog, type AddOnProductForEdit } from "@/features/admin/components/addon-form-dialog";
 import { ADDON_EFFECT_LABELS } from "@/constants/addon-effects";
+import { FEATURE_LABELS } from "@/constants/features";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
-import type { AddOnEffect } from "@/generated/prisma/client";
+import type { AddOnEffect, FeatureKey } from "@/generated/prisma/client";
 
 export function AddOnsList({ products }: { products: AddOnProductForEdit[] }) {
   const router = useRouter();
@@ -48,6 +49,8 @@ export function AddOnsList({ products }: { products: AddOnProductForEdit[] }) {
           <TableRow>
             <TableHead>Module</TableHead>
             <TableHead>Effet</TableHead>
+            <TableHead>Feature cible</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Prix</TableHead>
             <TableHead>Actif</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -60,6 +63,12 @@ export function AddOnsList({ products }: { products: AddOnProductForEdit[] }) {
               <TableCell className="text-sm text-muted-foreground">
                 {ADDON_EFFECT_LABELS[product.effect as AddOnEffect]}
                 {product.amount ? ` (+${product.amount})` : ""}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {product.targetFeature ? FEATURE_LABELS[product.targetFeature as FeatureKey] ?? product.targetFeature : "—"}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {product.isOneTime ? "Déverrouillage" : "Consommable"}
               </TableCell>
               <TableCell>{formatCurrency(product.price, product.currency)}</TableCell>
               <TableCell>
