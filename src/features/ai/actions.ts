@@ -32,7 +32,6 @@ export async function saveAiSettingsAction(input: unknown) {
   }
 
   revalidatePath("/dashboard/ai");
-  revalidatePath("/dashboard/ai/settings");
   return { success: true as const };
 }
 
@@ -47,7 +46,6 @@ export async function clearAiSettingsAction() {
   }
 
   revalidatePath("/dashboard/ai");
-  revalidatePath("/dashboard/ai/settings");
   return { success: true as const };
 }
 
