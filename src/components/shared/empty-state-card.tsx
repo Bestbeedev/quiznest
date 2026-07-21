@@ -18,8 +18,8 @@ export function EmptyStateCard({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
-          <Icon className="size-8 text-muted-foreground" />
+        <div className="flex flex-col items-center gap-1.5 rounded-lg border border-dashed py-6 text-center">
+          <Icon className="size-6 text-muted-foreground" />
           <p className="max-w-xs text-sm text-muted-foreground">{description}</p>
         </div>
       </CardContent>

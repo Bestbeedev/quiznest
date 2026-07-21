@@ -28,7 +28,7 @@ function NavItemLink({
       href={item.href}
       onClick={onNavigate}
       className={cn(
-        "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        "relative flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
         collapsed && "size-11 justify-center px-0",
         active
           ? collapsed
@@ -84,7 +84,7 @@ export function SidebarNav({
                 {group.label}
               </p>
             )}
-            <div className={cn("flex flex-col", collapsed ? "gap-2" : "gap-0.5")}>
+            <div className={cn("flex flex-col", collapsed ? "gap-1.5" : "gap-px")}>
               {group.items.map((item) => (
                 <NavItemLink
                   key={item.href}
