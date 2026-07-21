@@ -5,6 +5,19 @@ import { METERED_ADDON_EFFECTS } from "@/constants/addon-effects";
 import type { AddOnProductInput } from "@/lib/validators/addon-product";
 import type { AddOnEffect } from "@/generated/prisma/client";
 
+export async function decrementAddonRemaining(organizationId: string, effect: AddOnEffect, quantity = 1) {
+  const purchase = await prisma.organizationAddOn.findFirst({
+    where: { organizationId, product: { effect }, remaining: { gt: 0 } },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!purchase) return null;
+  const newRemaining = Math.max((purchase.remaining ?? 0) - quantity, 0);
+  return prisma.organizationAddOn.update({
+    where: { id: purchase.id },
+    data: { remaining: newRemaining },
+  });
+}
+
 export async function listAddOnProducts() {
   return prisma.addOnProduct.findMany({
     orderBy: { displayOrder: "asc" },
@@ -76,15 +89,21 @@ export async function listOrganizationAddOns(organizationId: string) {
   });
 }
 
-/** Sum of all quantity boosts an org has purchased for a given effect — e.g.
- * total extra participants across every "+100 participants" pack bought.
- * Used to extend a plan's base numeric limit without ever mutating it. */
+/** Sum of remaining quantity boosts an org has for a given effect — e.g.
+ * total extra AI generations left across every pack bought. For metered
+ * add-ons, returns the sum of `remaining` (not the original `amount`).
+ * Used to extend a plan's base numeric limit. */
 export async function getAddOnBonus(organizationId: string, effect: AddOnEffect) {
   const purchases = await prisma.organizationAddOn.findMany({
     where: { organizationId, product: { effect } },
     include: { product: true },
   });
-  return purchases.reduce((sum, purchase) => sum + (purchase.product.amount ?? 0), 0);
+  return purchases.reduce((sum, purchase) => {
+    if (METERED_ADDON_EFFECTS.has(effect)) {
+      return sum + (purchase.remaining ?? 0);
+    }
+    return sum + (purchase.product.amount ?? 0);
+  }, 0);
 }
 
 /** True if the org has purchased a non-metered unlock effect (e.g. export
