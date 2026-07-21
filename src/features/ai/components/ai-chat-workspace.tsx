@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useObject } from "@ai-sdk/react";
-import { Send, Plus, Trash2, Bot, User, Loader2, MessageSquare } from "lucide-react";
+import { Send, Plus, Trash2, Bot, User, Loader2, MessageSquare, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { aiChatTurnSchema } from "@/lib/ai/chat-schema";
@@ -11,9 +11,11 @@ import {
   getConversationAction,
   associateQuizAction,
   deleteConversationAction,
+  renameConversationAction,
 } from "@/features/ai/actions";
 import { AiQuestionBatch } from "@/features/ai/components/ai-question-batch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { AiImportQuestion } from "@/lib/validators/ai-import";
@@ -49,7 +51,11 @@ export function AiChatWorkspace({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   const { object, submit, isLoading, clear } = useObject({
     api: "/api/ai/chat",
@@ -85,6 +91,13 @@ export function AiChatWorkspace({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, object]);
 
+  useEffect(() => {
+    if (renamingId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renamingId]);
+
   const loadConversation = async (id: string) => {
     const result = await getConversationAction(id);
     if (!result || "error" in result) {
@@ -108,6 +121,7 @@ export function AiChatWorkspace({
     setMessages([]);
     setQuizId(null);
     setInput("");
+    setNewTitle("");
     clear();
   };
 
@@ -115,6 +129,27 @@ export function AiChatWorkspace({
     await deleteConversationAction(id);
     setConversations((prev) => prev.filter((c) => c.id !== id));
     if (activeId === id) handleNewConversation();
+  };
+
+  const startRename = (id: string, currentTitle: string) => {
+    setRenamingId(id);
+    setRenameValue(currentTitle);
+  };
+
+  const commitRename = async () => {
+    if (!renamingId || !renameValue.trim()) {
+      setRenamingId(null);
+      return;
+    }
+    const result = await renameConversationAction(renamingId, renameValue.trim());
+    if (result && "error" in result) {
+      toast.error(result.error);
+    } else {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === renamingId ? { ...c, title: renameValue.trim() } : c)),
+      );
+    }
+    setRenamingId(null);
   };
 
   const handleQuizChange = async (value: string | null) => {
@@ -142,13 +177,15 @@ export function AiChatWorkspace({
 
     let conversationId = activeId;
     if (!conversationId) {
-      const result = await createConversationAction(quizId);
+      const title = newTitle.trim() || undefined;
+      const result = await createConversationAction(quizId, title);
       conversationId = result.conversation.id;
       setConversations((prev) => [
         { ...result.conversation, quiz: quizzes.find((q) => q.id === quizId) ?? null },
         ...prev,
       ]);
       setActiveId(conversationId);
+      setNewTitle("");
     }
 
     setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "USER", content: trimmed, proposedQuestions: null }]);
@@ -176,18 +213,50 @@ export function AiChatWorkspace({
                 activeId === c.id && "bg-muted",
               )}
             >
-              <button type="button" className="flex min-w-0 flex-1 items-center gap-2" onClick={() => loadConversation(c.id)}>
-                <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{c.title}</span>
-              </button>
-              <button
-                type="button"
-                aria-label="Supprimer"
-                className="shrink-0 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
-                onClick={() => handleDelete(c.id)}
-              >
-                <Trash2 className="size-3.5" />
-              </button>
+              {renamingId === c.id ? (
+                <div className="flex min-w-0 flex-1 items-center gap-1">
+                  <input
+                    ref={renameInputRef}
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitRename();
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                    onBlur={commitRename}
+                    className="min-w-0 flex-1 rounded border bg-transparent px-1.5 py-0.5 text-sm outline-none focus:border-ring"
+                  />
+                  <button type="button" className="shrink-0 text-green-600 hover:text-green-700" onClick={commitRename}>
+                    <Check className="size-3.5" />
+                  </button>
+                  <button type="button" className="shrink-0 text-muted-foreground hover:text-foreground" onClick={() => setRenamingId(null)}>
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button type="button" className="flex min-w-0 flex-1 items-center gap-2" onClick={() => loadConversation(c.id)}>
+                    <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Renommer"
+                    className="shrink-0 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
+                    onClick={() => startRename(c.id, c.title)}
+                  >
+                    <Pencil className="size-3" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Supprimer"
+                    className="shrink-0 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
+                    onClick={() => handleDelete(c.id)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -213,9 +282,23 @@ export function AiChatWorkspace({
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
           {messages.length === 0 && !isLoading && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
               <Bot className="size-8" />
               <p>Décrivez le quiz que vous voulez créer — sujet, niveau, nombre de questions.</p>
+              {!activeId && (
+                <Input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Nom de la conversation (optionnel)"
+                  className="max-w-xs text-center"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                />
+              )}
             </div>
           )}
 

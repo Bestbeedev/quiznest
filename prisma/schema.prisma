@@ -67,17 +67,19 @@ model Organization {
   members OrganizationMember[]
   quizzes Quiz[]
 
-  subscription Subscription?
-  payments     Payment[]
-  invoices     Invoice[]
-  featureUsage FeatureUsage[]
-  wallet             Wallet?
-  couponRedemptions  CouponRedemption[]
-  addOnPurchases     OrganizationAddOn[]
-  passes             OrganizationPass[]
-  auditLogs    AuditLog[]
-  invitations  Invitation[]
-  apiKeys      ApiKey[]
+  subscription      Subscription?
+  payments          Payment[]
+  invoices          Invoice[]
+  featureUsage      FeatureUsage[]
+  wallet            Wallet?
+  couponRedemptions CouponRedemption[]
+  addOnPurchases    OrganizationAddOn[]
+  passes            OrganizationPass[]
+  auditLogs         AuditLog[]
+  invitations       Invitation[]
+  apiKeys           ApiKey[]
+  aiSettings        OrganizationAiSettings?
+  aiConversations   AiConversation[]
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -121,6 +123,7 @@ model User {
   auditLogs       AuditLog[]
   sentInvitations Invitation[]
   createdApiKeys  ApiKey[]
+  aiConversations AiConversation[]
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -243,10 +246,11 @@ model Quiz {
   openDate    DateTime?  @map("open_date")
   closeDate   DateTime?  @map("close_date")
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  questions    Question[]
-  participants Participant[]
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author          User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  questions       Question[]
+  participants    Participant[]
+  aiConversations AiConversation[]
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -390,19 +394,19 @@ model Plan {
   currency String       @default("XOF")
   interval PlanInterval @default(MONTH)
 
-  quizLimit        Int?    @map("quiz_limit")
-  participantLimit Int?    @map("participant_limit")
-  questionLimit    Int?    @map("question_limit")
-  storageLimitMb   Int?    @map("storage_limit_mb")
+  quizLimit        Int? @map("quiz_limit")
+  participantLimit Int? @map("participant_limit")
+  questionLimit    Int? @map("question_limit")
+  storageLimitMb   Int? @map("storage_limit_mb")
 
   /// Free-text marketing bullet points shown on pricing cards — display only,
   /// never used for access control. Real entitlements live in `PlanFeature`.
   features Json @default("[]")
 
-  description String?
-  badge       String?
-  color       String?
-  icon        String?
+  description  String?
+  badge        String?
+  color        String?
+  icon         String?
   displayOrder Int     @default(0) @map("display_order")
   isActive     Boolean @default(true) @map("is_active")
   isPromoted   Boolean @default(false) @map("is_promoted")
@@ -526,13 +530,13 @@ model Payment {
   /// purchases can reuse this same Payment row later without a schema change.
   metadata Json?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  invoice      Invoice?
-  walletTopUp       WalletTransaction? @relation("WalletTopUpPayment")
-  couponRedemption  CouponRedemption?
-  addOnPurchase     OrganizationAddOn?
-  passPurchase      OrganizationPass?
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription     Subscription?      @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  invoice          Invoice?
+  walletTopUp      WalletTransaction? @relation("WalletTopUpPayment")
+  couponRedemption CouponRedemption?
+  addOnPurchase    OrganizationAddOn?
+  passPurchase     OrganizationPass?
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -600,7 +604,7 @@ model Coupon {
   endsAt   DateTime?
 
   maxRedemptions  Int?
-  redemptionCount Int  @default(0)
+  redemptionCount Int     @default(0)
   isActive        Boolean @default(true)
 
   /// Empty = applies to every plan.
@@ -641,9 +645,9 @@ enum WalletTransactionType {
 /// Independent of subscriptions (Prompt-Archi.md "WALLET") — a standing
 /// credit balance an org can spend on AI/exports/participants/certificates.
 model Wallet {
-  id             String   @id @default(cuid())
-  organizationId String   @unique @map("organization_id")
-  balance        Int      @default(0)
+  id             String @id @default(cuid())
+  organizationId String @unique @map("organization_id")
+  balance        Int    @default(0)
 
   organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transactions WalletTransaction[]
@@ -654,13 +658,13 @@ model Wallet {
 }
 
 model WalletTransaction {
-  id       String                @id @default(cuid())
-  walletId String                @map("wallet_id")
-  type     WalletTransactionType
+  id        String                @id @default(cuid())
+  walletId  String                @map("wallet_id")
+  type      WalletTransactionType
   /// Always positive — direction is carried by `type`.
-  amount   Int
-  reason   String
-  paymentId String?              @unique @map("payment_id")
+  amount    Int
+  reason    String
+  paymentId String?               @unique @map("payment_id")
 
   wallet  Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
   payment Payment? @relation("WalletTopUpPayment", fields: [paymentId], references: [id], onDelete: SetNull)
@@ -701,18 +705,18 @@ enum AddOnEffect {
 /// Super-admin-managed one-time purchase catalog (Prompt-Archi.md "PAY AS YOU
 /// GO") — layered on top of a plan rather than replacing it.
 model AddOnProduct {
-  id          String      @id @default(cuid())
-  name        String
-  description String?
-  price       Int
-  currency    String      @default("XOF")
-  effect      AddOnEffect
+  id           String      @id @default(cuid())
+  name         String
+  description  String?
+  price        Int
+  currency     String      @default("XOF")
+  effect       AddOnEffect
   /// Amount granted per purchase (e.g. 100 for "+100 participants"); null for
   /// a one-off unlock effect like EXPORT_UNLOCK that isn't a quantity.
   amount       Int?
-  isActive     Boolean @default(true)
-  isPromoted   Boolean @default(false)
-  displayOrder Int     @default(0) @map("display_order")
+  isActive     Boolean     @default(true)
+  isPromoted   Boolean     @default(false)
+  displayOrder Int         @default(0) @map("display_order")
 
   purchases OrganizationAddOn[]
 
@@ -723,17 +727,17 @@ model AddOnProduct {
 }
 
 model OrganizationAddOn {
-  id             String @id @default(cuid())
-  organizationId String @map("organization_id")
-  productId      String @map("product_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  productId      String  @map("product_id")
   /// Remaining consumable amount for metered add-ons (e.g. AI packs);
   /// null for non-consumable unlocks or non-metered quantity boosts.
-  remaining Int?
-  paymentId String? @unique @map("payment_id")
+  remaining      Int?
+  paymentId      String? @unique @map("payment_id")
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  product      AddOnProduct  @relation(fields: [productId], references: [id])
-  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      AddOnProduct @relation(fields: [productId], references: [id])
+  payment      Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -810,9 +814,9 @@ model PlatformSettings {
   exportsEnabled Boolean @default(true) @map("exports_enabled")
   billingEnabled Boolean @default(false) @map("billing_enabled")
 
-  notificationEmail       String?  @map("notification_email")
-  notifyOnNewOrganization Boolean  @default(false) @map("notify_on_new_organization")
-  notifyOnNewSubscription Boolean  @default(false) @map("notify_on_new_subscription")
+  notificationEmail       String? @map("notification_email")
+  notifyOnNewOrganization Boolean @default(false) @map("notify_on_new_organization")
+  notifyOnNewSubscription Boolean @default(false) @map("notify_on_new_subscription")
 
   updatedAt DateTime @updatedAt @map("updated_at")
   updatedBy String?  @map("updated_by")
@@ -821,7 +825,7 @@ model PlatformSettings {
 }
 
 model AuditLog {
-  id             String @id @default(cuid())
+  id             String  @id @default(cuid())
   organizationId String? @map("organization_id")
   userId         String? @map("user_id")
 
@@ -839,6 +843,91 @@ model AuditLog {
   @@index([organizationId, createdAt])
   @@index([action])
   @@map("audit_logs")
+}
+
+enum AiProvider {
+  /// Uses the platform's own default key/model (server env), quota-metered via
+  /// the existing AI_GENERATION FeatureKey.
+  PLATFORM
+  /// Any OpenAI-compatible chat-completions endpoint (OpenCode Zen, OpenRouter,
+  /// OpenAI itself, DeepSeek direct, ...) — distinguished by `baseUrl`.
+  OPENAI_COMPATIBLE
+  /// Native Anthropic Messages API (not OpenAI-compatible, separate adapter).
+  ANTHROPIC
+}
+
+/// Bring-your-own-key configuration, one row per organization. When `provider`
+/// is PLATFORM (default), the org uses the server's own key and is subject to
+/// the plan's AI_GENERATION quota. Any other provider means the org supplied
+/// its own key: calls are billed to that key, not metered against the plan.
+model OrganizationAiSettings {
+  id             String @id @default(cuid())
+  organizationId String @unique @map("organization_id")
+
+  provider        AiProvider @default(PLATFORM)
+  /// Required for OPENAI_COMPATIBLE (e.g. https://opencode.ai/zen/v1); unused otherwise.
+  baseUrl         String?    @map("base_url")
+  model           String?
+  /// AES-256-GCM ciphertext of the org's own API key. Null when provider is PLATFORM.
+  encryptedApiKey String?    @map("encrypted_api_key")
+  /// Masked display value (e.g. "sk-ab12••••••••wxyz"), computed once at save
+  /// time — avoids decrypting the real key just to render the settings page.
+  keyPreview      String?    @map("key_preview")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("organization_ai_settings")
+}
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+}
+
+model AiConversation {
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  userId         String  @map("user_id")
+  /// Quiz the user has associated this conversation with — questions generated
+  /// here are inserted into this quiz. Nullable: a conversation can start
+  /// without one and associate a quiz later.
+  quizId         String? @map("quiz_id")
+
+  title String @default("Nouvelle conversation")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz         Quiz?        @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  messages     AiMessage[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([organizationId, userId, updatedAt])
+  @@index([quizId])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String        @id @default(cuid())
+  conversationId String        @map("conversation_id")
+  role           AiMessageRole
+  content        String
+
+  /// Structured question batch proposed by the assistant in this message, if
+  /// any — validated shape mirrors `aiImportSchema`. Kept so "insert into quiz"
+  /// can replay the exact batch without re-parsing the chat text.
+  proposedQuestions Json? @map("proposed_questions")
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
 }
 
 // --- Better Auth models below this line are generated by:

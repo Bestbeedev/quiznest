@@ -6,6 +6,14 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@ai-sdk/anthropic@4.0.17'
+  - '@ai-sdk/gateway@4.0.25'
+  - '@ai-sdk/mcp@2.0.16'
+  - '@ai-sdk/openai-compatible@3.0.14'
+  - '@ai-sdk/provider-utils@5.0.12'
+  - '@ai-sdk/react@4.0.36'
+  - ai@7.0.33
 onlyBuiltDependencies:
   - '@prisma/engines'
   - prisma

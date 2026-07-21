@@ -1,140 +1,104 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Sparkles, Zap, FileText, Copy, CheckCircle2 } from "lucide-react";
+import { Sparkles, FileText } from "lucide-react";
 
 import { buildMetadata } from "@/constants/seo";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { requireActiveOrganization } from "@/lib/db/tenant";
 import { canUseFeature } from "@/lib/services/feature-gate";
+import { getPlatformSettings } from "@/lib/services/platform-settings";
 import { listQuizzes } from "@/lib/services/quiz";
-import { getOrganizationSubscription } from "@/lib/services/billing";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getOrganizationMembers } from "@/lib/services/organization";
+import { getAiSettings } from "@/lib/services/ai-settings";
+import { roleAtLeast } from "@/constants/roles";
+import * as conversationService from "@/lib/services/ai-conversation";
 import { Badge } from "@/components/ui/badge";
 import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
+import { AiChatWorkspace } from "@/features/ai/components/ai-chat-workspace";
+import { AiSettingsDialog } from "@/features/ai/components/ai-settings-dialog";
 import type { FeatureKey } from "@/generated/prisma/client";
+import Link from "next/link";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Génération IA de Questions",
+  title: "Assistant IA",
   description:
-    "Générez des questions de quiz automatiquement avec l'intelligence artificielle. Choisissez le sujet, le niveau et le nombre de questions.",
+    "Discutez avec l'assistant IA de QuizNest pour générer des questions de quiz et les importer directement dans vos quiz.",
   path: "/dashboard/ai",
 });
 
 export default async function AiPage() {
+  const session = await requireAuth();
   const organization = await requireActiveOrganization();
-  const [quizzes, subscription, aiCheck] = await Promise.all([
+  const [quizzes, aiCheck, platformSettings, conversations, members, aiSettings] = await Promise.all([
     listQuizzes(organization.id),
-    getOrganizationSubscription(organization.id),
     canUseFeature(organization.id, "AI_GENERATION" as FeatureKey),
+    getPlatformSettings(),
+    conversationService.listConversations(organization.id, session.user.id),
+    getOrganizationMembers(organization.id),
+    getAiSettings(organization.id),
   ]);
 
-  const plan = subscription?.plan;
-  const isFree = plan?.slug === "free";
-  const isGated = !aiCheck.allowed;
+  const currentMember = members.find((m) => m.userId === session.user.id);
+  const canManage = currentMember ? roleAtLeast(currentMember.role, "ADMIN") : false;
+
+  const isGated = !aiCheck.allowed && platformSettings.aiGeneration;
+  const aiDisabled = !platformSettings.aiGeneration;
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Génération par IA"
-        subtitle="Générez des questions de quiz en quelques secondes avec l'intelligence artificielle."
-      />
-
-      {isGated && (
-        <UpgradeBanner
-          title="Débloquez l'IA Premium"
-          description="Générez des questions automatiquement sans quitter la plateforme. Plus besoin de copier-coller dans ChatGPT."
-          variant="card"
-          features={[
-            "Génération directe dans l'app",
-            "Questions illimitées",
-            "Tous les types de questions",
-            "Support prioritaire",
-          ]}
-          icon={Sparkles}
-          ctaLabel="Passer au Professional"
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <PageHeader
+          title="Assistant IA"
+          subtitle="Discutez avec l'IA pour créer vos questions, puis importez-les directement dans un quiz."
         />
+        <AiSettingsDialog initialSettings={aiSettings} canManage={canManage} />
+      </div>
+
+      {aiDisabled ? (
+        <EmptyStateCard
+          icon={Sparkles}
+          title="Génération IA désactivée"
+          description="La génération de questions par IA est actuellement désactivée par l'administrateur de la plateforme."
+        />
+      ) : (
+        <>
+          {isGated && (
+            <UpgradeBanner
+              title="Quota IA atteint"
+              description="Passez à un plan supérieur, achetez un Pack IA, ou configurez votre propre clé API dans les réglages IA pour continuer sans limite de plateforme."
+              variant="card"
+              features={["Génération illimitée avec votre clé", "Tous les types de questions", "Historique de conversation"]}
+              icon={Sparkles}
+              ctaLabel="Voir les plans"
+            />
+          )}
+
+          {quizzes.length === 0 ? (
+            <EmptyStateCard
+              icon={FileText}
+              title="Créez d'abord un quiz"
+              description="L'assistant IA importe les questions dans un quiz existant — créez-en un pour commencer."
+            />
+          ) : (
+            <AiChatWorkspace
+              quizzes={quizzes.map((q) => ({ id: q.id, title: q.title }))}
+              initialConversations={conversations.map((c) => ({
+                id: c.id,
+                title: c.title,
+                quizId: c.quizId,
+                quiz: c.quiz,
+                updatedAt: c.updatedAt,
+              }))}
+              aiAllowed={aiCheck.allowed}
+            />
+          )}
+        </>
       )}
 
-      <Section title="Comment ça marche ?" description="3 étapes simples, sans clé API à configurer.">
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[
-                  {
-                    step: "1",
-                    title: "Ouvrez un quiz",
-                    desc: "Dans l'onglet Questions, cliquez sur « Générer avec l'IA ».",
-                    icon: FileText,
-                  },
-                  {
-                    step: "2",
-                    title: "Copiez le prompt",
-                    desc: "Collez-le dans ChatGPT, Claude ou tout autre assistant IA.",
-                    icon: Copy,
-                  },
-                  {
-                    step: "3",
-                    title: "Importez les questions",
-                    desc: "Collez la réponse de l'IA — les questions sont créées automatiquement.",
-                    icon: CheckCircle2,
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.step}
-                    className="relative flex flex-col gap-2 rounded-lg border p-4"
-                  >
-                    <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                      {item.step}
-                    </span>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Astuces</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="font-medium">Soyez précis</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Indiquez le thème, le niveau et le nombre de questions souhaité.
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="font-medium">Mélangez les types</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Demandez un mix de QCM, vrai/faux et questions ouvertes.
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="font-medium">Revoyez toujours</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Vérifiez et ajustez les réponses proposées par l&apos;IA avant de publier.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </Section>
-
-      <Section title="Vos quiz" description="Sélectionnez un quiz pour générer des questions par IA.">
-        {quizzes.length === 0 ? (
-          <EmptyStateCard
-            icon={Sparkles}
-            title="Créez d'abord un quiz"
-            description="La génération par IA s'utilise directement depuis un quiz — créez-en un pour commencer."
-          />
-        ) : (
+      {quizzes.length > 0 && (
+        <Section title="Accès rapide" description="Ouvrir un quiz pour gérer ses questions manuellement.">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {quizzes.map((quiz) => (
               <Link
@@ -145,13 +109,8 @@ export default async function AiPage() {
                 <div className="flex items-center gap-3">
                   <FileText className="size-8 shrink-0 text-muted-foreground group-hover:text-primary" />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium group-hover:text-primary">
-                      {quiz.title}
-                    </p>
-                    <Badge
-                      variant={quiz.status === "PUBLISHED" ? "default" : "secondary"}
-                      className="mt-1 text-[10px]"
-                    >
+                    <p className="truncate text-sm font-medium group-hover:text-primary">{quiz.title}</p>
+                    <Badge variant={quiz.status === "PUBLISHED" ? "default" : "secondary"} className="mt-1 text-[10px]">
                       {quiz.status === "PUBLISHED" ? "Publié" : "Brouillon"}
                     </Badge>
                   </div>
@@ -159,8 +118,8 @@ export default async function AiPage() {
               </Link>
             ))}
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
     </div>
   );
 }

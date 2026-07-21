@@ -21,7 +21,7 @@ const LANGUAGE_MAP: Record<string, string> = {
   ar: "arabe",
 };
 
-const TYPE_INSTRUCTIONS: Record<string, string> = {
+export const TYPE_INSTRUCTIONS: Record<string, string> = {
   single_choice:
     `"single_choice" : une seule bonne réponse possible. Au moins 2 choix.`,
   multiple_choice:
@@ -32,7 +32,7 @@ const TYPE_INSTRUCTIONS: Record<string, string> = {
     `"short_answer" : pas de choix. Le participant tape sa réponse. Fournis un champ "acceptedAnswers" avec les réponses acceptées (tableau de chaînes).`,
 };
 
-function buildTypeExamples(): string {
+export function buildTypeExamples(): string {
   return `  Exemples :
 
   // Choix unique
