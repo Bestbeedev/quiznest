@@ -184,18 +184,6 @@ export function FlexibilitySection() {
             </Card>
           </Reveal>
         </div>
-
-        {/* Bottom CTA */}
-          <Reveal delay={0.3}>
-          <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Tous ces leviers sont entièrement gérés depuis le Super Admin.{" "}
-              <span className="font-medium text-foreground">
-                Aucun code à modifier pour ajuster votre offre.
-              </span>
-            </p>
-          </div>
-        </Reveal>
       </div>
     </section>
   );

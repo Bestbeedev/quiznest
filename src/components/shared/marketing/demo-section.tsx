@@ -310,9 +310,9 @@ export function DemoSection() {
         <div className="mt-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} > 
             <Reveal delay={0.1}>
-              <TabsList className="mx-auto mb-6 p-3 w-fit">
+              <TabsList className="mx-auto mb-6 h-10 w-full ">
                 {DEMO_TABS.map((tab) => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5">
+                  <TabsTrigger key={tab.id} value={tab.id} className="gap-3">
                     <tab.icon className="size-4" />
                     {tab.label}
                   </TabsTrigger>

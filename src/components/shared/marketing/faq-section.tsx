@@ -12,7 +12,7 @@ export function FaqSection() {
     <section id="faq" className="scroll-mt-20">
       <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
-          <div className="mx-auto max-w-2xl text-center">
+          <div className="mx-auto max-w-6xl text-center">
             <p className="text-sm font-medium text-primary">FAQ</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               Questions fréquentes
