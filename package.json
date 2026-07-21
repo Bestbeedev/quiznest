@@ -7,7 +7,7 @@
     "db:baseline": "prisma migrate resolve --applied 20260716133535_init && prisma migrate resolve --applied 20260716150042_add_quiz_models && prisma migrate resolve --applied 20260716162226_add_super_admin_flag && prisma migrate resolve --applied 20260716184459_add_participants_answers && prisma migrate resolve --applied 20260716184703_add_billing_and_audit_log && prisma migrate resolve --applied 20260717183431_add_question_bank_fields && prisma migrate resolve --applied 20260717204325_add_invitations_and_api_keys && prisma migrate resolve --applied 20260719104724_add_platform_settings && prisma migrate resolve --applied 20260719124305_add_plan_features_and_gating && prisma migrate resolve --applied 20260720081721_add_payments_invoices_webhooks_usage && prisma migrate resolve --applied 20260720090155_add_coupons_wallet_addons_pass_promotions",
     "db:sync": "prisma db push",
     "db:migrate:deploy": "prisma migrate deploy",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
@@ -17,6 +17,9 @@
     "db:down": "docker compose down"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "4.0.17",
+    "@ai-sdk/openai-compatible": "3.0.14",
+    "@ai-sdk/react": "4.0.36",
     "@base-ui/react": "^1.6.0",
     "@better-auth/infra": "^0.3.6",
     "@hookform/resolvers": "^5.4.0",
@@ -26,6 +29,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@teispace/next-themes": "^0.3.0",
     "@vercel/analytics": "^2.0.1",
+    "ai": "7.0.33",
     "better-auth": "^1.6.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
