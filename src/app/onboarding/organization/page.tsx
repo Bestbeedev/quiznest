@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ListChecks, Share2, Sparkles } from "lucide-react";
 import { requireAuth } from "@/lib/auth/require-auth";
+import { getDefaultRedirectPath } from "@/lib/auth/get-default-redirect";
 import { getActiveOrganization } from "@/lib/db/tenant";
 import { CreateOrganizationForm } from "@/features/organizations/components/create-organization-form";
 import { Logo } from "@/components/shared/logo";
@@ -31,7 +32,7 @@ export default async function CreateOrganizationPage({
   const { callbackUrl } = await searchParams;
 
   if (organization) {
-    redirect(callbackUrl ?? "/dashboard");
+    redirect(callbackUrl ?? (await getDefaultRedirectPath()));
   }
 
   return (

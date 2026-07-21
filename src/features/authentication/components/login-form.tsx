@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { signIn } from "@/lib/auth/client";
 import { signInSchema, type SignInInput } from "@/lib/validators/auth";
 import { applyZodErrors } from "@/lib/utils/zod-form";
+import { getPostLoginRedirect } from "@/features/authentication/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -61,7 +62,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push(searchParams.get("callbackUrl") ?? "/dashboard");
+    router.push(await getPostLoginRedirect(searchParams.get("callbackUrl")));
     router.refresh();
   });
 
