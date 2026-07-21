@@ -36,7 +36,7 @@ function DashboardView() {
         <div className="ml-3 text-xs font-medium text-muted-foreground">Tableau de bord</div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 p-4 sm:p-5">
+      <div className="grid grid-cols-4 gap-2 p-3 sm:gap-3 sm:p-4">
         <div className="col-span-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { icon: BookOpen, label: "Quiz créés", value: "24", color: "text-primary", bg: "bg-primary/10" },
@@ -44,8 +44,8 @@ function DashboardView() {
             { icon: Trophy, label: "Taux moyen", value: "78%", color: "text-emerald-500", bg: "bg-emerald-500/10" },
             { icon: TrendingUp, label: "Progression", value: "+12%", color: "text-amber-500", bg: "bg-amber-500/10" },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl border bg-card p-3.5">
-              <div className={`flex size-8 items-center justify-center rounded-lg ${s.bg}`}>
+            <div key={s.label} className="rounded-xl border bg-card p-3">
+              <div className={`flex size-7 items-center justify-center rounded-lg ${s.bg}`}>
                 <s.icon className={`size-4 ${s.color}`} />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">{s.label}</p>
@@ -294,23 +294,23 @@ export function DemoSection() {
 
   return (
     <section className="bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-primary">Démonstration</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               Voyez-le en action
             </h2>
-            <p className="mt-3 text-base text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               Explorez l&apos;interface par vous-même. Cliquez sur les onglets pour découvrir chaque vue.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-10">
+        <div className="mt-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} > 
             <Reveal delay={0.1}>
-              <TabsList className="mx-auto mb-8 p-4 w-fit">
+              <TabsList className="mx-auto mb-6 p-3 w-fit">
                 {DEMO_TABS.map((tab) => (
                   <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5">
                     <tab.icon className="size-4" />

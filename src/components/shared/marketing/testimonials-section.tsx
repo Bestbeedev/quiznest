@@ -15,30 +15,30 @@ function initials(name: string) {
 export function TestimonialsSection() {
   return (
     <section>
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-primary">Témoignages</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               Ils parlent mieux que nous
             </h2>
-            <p className="mt-3 text-base text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               Des organisations de toutes tailles font confiance à QuizNest.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
           {TESTIMONIALS.map((testimonial, i) => (
             <Reveal key={testimonial.name} delay={0.1 + i * 0.1} direction={i % 2 === 0 ? "left" : "right"}>
               <Card className="group relative h-full overflow-hidden border-0 bg-gradient-to-br from-card to-muted/50 p-0 shadow-md ring-1 ring-border transition-all hover:shadow-lg hover:scale-[1.02] active:scale-100">
                 <div className="absolute top-0 right-0 p-4 text-5xl font-serif leading-none text-primary/10 select-none">
                   &ldquo;
                 </div>
-                <CardContent className="p-6 sm:p-8">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="size-12 ring-2 ring-primary/20">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-9 ring-2 ring-primary/20">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-semibold">
                         {initials(testimonial.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -49,12 +49,12 @@ export function TestimonialsSection() {
                   </div>
 
                   {testimonial.highlight && (
-                    <p className="mt-4 text-sm font-medium text-primary">
+                    <p className="mt-3 text-[12px] font-medium text-primary">
                       {testimonial.highlight}
                     </p>
                   )}
 
-                  <blockquote className="mt-2 text-base leading-relaxed text-muted-foreground">
+                  <blockquote className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
                     &ldquo;{testimonial.quote}&rdquo;
                   </blockquote>
                 </CardContent>

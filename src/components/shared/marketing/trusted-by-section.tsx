@@ -3,11 +3,11 @@ import { TRUSTED_BY } from "@/constants/marketing";
 export function TrustedBySection() {
   return (
     <section className="border-y bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <p className="text-center text-xs font-medium tracking-widest uppercase text-muted-foreground">
           Ils nous font confiance
         </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
           {TRUSTED_BY.map((org) => (
             <div
               key={org.name}

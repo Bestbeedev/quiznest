@@ -92,44 +92,44 @@ const STEPS = [
 export function FlexibilitySection() {
   return (
     <section className="relative overflow-hidden bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-primary">Flexibilité</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               Pas juste un abonnement.{" "}
               <span className="bg-gradient-to-r from-primary to-violet-600 bg-clip-text text-transparent">
                 Un système intelligent.
               </span>
             </h2>
-            <p className="mt-3 text-base text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               QuizNest s&apos;adapte à votre budget et à vos besoins. Payez seulement ce que vous utilisez, quand vous en avez besoin.
             </p>
           </div>
         </Reveal>
 
         {/* 5 Levers Grid */}
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {LEVERS.map((lever, i) => (
             <Reveal key={lever.title} delay={0.1 + i * 0.08}>
               <Card className={cn(
                 "group relative overflow-hidden border-0 bg-gradient-to-br from-background to-background p-0 shadow-sm ring-1 transition-all hover:shadow-md hover:scale-[1.02] active:scale-100",
                 lever.ring,
               )}>
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", lever.bg)}>
-                      <lever.icon className={cn("size-5", lever.color)} />
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-2.5">
+                    <div className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", lever.bg)}>
+                      <lever.icon className={cn("size-4", lever.color)} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold">{lever.title}</p>
-                      <p className={cn("mt-0.5 text-xs font-medium", lever.color)}>{lever.headline}</p>
+                      <p className="text-[13px] font-semibold">{lever.title}</p>
+                      <p className={cn("mt-0.5 text-[11px] font-medium", lever.color)}>{lever.headline}</p>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
                     {lever.description}
                   </p>
-                  <ul className="mt-3 flex flex-col gap-1.5">
+                  <ul className="mt-2.5 flex flex-col gap-1">
                     {lever.details.map((detail) => (
                       <li key={detail} className="flex items-start gap-2 text-xs text-muted-foreground">
                         <CheckCircle2 className={cn("mt-0.5 size-3 shrink-0", lever.color)} />
@@ -144,21 +144,21 @@ export function FlexibilitySection() {
 
           {/* Priority Flow Card */}
           <Reveal delay={0.5}>
-            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/5 via-violet-500/5 to-background p-0 shadow-sm ring-1 ring-primary/20 sm:col-span-2 lg:col-span-1">
-              <CardContent className="flex h-full flex-col p-5">
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/5 via-violet-500/5 to-background p-0 shadow-sm ring-1 ring-primary/20 sm:col-span-2 lg:col-span-1">
+              <CardContent className="flex h-full flex-col p-4">
                 <div className="flex items-center gap-2">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
-                    <Shield className="size-5 text-primary" />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
+                    <Shield className="size-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">Ordre de vérification</p>
-                    <p className="text-xs text-primary">Automatique et transparent</p>
+                    <p className="text-[13px] font-semibold">Ordre de vérification</p>
+                    <p className="text-[11px] text-primary">Automatique et transparent</p>
                   </div>
                 </div>
-                <p className="mt-3 text-sm text-muted-foreground">
+                <p className="mt-2.5 text-[12px] text-muted-foreground">
                   Quand vous effectuez une action, le système vérifie automatiquement dans cet ordre pour vous offrir le meilleur prix :
                 </p>
-                <div className="mt-4 flex flex-col gap-2">
+                <div className="mt-3 flex flex-col gap-1.5">
                   {STEPS.map((step, i) => (
                     <div key={step.label} className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export function FlexibilitySection() {
                         <div className={cn("flex size-6 items-center justify-center rounded-md", step.bg)}>
                           <step.icon className={cn("size-3", step.color)} />
                         </div>
-                        <span className="text-sm font-medium">{step.label}</span>
+                        <span className="text-[13px] font-medium">{step.label}</span>
                       </div>
                       {i < STEPS.length - 1 && (
                         <ArrowRight className="size-3 text-muted-foreground/40" />
@@ -186,8 +186,8 @@ export function FlexibilitySection() {
         </div>
 
         {/* Bottom CTA */}
-        <Reveal delay={0.3}>
-          <div className="mt-12 text-center">
+          <Reveal delay={0.3}>
+          <div className="mt-8 text-center">
             <p className="text-sm text-muted-foreground">
               Tous ces leviers sont entièrement gérés depuis le Super Admin.{" "}
               <span className="font-medium text-foreground">

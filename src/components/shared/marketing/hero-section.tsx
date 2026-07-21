@@ -75,7 +75,7 @@ function HeroMockup() {
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.8, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-      className="relative mx-auto mt-12 max-w-4xl"
+      className="relative mx-auto mt-8 max-w-4xl"
     >
       <div className="relative overflow-hidden rounded-2xl border bg-card shadow-2xl shadow-primary/10 dark:shadow-primary/5">
         <div className="flex items-center gap-1.5 border-b bg-muted/50 px-4 py-2.5">
@@ -86,7 +86,7 @@ function HeroMockup() {
             quiznest.app/dashboard
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3 p-4 sm:p-6">
+        <div className="grid grid-cols-4 gap-2 p-3 sm:gap-3 sm:p-5">
           <div className="col-span-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               { label: "Quiz publiés", value: "24", change: "+12%", color: "from-primary/20 to-primary/5" },
@@ -98,7 +98,7 @@ function HeroMockup() {
                 className={`rounded-xl bg-gradient-to-br ${stat.color} p-4 ring-1 ring-border`}
               >
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight">{stat.value}</p>
+                <p className="mt-0.5 text-xl font-semibold tracking-tight">{stat.value}</p>
                 <p className="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400">{stat.change}</p>
               </div>
             ))}
@@ -174,7 +174,7 @@ export function HeroSection() {
   return (
     <section
       ref={ref}
-      className="relative min-h-[calc(100vh-3.5rem)] flex flex-col items-center justify-center overflow-hidden px-6 pb-16 pt-24 sm:pt-32"
+      className="relative min-h-[calc(100vh-2.75rem)] flex flex-col items-center justify-center overflow-hidden px-4 pb-10 pt-20 sm:px-6 sm:pt-28"
     >
       <FloatingGrid />
       <FloatingShapes />
@@ -186,7 +186,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Badge variant="outline" className="mb-6 gap-1.5 px-3 py-1 text-xs font-normal">
+          <Badge variant="outline" className="mb-4 gap-1 px-2.5 py-0.5 text-[11px] font-normal">
             <Sparkles className="size-3 text-primary" />
             IA intégrée nativement
           </Badge>
@@ -196,7 +196,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-          className="max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+          className="max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl"
         >
           Créez, partagez et{" "}
           <span className="bg-gradient-to-r from-primary via-primary to-violet-500 bg-clip-text text-transparent dark:from-primary dark:via-violet-400 dark:to-emerald-400">
@@ -209,7 +209,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-          className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+          className="mt-4 max-w-xl text-[13px] leading-relaxed text-muted-foreground sm:text-sm"
         >
           La plateforme nouvelle génération qui transforme vos évaluations en expériences interactives.
           <span className="hidden sm:inline"> IA, analytics, flexibilité de paiement — tout inclus.</span>
@@ -219,15 +219,15 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-          className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          className="mt-6 flex flex-wrap items-center justify-center gap-2.5"
         >
           <Link href="/register">
-            <Button size="lg" className="h-11 gap-2 rounded-xl px-6 text-base shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-100">
+            <Button size="lg" className="h-10 gap-2 rounded-xl px-5 text-sm shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-100">
               Commencer gratuitement
               <ArrowRight className="size-4 transition-transform group-hover/button:translate-x-0.5" />
             </Button>
           </Link>
-          <Button variant="outline" size="lg" className="h-11 gap-2 rounded-xl px-6 text-base">
+          <Button variant="outline" size="lg" className="h-10 gap-2 rounded-xl px-5 text-sm">
             <Play className="size-4" />
             Voir la démo
           </Button>

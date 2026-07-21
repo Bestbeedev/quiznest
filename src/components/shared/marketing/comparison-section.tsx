@@ -79,35 +79,35 @@ function CellValue({ value }: { value: boolean | string }) {
 export function ComparisonSection() {
   return (
     <section className="scroll-mt-20">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-primary">Comparaison</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               Comparez les fonctionnalités
             </h2>
-            <p className="mt-3 text-base text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               Trouvez le plan qui correspond exactement à vos besoins.
             </p>
           </div>
         </Reveal>
 
         <Reveal delay={0.15}>
-          <div className="mt-14 overflow-x-auto rounded-2xl border bg-card shadow-lg ring-1 ring-border">
+          <div className="mt-10 overflow-x-auto rounded-xl border bg-card shadow-lg ring-1 ring-border">
             <table className="w-full min-w-[580px]">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">
-                    Fonctionnalité
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold">
-                    Free
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold">
-                    Starter
-                  </th>
-                  <th className="px-6 py-4 text-center">
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                  <th className="px-4 py-3 text-left text-[13px] font-semibold text-muted-foreground">
+                     Fonctionnalité
+                   </th>
+                   <th className="px-4 py-3 text-center text-[13px] font-semibold">
+                     Free
+                   </th>
+                   <th className="px-4 py-3 text-center text-[13px] font-semibold">
+                     Starter
+                   </th>
+                   <th className="px-4 py-3 text-center">
+                     <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary">
                       Professional
                     </span>
                   </th>
@@ -119,7 +119,7 @@ export function ComparisonSection() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="border-b bg-muted/30 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        className="border-b bg-muted/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
                       >
                         {group.category}
                       </td>
@@ -129,16 +129,16 @@ export function ComparisonSection() {
                         key={row.label}
                         className="border-b last:border-0 transition-colors hover:bg-muted/30"
                       >
-                        <td className="px-6 py-3 text-sm text-muted-foreground">
+                        <td className="px-4 py-2 text-[12px] text-muted-foreground">
                           {row.label}
                         </td>
-                        <td className="px-6 py-3 text-center">
+                        <td className="px-4 py-2 text-center">
                           <CellValue value={row.free} />
                         </td>
-                        <td className="px-6 py-3 text-center">
+                        <td className="px-4 py-2 text-center">
                           <CellValue value={row.starter} />
                         </td>
-                        <td className="px-6 py-3 text-center">
+                        <td className="px-4 py-2 text-center">
                           <CellValue value={row.pro} />
                         </td>
                       </tr>

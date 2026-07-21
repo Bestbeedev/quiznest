@@ -81,13 +81,13 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
 export function StatsSection() {
   return (
     <section className="border-y bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <Reveal>
           <p className="text-center text-xs font-medium tracking-widest uppercase text-muted-foreground">
             Rejoignez des milliers d&apos;organisations
           </p>
         </Reveal>
-        <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {STATS.map((stat, i) => (
             <Reveal key={stat.label} delay={0.1 + i * 0.1}>
               <motion.div
@@ -96,14 +96,14 @@ export function StatsSection() {
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 <div
-                  className={`flex size-12 items-center justify-center rounded-2xl ${stat.bg}`}
+                  className={`flex size-10 items-center justify-center rounded-xl ${stat.bg}`}
                 >
-                  <stat.icon className={`size-6 ${stat.color}`} />
+                  <stat.icon className={`size-5 ${stat.color}`} />
                 </div>
-                <p className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+                <p className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-[13px] text-muted-foreground">
                   {stat.label}
                 </p>
               </motion.div>

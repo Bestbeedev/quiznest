@@ -12,20 +12,20 @@ export async function PricingSection() {
 
   return (
     <section id="tarifs" className="scroll-mt-20 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-primary">Tarifs</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               Un plan pour chaque besoin
             </h2>
-            <p className="mt-3 text-base text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               Commencez gratuitement, passez à un plan supérieur quand vous êtes prêt.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
           {plans.map((plan, i) => {
             const isHighlighted = plan.isPromoted;
             const marketingFeatures = Array.isArray(plan.features) ? (plan.features as string[]) : [];
@@ -60,13 +60,13 @@ export async function PricingSection() {
                     </div>
                   )}
 
-                  <CardHeader className="relative p-6 pb-0">
-                    <p className="text-lg font-semibold">{plan.name}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                  <CardHeader className="relative p-4 pb-0">
+                    <p className="text-sm font-semibold">{plan.name}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
                       {plan.description}
                     </p>
-                    <div className="mt-4 flex items-baseline gap-1">
-                      <span className="text-4xl font-bold tracking-tight">
+                    <div className="mt-3 flex items-baseline gap-1">
+                      <span className="text-3xl font-bold tracking-tight">
                         {plan.price === null
                           ? "Sur devis"
                           : plan.price === 0
@@ -81,12 +81,12 @@ export async function PricingSection() {
                     </div>
                   </CardHeader>
 
-                  <CardContent className="relative flex flex-1 flex-col p-6 pt-4">
-                    <div className="border-t pt-4">
+                  <CardContent className="relative flex flex-1 flex-col p-4 pt-3">
+                    <div className="border-t pt-3">
                       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         Inclus
                       </p>
-                      <ul className="flex-1 space-y-2.5">
+                      <ul className="flex-1 space-y-2">
                         {marketingFeatures.map((feature) => (
                           <li
                             key={feature}
@@ -98,7 +98,7 @@ export async function PricingSection() {
                         ))}
                       </ul>
                     </div>
-                    <Link href={plan.price === 0 ? "/register" : `/register?callbackUrl=${encodeURIComponent(`/dashboard/billing?plan=${plan.slug}`)}`} className="mt-6 block">
+                    <Link href={plan.price === 0 ? "/register" : `/register?callbackUrl=${encodeURIComponent(`/dashboard/billing?plan=${plan.slug}`)}`} className="mt-4 block">
                       <Button
                         variant={isHighlighted ? "default" : "outline"}
                         className="w-full transition-all hover:scale-[1.02] active:scale-100"

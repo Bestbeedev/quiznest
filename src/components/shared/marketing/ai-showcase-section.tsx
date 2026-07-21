@@ -41,13 +41,13 @@ const AI_FEATURES = [
 
 function AiBrainVisual() {
   return (
-    <div className="relative mx-auto size-64 sm:size-80">
+    <div className="relative mx-auto size-48 sm:size-64">
       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 via-violet-500/10 to-emerald-500/10 blur-3xl" />
       <div className="absolute inset-4 rounded-full bg-gradient-to-br from-primary/10 to-violet-500/5 ring-1 ring-primary/20" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative">
-          <div className="flex size-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-violet-600 shadow-2xl shadow-primary/30">
-            <Brain className="size-10 text-white" />
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-2xl shadow-primary/30">
+            <Brain className="size-8 text-white" />
           </div>
           <div className="absolute -top-3 -right-3 flex size-8 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/30">
             <Sparkles className="size-4 text-white" />
@@ -70,20 +70,20 @@ function AiBrainVisual() {
 export function AiShowcaseSection() {
   return (
     <section id="ia" className="scroll-mt-20 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-primary">Intelligence artificielle</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               L&apos;IA au service de vos évaluations
             </h2>
-            <p className="mt-3 text-base text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               Générez des dizaines de questions pertinentes en quelques secondes, sans effort.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-14 grid items-center gap-12 lg:grid-cols-2">
+        <div className="mt-10 grid items-center gap-8 lg:grid-cols-2">
           <Reveal delay={0.1} direction="left">
             <AiBrainVisual />
           </Reveal>
@@ -92,12 +92,12 @@ export function AiShowcaseSection() {
             {AI_FEATURES.map((feature, i) => (
               <Reveal key={feature.title} delay={0.15 + i * 0.1} direction="right">
                 <Card className="group border-0 bg-card/50 shadow-sm ring-1 ring-border transition-all hover:shadow-md hover:ring-primary/20">
-                  <CardContent className="p-5">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                      <feature.icon className="size-5" />
+                  <CardContent className="p-4">
+                    <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                      <feature.icon className="size-4" />
                     </div>
-                    <h3 className="mt-3 text-sm font-semibold">{feature.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <h3 className="mt-2 text-[13px] font-semibold">{feature.title}</h3>
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                       {feature.description}
                     </p>
                   </CardContent>

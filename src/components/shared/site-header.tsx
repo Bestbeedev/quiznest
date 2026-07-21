@@ -20,7 +20,7 @@ function UserAvatar({ name }: { name: string }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+    <span className="flex size-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
       {initials}
     </span>
   );
@@ -49,22 +49,22 @@ export function SiteHeader() {
           : "bg-transparent",
       )}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+      <div className="mx-auto flex h-11 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo />
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-5 md:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1.5 md:flex">
           <ThemeToggle />
           {isLoggedIn ? (
             <>
@@ -72,20 +72,20 @@ export function SiteHeader() {
                 href="/dashboard"
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
-                  "gap-1.5",
+                  "gap-1.5 text-[13px]",
                 )}
               >
-                <LayoutDashboard className="size-4" />
+                <LayoutDashboard className="size-3.5" />
                 Dashboard
               </Link>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <UserAvatar name={session.user.name} />
                 <button
                   type="button"
                   onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.reload() } })}
-                  className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <LogOut className="size-4" />
+                  <LogOut className="size-3.5" />
                 </button>
               </div>
             </>
@@ -93,7 +93,7 @@ export function SiteHeader() {
             <>
               <Link
                 href="/login"
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-[13px]")}
               >
                 Connexion
               </Link>
@@ -101,26 +101,26 @@ export function SiteHeader() {
                 href="/register"
                 className={cn(
                   buttonVariants({ size: "sm" }),
-                  "group gap-1.5 transition-all hover:scale-105 active:scale-100",
+                  "group gap-1 text-[13px] transition-all hover:scale-105 active:scale-100",
                 )}
               >
                 Essayer gratuitement
-                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-0.5 md:hidden">
           <ThemeToggle />
           <button
             type="button"
-            className="p-2"
+            className="p-1.5"
             aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((open) => !open)}
           >
-            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            {mobileOpen ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
           </button>
         </div>
       </div>
@@ -134,66 +134,65 @@ export function SiteHeader() {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="overflow-hidden border-t bg-background md:hidden"
           >
-            <div className="flex flex-col gap-4 px-6 py-4">
+            <div className="flex flex-col gap-1 px-4 py-3">
               {NAV_LINKS.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="rounded-md px-2 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="flex flex-col gap-2 pt-2">
-                {isLoggedIn ? (
-                  <>
-                    <Link
-                      href="/dashboard"
-                      className={cn(
-                        buttonVariants({ variant: "default", size: "sm" }),
-                        "gap-1.5",
-                      )}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      <LayoutDashboard className="size-4" />
-                      Dashboard
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileOpen(false);
-                        signOut({ fetchOptions: { onSuccess: () => window.location.reload() } });
-                      }}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "gap-1.5",
-                      )}
-                    >
-                      <LogOut className="size-4" />
-                      Déconnexion
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/login"
-                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      Connexion
-                    </Link>
-                    <Link
-                      href="/register"
-                      className={cn(buttonVariants({ size: "sm" }), "group gap-1.5")}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      Essayer gratuitement
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  </>
-                )}
-              </div>
+              <div className="my-1 h-px bg-border" />
+              {isLoggedIn ? (
+                <div className="flex flex-col gap-1.5">
+                  <Link
+                    href="/dashboard"
+                    className={cn(
+                      buttonVariants({ variant: "default", size: "sm" }),
+                      "gap-1.5 text-[13px]",
+                    )}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <LayoutDashboard className="size-3.5" />
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      signOut({ fetchOptions: { onSuccess: () => window.location.reload() } });
+                    }}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "gap-1.5 text-[13px]",
+                    )}
+                  >
+                    <LogOut className="size-3.5" />
+                    Déconnexion
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <Link
+                    href="/login"
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-[13px]")}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Connexion
+                  </Link>
+                  <Link
+                    href="/register"
+                    className={cn(buttonVariants({ size: "sm" }), "group gap-1 text-[13px]")}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Essayer gratuitement
+                    <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.nav>
         )}
