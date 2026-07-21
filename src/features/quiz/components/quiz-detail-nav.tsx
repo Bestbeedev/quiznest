@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { HelpCircle, BarChart3, Users } from "lucide-react";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -30,9 +31,28 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-      <nav className="shrink-0 lg:w-56">
-        <div className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+    <div className="flex flex-col gap-4 lg:flex-row lg:gap-8">
+      {/* Mobile: horizontal line tabs */}
+      <nav className="shrink-0 lg:hidden">
+        <Tabs
+          value={active}
+          onValueChange={(v) => setActive(v as QuizTab)}
+        >
+          <TabsList variant="line" className="w-full overflow-x-auto">
+            {NAV_ITEMS.map((item) => (
+              <TabsTrigger key={item.value} value={item.value} className="gap-1.5">
+                <item.icon className="size-4 shrink-0" />
+                {item.label}
+              </TabsTrigger>
+            ))}
+            {settingsTrigger}
+          </TabsList>
+        </Tabs>
+      </nav>
+
+      {/* Desktop: vertical sidebar */}
+      <nav className="hidden shrink-0 lg:block lg:w-56">
+        <div className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const isActive = active === item.value;
             return (
@@ -41,7 +61,7 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
                 type="button"
                 onClick={() => setActive(item.value)}
                 className={cn(
-                  "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-all shrink-0 sm:shrink sm:w-auto",
+                  "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-all",
                   isActive
                     ? "bg-primary/10 text-primary shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -55,12 +75,12 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
                 />
                 <div className="min-w-0">
                   <p className={cn("truncate", isActive && "text-primary")}>{item.label}</p>
-                  <p className="hidden truncate text-[11px] text-muted-foreground lg:block">{item.description}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{item.description}</p>
                 </div>
               </button>
             );
           })}
-          <div key="settings">{settingsTrigger}</div>
+          {settingsTrigger}
         </div>
       </nav>
 
