@@ -61,7 +61,7 @@ export default async function QuizDetailPage({
     notFound();
   }
 
-  const [participants, resultsSummary, attemptsTrend, platformSettings, csvCheck, excelCheck, pdfCheck, aiCheck] = await Promise.all([
+  const [participants, resultsSummary, attemptsTrend, platformSettings, csvCheck, excelCheck, pdfCheck] = await Promise.all([
     listParticipants(organization.id, id),
     getQuizResultsSummary(organization.id, id),
     getQuizAttemptsTrend(organization.id, id),
@@ -69,14 +69,7 @@ export default async function QuizDetailPage({
     canUseFeature(organization.id, "EXPORT_CSV" as FeatureKey),
     canUseFeature(organization.id, "EXPORT_EXCEL" as FeatureKey),
     canUseFeature(organization.id, "EXPORT_PDF" as FeatureKey),
-    canUseFeature(organization.id, "AI_GENERATION" as FeatureKey),
   ]);
-
-  const aiGeneration = !platformSettings.aiGeneration
-    ? { allowed: false, reason: "Fonctionnalité désactivée par la plateforme.", cta: "none" as const }
-    : aiCheck.allowed
-      ? { allowed: true as const }
-      : { allowed: false, reason: aiCheck.reason, cta: aiCheck.cta, limit: aiCheck.limit, used: aiCheck.used, remaining: aiCheck.remaining };
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
@@ -107,7 +100,6 @@ export default async function QuizDetailPage({
             quizId={quiz.id}
             quizTitle={quiz.title}
             questions={quiz.questions}
-            aiGeneration={aiGeneration}
           />
         }
         participants={<ParticipantsTab quizId={quiz.id} participants={participants} />}

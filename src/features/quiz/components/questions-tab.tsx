@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { deleteQuestionAction } from "@/features/quiz/actions";
 import { AddQuestionDialog, type QuestionForEdit } from "@/features/quiz/components/add-question-dialog";
 import { AiGenerateDialog } from "@/features/quiz/components/ai-generate-dialog";
-import { FeatureLockNotice, type FeatureCheckUI } from "@/components/shared/feature-lock";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,12 +66,10 @@ export function QuestionsTab({
   quizId,
   quizTitle,
   questions,
-  aiGeneration,
 }: {
   quizId: string;
   quizTitle: string;
   questions: QuestionWithChoices[];
-  aiGeneration: FeatureCheckUI;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -117,11 +114,7 @@ export function QuestionsTab({
 
       {/* Actions: each on its own line on mobile */}
       <div className="flex flex-col gap-1.5">
-        {aiGeneration.allowed ? (
-          <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
-        ) : (
-          <FeatureLockNotice label="Générer avec l'IA" reason={aiGeneration.reason} check={aiGeneration} />
-        )}
+        <AiGenerateDialog quizId={quizId} quizTitle={quizTitle} />
         <AddQuestionDialog quizId={quizId} />
       </div>
 
