@@ -41,8 +41,10 @@ import { LastUpdatedPill } from "@/features/dashboard/components/last-updated-pi
 import { NotificationsBanner, type DashboardNotification } from "@/features/dashboard/components/notifications-banner";
 import { DashboardUpsellBanners } from "@/features/dashboard/components/dashboard-upsell-banners";
 import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
+import { QuotaOverview } from "@/features/dashboard/components/quota-overview";
 import { ChartAreaInteractive, ChartDonutTotal } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
+import { canUseFeature } from "@/lib/services/feature-gate";
 
 function computeTrend(current: number, previous: number) {
   if (previous === 0) {
@@ -78,12 +80,13 @@ export default async function DashboardPage() {
     getTopQuizzesByParticipation(organization.id),
   ]);
 
-  const [activityResult, revenueResult, subscriptionResult, membersResult, walletResult] = await Promise.allSettled([
+  const [activityResult, revenueResult, subscriptionResult, membersResult, walletResult, aiQuotaResult] = await Promise.allSettled([
     getOrgRecentActivity(organization.id),
     getOrganizationRevenueStats(organization.id),
     getOrganizationSubscription(organization.id),
     getOrganizationMembers(organization.id),
     getOrCreateWallet(organization.id),
+    canUseFeature(organization.id, "AI_GENERATION"),
   ]);
 
   const activity: OrgActivityItem[] = activityResult.status === "fulfilled" ? activityResult.value : [];
@@ -91,6 +94,7 @@ export default async function DashboardPage() {
   const subscription = subscriptionResult.status === "fulfilled" ? subscriptionResult.value : null;
   const members = membersResult.status === "fulfilled" ? membersResult.value : [];
   const walletBalance = walletResult.status === "fulfilled" ? walletResult.value.balance : 0;
+  const aiQuota = aiQuotaResult.status === "fulfilled" ? aiQuotaResult.value : { limit: null, used: 0, source: "plan" as const };
 
   const notifications: DashboardNotification[] = [];
   const plan = subscription?.plan;
@@ -206,6 +210,21 @@ export default async function DashboardPage() {
             />
           </Reveal>
         </div>
+      </Section>
+
+      <Section title="Vos quotas" description="Utilisation de vos ressources ce mois">
+        <Reveal>
+          <QuotaOverview
+            quizUsed={stats.total}
+            quizLimit={plan?.quizLimit ?? null}
+            participantUsed={participantStats.totalParticipants}
+            participantLimit={plan?.participantLimit ?? null}
+            aiUsed={aiQuota.used ?? 0}
+            aiLimit={aiQuota.limit ?? null}
+            aiLabel={aiQuota.source === "pass" ? "Inclus via Pass" : plan?.name ?? "Free"}
+            walletBalance={walletBalance}
+          />
+        </Reveal>
       </Section>
 
       <Section title="Analytics" description="Tendances et répartition">
