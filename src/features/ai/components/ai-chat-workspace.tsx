@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useObject } from "@ai-sdk/react";
-import { Send, Plus, Trash2, Bot, User, Loader2, MessageSquare, Pencil, Check, X } from "lucide-react";
+import { Send, Plus, Trash2, Bot, User, Loader2, MessageSquare, Pencil, Check, X, Sparkles } from "lucide-react";
+import { AI_PROMPT_TEMPLATES } from "@/constants/ai-prompts";
 import { toast } from "sonner";
 
 import { aiChatTurnSchema } from "@/lib/ai/chat-schema";
@@ -282,23 +283,52 @@ export function AiChatWorkspace({
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
           {messages.length === 0 && !isLoading && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
-              <Bot className="size-8" />
-              <p>Décrivez le quiz que vous voulez créer — sujet, niveau, nombre de questions.</p>
-              {!activeId && (
-                <Input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Nom de la conversation (optionnel)"
-                  className="max-w-xs text-center"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                />
-              )}
+            <div className="flex flex-1 flex-col gap-5">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                  <Sparkles className="size-5 text-primary" />
+                </div>
+                <p className="text-sm font-medium">Comment puis-je vous aider ?</p>
+                <p className="text-xs text-muted-foreground">
+                  Choisissez un prompt ci-dessous ou décrivez votre quiz.
+                </p>
+                {!activeId && (
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Nom de la conversation (optionnel)"
+                    className="max-w-xs text-center"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                {AI_PROMPT_TEMPLATES.map((template) => {
+                  const Icon = template.icon;
+                  return (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => setInput(template.prompt)}
+                      className="group flex items-start gap-3 rounded-xl border bg-card p-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
+                    >
+                      <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${template.color}`}>
+                        <Icon className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium leading-none group-hover:text-primary">{template.label}</p>
+                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{template.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
