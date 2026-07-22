@@ -40,6 +40,7 @@ import { TopQuizzesList } from "@/features/dashboard/components/top-quizzes-list
 import { LastUpdatedPill } from "@/features/dashboard/components/last-updated-pill";
 import { NotificationsBanner, type DashboardNotification } from "@/features/dashboard/components/notifications-banner";
 import { DashboardUpsellBanners } from "@/features/dashboard/components/dashboard-upsell-banners";
+import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
 import { ChartAreaInteractive, ChartDonutTotal } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
 
@@ -139,8 +140,10 @@ export default async function DashboardPage() {
       ? Math.round((participantStatusBreakdown.COMPLETED / totalTrackedParticipants) * 100)
       : null;
 
+  const isFreePlan = plan?.slug === "free";
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <PageHeader
         title="Tableau de bord"
         subtitle={organization.name}
@@ -167,48 +170,45 @@ export default async function DashboardPage() {
         walletBalance={walletBalance}
       />
 
-      <Section title="Actions rapides">
+      <Section title="Vue d'ensemble" description={`Aperçu rapide de ${organization.name}`}>
         <QuickActions />
-      </Section>
-
-      <Section title="Aperçu" description="Statistiques clés de votre organisation">
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           <Reveal>
             <StatCard icon={ListChecks} label="Quiz créés" value={String(stats.total)} trend={quizTrend ? { ...quizTrend, comparisonLabel: "vs semaine dernière" } : undefined} />
           </Reveal>
-          <Reveal delay={0.05}>
-            <StatCard icon={Rocket} label="Quiz publiés" value={String(stats.published)} />
+          <Reveal delay={0.03}>
+            <StatCard icon={Rocket} label="Publiés" value={String(stats.published)} />
           </Reveal>
-          <Reveal delay={0.1}>
+          <Reveal delay={0.06}>
             <StatCard
               icon={Users}
               label="Participants"
               value={String(participantStats.totalParticipants)}
-              trend={participantsTrendDelta ? { ...participantsTrendDelta, comparisonLabel: "vs 7j précédents" } : undefined}
+              trend={participantsTrendDelta ? { ...participantsTrendDelta, comparisonLabel: "vs 7j" } : undefined}
             />
           </Reveal>
-          <Reveal delay={0.15}>
+          <Reveal delay={0.09}>
             <StatCard
               icon={Percent}
-              label="Taux de réussite"
+              label="Réussite"
               value={participantStats.passRate === null ? "—" : `${participantStats.passRate}%`}
-              hint={participantStats.passRate === null ? "Bientôt disponible" : undefined}
+              hint={participantStats.passRate === null ? "Bientôt" : undefined}
               muted={participantStats.passRate === null}
             />
           </Reveal>
-          <Reveal delay={0.2}>
+          <Reveal delay={0.12}>
             <StatCard
               icon={CheckCircle2}
-              label="Taux de complétion"
+              label="Complétion"
               value={completionRate === null ? "—" : `${completionRate}%`}
-              hint={completionRate === null ? "Bientôt disponible" : undefined}
+              hint={completionRate === null ? "Bientôt" : undefined}
               muted={completionRate === null}
             />
           </Reveal>
         </div>
       </Section>
 
-      <Section title="Tendances" description="Évolution de la participation">
+      <Section title="Analytics" description="Tendances et répartition">
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal className="lg:col-span-2">
             {participantsTrend.some((d) => d.participants > 0) ? (
@@ -236,9 +236,6 @@ export default async function DashboardPage() {
             <QuizStatusPanel breakdown={quizStatusBreakdown} />
           </Reveal>
         </div>
-      </Section>
-
-      <Section title="Activité" description="Résumé des participations et quiz populaires">
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal>
             {totalTrackedParticipants > 0 ? (
@@ -266,15 +263,15 @@ export default async function DashboardPage() {
             )}
           </Reveal>
           <Reveal delay={0.02}>
-            <ActivityFeedCard activity={activity} />
+            <TopQuizzesList quizzes={topQuizzes} />
           </Reveal>
           <Reveal delay={0.04}>
-            <TopQuizzesList quizzes={topQuizzes} />
+            <ActivityFeedCard activity={activity} />
           </Reveal>
         </div>
       </Section>
 
-      <Section title="Organisation" description="Facturation, équipe et quiz récents">
+      <Section title="Organisation" description="Facturation, équipe et contenu récent">
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal>
             <RevenueSummaryCard
@@ -291,6 +288,18 @@ export default async function DashboardPage() {
           </Reveal>
         </div>
       </Section>
+
+      {isFreePlan && (
+        <Reveal>
+          <UpgradeBanner
+            title="Passez au niveau supérieur"
+            description="Débloquez l'IA, les exports, les certificats et les analytics avancés avec un plan payant."
+            variant="card"
+            features={["Génération IA illimitée", "Exports PDF/Excel/CSV", "Certificats personnalisés", "Analytics avancés"]}
+            ctaLabel="Voir les plans"
+          />
+        </Reveal>
+      )}
     </div>
   );
 }
