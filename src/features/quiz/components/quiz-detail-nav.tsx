@@ -47,7 +47,7 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
             ))}
           </TabsList>
         </Tabs>
-        {settingsTrigger}
+        <div key="settings">{settingsTrigger}</div>
       </nav>
 
       {/* Desktop: vertical sidebar */}
@@ -80,7 +80,7 @@ export function QuizDetailNav({ questions, participants, results, settingsTrigge
               </button>
             );
           })}
-          {settingsTrigger}
+          <div key="settings">{settingsTrigger}</div>
         </div>
       </nav>
 
