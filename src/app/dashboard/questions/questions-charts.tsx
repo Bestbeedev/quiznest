@@ -2,7 +2,7 @@
 
 import { Award, BarChart3, Gauge } from "lucide-react"
 
-import { ChartBarCategories } from "@/components/charts"
+import { ChartLollipop } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -33,11 +33,11 @@ export function QuestionsCharts({
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {typeData.length >= 2 ? (
-        <ChartBarCategories
+        <ChartLollipop
           data={typeData.map((item) => ({
             label: TYPE_META[item.type]?.label ?? item.type,
             value: item.count,
-            fill: TYPE_META[item.type]?.color ?? "var(--chart-5)",
+            color: TYPE_META[item.type]?.color ?? "var(--chart-5)",
           }))}
           title="Par type"
           config={pieConfig}

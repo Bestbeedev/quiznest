@@ -1,6 +1,6 @@
 "use client"
 
-import { ChartBarCategories } from "@/components/charts"
+import { ChartLollipop } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 
 export function QuizStatusChart({
@@ -13,11 +13,11 @@ export function QuizStatusChart({
   archived: number
 }) {
   return (
-    <ChartBarCategories
+    <ChartLollipop
       data={[
-        { label: "Brouillon", value: draft, fill: "var(--chart-2)" },
-        { label: "Publié", value: published, fill: "var(--chart-1)" },
-        { label: "Archivé", value: archived, fill: "var(--chart-5)" },
+        { label: "Brouillon", value: draft, color: "var(--chart-2)" },
+        { label: "Publié", value: published, color: "var(--chart-1)" },
+        { label: "Archivé", value: archived, color: "var(--chart-5)" },
       ]}
       title="Quiz par statut"
       config={{

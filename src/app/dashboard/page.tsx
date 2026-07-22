@@ -42,7 +42,7 @@ import { NotificationsBanner, type DashboardNotification } from "@/features/dash
 import { DashboardUpsellBanners } from "@/features/dashboard/components/dashboard-upsell-banners";
 import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
 import { QuotaOverview } from "@/features/dashboard/components/quota-overview";
-import { ChartAreaInteractive, ChartBarCategories } from "@/components/charts";
+import { ChartAreaInteractive, ChartLollipop } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
 import { canUseFeature } from "@/lib/services/feature-gate";
 
@@ -258,11 +258,11 @@ export default async function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal>
             {totalTrackedParticipants > 0 ? (
-              <ChartBarCategories
+              <ChartLollipop
                 data={[
-                  { label: "Terminé", value: participantStatusBreakdown.COMPLETED, fill: "var(--chart-2)" },
-                  { label: "En cours", value: participantStatusBreakdown.IN_PROGRESS, fill: "var(--chart-3)" },
-                  { label: "Abandonné", value: participantStatusBreakdown.ABANDONED, fill: "var(--chart-5)" },
+                  { label: "Terminé", value: participantStatusBreakdown.COMPLETED, color: "var(--chart-2)" },
+                  { label: "En cours", value: participantStatusBreakdown.IN_PROGRESS, color: "var(--chart-3)" },
+                  { label: "Abandonné", value: participantStatusBreakdown.ABANDONED, color: "var(--chart-5)" },
                 ]}
                 title="Statut des participations"
                 description={`${totalTrackedParticipants} participation(s) au total`}

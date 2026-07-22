@@ -2,7 +2,7 @@
 
 import { Percent, Target } from "lucide-react"
 
-import { ChartBarCategories } from "@/components/charts"
+import { ChartLollipop } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -21,11 +21,11 @@ export function ParticipantsCharts({
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <ChartBarCategories
+      <ChartLollipop
         data={[
-          { label: "Terminé", value: completed, fill: "var(--chart-1)" },
-          { label: "En cours", value: inProgress, fill: "var(--chart-2)" },
-          { label: "Abandonné", value: abandoned, fill: "var(--chart-5)" },
+          { label: "Terminé", value: completed, color: "var(--chart-1)" },
+          { label: "En cours", value: inProgress, color: "var(--chart-2)" },
+          { label: "Abandonné", value: abandoned, color: "var(--chart-5)" },
         ]}
         title="Répartition par statut"
         description={`${total} participant(s) au total`}

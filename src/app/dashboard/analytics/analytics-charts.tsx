@@ -1,6 +1,6 @@
 "use client"
 
-import { ChartBarCategories, ChartTooltipDefault } from "@/components/charts"
+import { ChartLollipop, ChartTooltipDefault } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 
 export function AnalyticsCharts({
@@ -20,10 +20,10 @@ export function AnalyticsCharts({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ChartBarCategories
+      <ChartLollipop
         data={[
-          { label: "Réussi", value: Math.round(passed), fill: "var(--chart-3)" },
-          { label: "Non réussi", value: Math.round(failed), fill: "var(--chart-4)" },
+          { label: "Réussi", value: Math.round(passed), color: "var(--chart-3)" },
+          { label: "Non réussi", value: Math.round(failed), color: "var(--chart-4)" },
         ]}
         title="Taux de réussite"
         description={`Basé sur ${totalParticipants} participants`}
