@@ -30,6 +30,7 @@ export function QuizTableToolbar({ table, quizzes }: { table: Table<QuizRow>; qu
         onValueChange={(value) =>
           table.getColumn("status")?.setFilterValue(value === "all" ? undefined : value)
         }
+        items={[{ value: "all", label: "Tous les statuts" }, ...STATUS_OPTIONS]}
       >
         <SelectTrigger size="sm" className="w-36">
           <SelectValue placeholder="Statut" />
@@ -49,6 +50,7 @@ export function QuizTableToolbar({ table, quizzes }: { table: Table<QuizRow>; qu
         onValueChange={(value) =>
           table.getColumn("author")?.setFilterValue(value === "all" ? undefined : value)
         }
+        items={[{ value: "all", label: "Tous les auteurs" }, ...authors.map((name) => ({ value: name, label: name }))]}
       >
         <SelectTrigger size="sm" className="w-40">
           <SelectValue placeholder="Auteur" />

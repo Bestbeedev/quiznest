@@ -266,7 +266,7 @@ export function AiChatWorkspace({
       <div className="flex flex-col overflow-hidden rounded-lg border">
         <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-2.5">
           <p className="text-sm font-medium">Quiz associé</p>
-          <Select value={quizId ?? "none"} onValueChange={handleQuizChange}>
+          <Select value={quizId ?? "none"} onValueChange={handleQuizChange} items={[{ value: "none", label: "Aucun quiz" }, ...quizzes.map((q) => ({ value: q.id, label: q.title }))]}>
             <SelectTrigger className="h-8 w-56 text-xs">
               <SelectValue placeholder="Aucun quiz" />
             </SelectTrigger>

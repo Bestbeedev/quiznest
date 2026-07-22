@@ -34,6 +34,7 @@ export function OrgParticipantsToolbar({
       <Select
         value={quizValue}
         onValueChange={(v) => table.getColumn("quiz")?.setFilterValue(v === "all" ? undefined : v)}
+        items={[{ value: "all", label: "Tous les quiz" }, ...quizzes]}
       >
         <SelectTrigger size="sm" className="w-40">
           <SelectValue placeholder="Quiz" />
@@ -51,6 +52,7 @@ export function OrgParticipantsToolbar({
       <Select
         value={statusValue}
         onValueChange={(v) => table.getColumn("status")?.setFilterValue(v === "all" ? undefined : v)}
+        items={[{ value: "all", label: "Tous les statuts" }, ...STATUS_OPTIONS]}
       >
         <SelectTrigger size="sm" className="w-36">
           <SelectValue placeholder="Statut" />

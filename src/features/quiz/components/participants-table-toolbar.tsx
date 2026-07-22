@@ -20,6 +20,7 @@ export function ParticipantsTableToolbar({ table }: { table: Table<Participant> 
       onValueChange={(value) =>
         table.getColumn("status")?.setFilterValue(value === "all" ? undefined : value)
       }
+      items={[{ value: "all", label: "Tous les statuts" }, ...STATUS_OPTIONS]}
     >
       <SelectTrigger size="sm" className="w-36">
         <SelectValue placeholder="Statut" />

@@ -83,6 +83,7 @@ export function TeamMembersList({
               <Select
                 value={member.role}
                 onValueChange={(role) => role && handleRoleChange(member.id, role)}
+                items={ROLE_LABELS}
               >
                 <SelectTrigger size="sm" className="w-32">
                   <SelectValue />

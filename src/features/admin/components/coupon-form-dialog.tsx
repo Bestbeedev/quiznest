@@ -130,7 +130,7 @@ export function CouponFormDialog({ coupon, plans }: { coupon?: CouponForEdit; pl
             <Field orientation="responsive">
               <Field>
                 <FieldLabel>Type</FieldLabel>
-                <Select value={type} onValueChange={(v) => v && setValue("type", v as CouponInput["type"])}>
+                <Select value={type} onValueChange={(v) => v && setValue("type", v as CouponInput["type"])} items={{ PERCENTAGE: "Pourcentage", FIXED: "Montant fixe" }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

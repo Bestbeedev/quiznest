@@ -210,7 +210,7 @@ export function AddQuestionDialog({
           <FieldGroup>
             <Field>
               <FieldLabel>Type de question</FieldLabel>
-              <Select value={type} onValueChange={handleTypeChange}>
+              <Select value={type} onValueChange={handleTypeChange} items={TYPE_LABELS}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -289,7 +289,7 @@ export function AddQuestionDialog({
 
               <Field>
                 <FieldLabel>Difficulté</FieldLabel>
-                <Select value={watch("difficulty")} onValueChange={(v) => v && setValue("difficulty", v as CreateQuestionInput["difficulty"])}>
+                <Select value={watch("difficulty")} onValueChange={(v) => v && setValue("difficulty", v as CreateQuestionInput["difficulty"])} items={DIFFICULTY_LABELS}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

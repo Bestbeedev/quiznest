@@ -144,6 +144,7 @@ export function OrganizationSettingsForm({
             <Select
               value={watch("language")}
               onValueChange={(v) => v && setValue("language", v as "fr" | "en")}
+              items={{ fr: "Français", en: "English" }}
             >
               <SelectTrigger>
                 <SelectValue />

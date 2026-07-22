@@ -221,7 +221,7 @@ export function PlanFormDialog({ plan, trigger }: { plan?: PlanForEdit; trigger?
               </Field>
               <Field>
                 <FieldLabel>Fréquence</FieldLabel>
-                <Select value={watch("interval")} onValueChange={(v) => v && setValue("interval", v as PlanInput["interval"])}>
+                <Select value={watch("interval")} onValueChange={(v) => v && setValue("interval", v as PlanInput["interval"])} items={{ MONTH: "Mensuel", YEAR: "Annuel" }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

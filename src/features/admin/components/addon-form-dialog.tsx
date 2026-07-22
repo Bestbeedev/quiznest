@@ -134,7 +134,7 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
 
             <Field>
               <FieldLabel>Effet</FieldLabel>
-              <Select value={effect} onValueChange={(v) => v && setValue("effect", v as AddOnProductInput["effect"])}>
+              <Select value={effect} onValueChange={(v) => v && setValue("effect", v as AddOnProductInput["effect"])} items={ADDON_EFFECT_LABELS}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -153,6 +153,7 @@ export function AddOnFormDialog({ product }: { product?: AddOnProductForEdit }) 
               <Select
                 value={targetFeature ?? "__none__"}
                 onValueChange={(v) => setValue("targetFeature", v === "__none__" ? null : (v as FeatureKey))}
+                items={[{ value: "__none__", label: "Aucune" }, ...Object.entries(FEATURE_LABELS).map(([value, label]) => ({ value, label }))]}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Aucune (pas de mapping feature)" />

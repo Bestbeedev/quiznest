@@ -150,6 +150,7 @@ export function InviteMemberDialog({ teamCheck }: { teamCheck?: FeatureCheckUI }
                 <Select
                   value={watch("role")}
                   onValueChange={(v) => v && setValue("role", v as InviteMemberInput["role"])}
+                  items={ROLE_LABELS}
                 >
                   <SelectTrigger>
                     <SelectValue />

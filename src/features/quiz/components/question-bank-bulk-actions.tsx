@@ -49,7 +49,7 @@ export function QuestionBankBulkActions({
   return (
     <>
       <div className="ml-auto flex items-center gap-1.5">
-        <Select value={targetQuizId} onValueChange={(v) => v && setTargetQuizId(v)}>
+        <Select value={targetQuizId} onValueChange={(v) => v && setTargetQuizId(v)} items={quizzes.map((quiz) => ({ value: quiz.id, label: quiz.title }))}>
           <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Quiz cible..." />
           </SelectTrigger>

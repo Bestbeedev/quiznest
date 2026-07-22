@@ -33,7 +33,7 @@ function FilterSelect({
   options: { value: string; label: string }[];
 }) {
   return (
-    <Select value={value} onValueChange={(v) => v && onChange(v)}>
+    <Select value={value} onValueChange={(v) => v && onChange(v)} items={[{ value: "all", label: allLabel }, ...options]}>
       <SelectTrigger size="sm" className="w-36">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

@@ -68,7 +68,7 @@ export function AiSettingsForm({
       <FieldGroup>
         <Field>
           <FieldLabel>Fournisseur</FieldLabel>
-          <Select value={provider} onValueChange={(v) => setProvider(v as AiSettingsView["provider"])}>
+          <Select value={provider} onValueChange={(v) => setProvider(v as AiSettingsView["provider"])} items={PROVIDER_LABELS}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
