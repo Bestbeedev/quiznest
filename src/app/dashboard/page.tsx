@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { CheckCircle2, ListChecks, Percent, Rocket, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  ListChecks,
+  Percent,
+  Rocket,
+  Users,
+  Plus,
+} from "lucide-react";
 
 import { getActiveOrganization } from "@/lib/db/tenant";
 import { buildMetadata } from "@/constants/seo";
@@ -10,6 +17,7 @@ export const metadata: Metadata = buildMetadata({
     "Vue d'ensemble de votre espace QuizNest : quiz, participants, taux de réussite et statistiques en temps réel.",
   path: "/dashboard",
 });
+
 import {
   getQuizStats,
   getRecentQuizzes,
@@ -26,10 +34,14 @@ import { getOrgRecentActivity, type OrgActivityItem } from "@/lib/services/activ
 import { getOrganizationRevenueStats, getOrganizationSubscription } from "@/lib/services/billing";
 import { getOrganizationMembers } from "@/lib/services/organization";
 import { getOrCreateWallet } from "@/lib/services/wallet";
+import { canUseFeature } from "@/lib/services/feature-gate";
+
+// Composants UI
 import { StatCard } from "@/components/shared/stat-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { Reveal } from "@/components/shared/reveal";
+import { Button } from "@/components/ui/button";
 import { RecentQuizzesCard } from "@/features/dashboard/components/recent-quizzes-card";
 import { ActivityFeedCard } from "@/features/dashboard/components/activity-feed-card";
 import { RevenueSummaryCard } from "@/features/dashboard/components/revenue-summary-card";
@@ -44,8 +56,8 @@ import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
 import { QuotaOverview } from "@/features/dashboard/components/quota-overview";
 import { ChartAreaInteractive, ChartLollipop } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
-import { canUseFeature } from "@/lib/services/feature-gate";
 
+// Utilitaires
 function computeTrend(current: number, previous: number) {
   if (previous === 0) {
     if (current === 0) return null;
@@ -96,6 +108,7 @@ export default async function DashboardPage() {
   const walletBalance = walletResult.status === "fulfilled" ? walletResult.value.balance : 0;
   const aiQuota = aiQuotaResult.status === "fulfilled" ? aiQuotaResult.value : { limit: null, used: 0, source: "plan" as const };
 
+  // Construction des notifications
   const notifications: DashboardNotification[] = [];
   const plan = subscription?.plan;
   if (plan?.quizLimit !== undefined && plan?.quizLimit !== null && stats.total >= plan.quizLimit) {
@@ -129,6 +142,7 @@ export default async function DashboardPage() {
     });
   }
 
+  // Calculs de tendance
   const quizTrend = computeTrend(
     creationTrend.at(-1)?.quiz ?? 0,
     creationTrend.at(-2)?.quiz ?? 0,
@@ -147,11 +161,14 @@ export default async function DashboardPage() {
   const isFreePlan = plan?.slug === "free";
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Tableau de bord"
-        subtitle={organization.name}
-        actions={
+    <div className="flex flex-col gap-8 px-4 md:px-6 py-6 max-w-7xl mx-auto">
+      {/* ==================== EN-TÊTE ==================== */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          title="Tableau de bord"
+          subtitle={organization.name}
+        />
+        <div className="flex items-center gap-4">
           <LastUpdatedPill
             formattedDate={new Date().toLocaleDateString("fr-FR", {
               weekday: "long",
@@ -160,25 +177,38 @@ export default async function DashboardPage() {
               year: "numeric",
             })}
           />
-        }
-      />
+          <Button size="sm" className="hidden md:flex">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau quiz
+          </Button>
+        </div>
+      </div>
 
-      <NotificationsBanner notifications={notifications} />
+      {/* ==================== BANDEAU D'ALERTES & UPSELL ==================== */}
+      {/* On combine les deux composants existants pour une meilleure cohérence */}
+      <div className="space-y-3">
+        <NotificationsBanner notifications={notifications} />
+        <DashboardUpsellBanners
+          planSlug={plan?.slug ?? "free"}
+          quizCount={stats.total}
+          quizLimit={plan?.quizLimit ?? null}
+          participantCount={participantStats.totalParticipants}
+          participantLimit={plan?.participantLimit ?? null}
+          walletBalance={walletBalance}
+        />
+      </div>
 
-      <DashboardUpsellBanners
-        planSlug={plan?.slug ?? "free"}
-        quizCount={stats.total}
-        quizLimit={plan?.quizLimit ?? null}
-        participantCount={participantStats.totalParticipants}
-        participantLimit={plan?.participantLimit ?? null}
-        walletBalance={walletBalance}
-      />
-
+      {/* ==================== KPI (5 cartes) ==================== */}
       <Section title="Vue d'ensemble" description={`Aperçu rapide de ${organization.name}`}>
         <QuickActions />
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           <Reveal>
-            <StatCard icon={ListChecks} label="Quiz créés" value={String(stats.total)} trend={quizTrend ? { ...quizTrend, comparisonLabel: "vs semaine dernière" } : undefined} />
+            <StatCard
+              icon={ListChecks}
+              label="Quiz créés"
+              value={String(stats.total)}
+              trend={quizTrend ? { ...quizTrend, comparisonLabel: "vs semaine dernière" } : undefined}
+            />
           </Reveal>
           <Reveal delay={0.03}>
             <StatCard icon={Rocket} label="Publiés" value={String(stats.published)} />
@@ -212,6 +242,7 @@ export default async function DashboardPage() {
         </div>
       </Section>
 
+      {/* ==================== QUOTAS ==================== */}
       <Section title="Vos quotas" description="Utilisation de vos ressources ce mois">
         <Reveal>
           <QuotaOverview
@@ -227,7 +258,9 @@ export default async function DashboardPage() {
         </Reveal>
       </Section>
 
+      {/* ==================== ANALYTICS (graphiques) ==================== */}
       <Section title="Analytics" description="Tendances et répartition">
+        {/* Ligne 1 : participation (2/3) + statut quiz (1/3) */}
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal className="lg:col-span-2">
             {participantsTrend.some((d) => d.participants > 0) ? (
@@ -255,6 +288,8 @@ export default async function DashboardPage() {
             <QuizStatusPanel breakdown={quizStatusBreakdown} />
           </Reveal>
         </div>
+
+        {/* Ligne 2 : statut participants (1/3) + top quiz (1/3) + activité (1/3) */}
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal>
             {totalTrackedParticipants > 0 ? (
@@ -288,6 +323,7 @@ export default async function DashboardPage() {
         </div>
       </Section>
 
+      {/* ==================== ORGANISATION ==================== */}
       <Section title="Organisation" description="Facturation, équipe et contenu récent">
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal>
@@ -306,6 +342,7 @@ export default async function DashboardPage() {
         </div>
       </Section>
 
+      {/* ==================== UPGRADE BANNER (si gratuit) ==================== */}
       {isFreePlan && (
         <Reveal>
           <UpgradeBanner
