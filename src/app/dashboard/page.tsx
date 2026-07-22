@@ -42,7 +42,7 @@ import { NotificationsBanner, type DashboardNotification } from "@/features/dash
 import { DashboardUpsellBanners } from "@/features/dashboard/components/dashboard-upsell-banners";
 import { UpgradeBanner } from "@/features/dashboard/components/upgrade-banner";
 import { QuotaOverview } from "@/features/dashboard/components/quota-overview";
-import { ChartAreaInteractive, ChartDonutTotal } from "@/components/charts";
+import { ChartAreaInteractive, ChartBarCategories } from "@/components/charts";
 import type { ChartConfig } from "@/components/ui/chart";
 import { canUseFeature } from "@/lib/services/feature-gate";
 
@@ -258,22 +258,20 @@ export default async function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <Reveal>
             {totalTrackedParticipants > 0 ? (
-              <ChartDonutTotal
+              <ChartBarCategories
                 data={[
-                  { statut: "termine", nombre: participantStatusBreakdown.COMPLETED, fill: "var(--color-termine)" },
-                  { statut: "en_cours", nombre: participantStatusBreakdown.IN_PROGRESS, fill: "var(--color-en_cours)" },
-                  { statut: "abandonne", nombre: participantStatusBreakdown.ABANDONED, fill: "var(--color-abandonne)" },
+                  { label: "Terminé", value: participantStatusBreakdown.COMPLETED, fill: "var(--chart-2)" },
+                  { label: "En cours", value: participantStatusBreakdown.IN_PROGRESS, fill: "var(--chart-3)" },
+                  { label: "Abandonné", value: participantStatusBreakdown.ABANDONED, fill: "var(--chart-5)" },
                 ]}
                 title="Statut des participations"
+                description={`${totalTrackedParticipants} participation(s) au total`}
                 config={{
-                  nombre: { label: "Participants" },
                   termine: { label: "Terminé", color: "var(--chart-2)" },
                   en_cours: { label: "En cours", color: "var(--chart-3)" },
                   abandonne: { label: "Abandonné", color: "var(--chart-5)" },
                 } satisfies ChartConfig}
-                dataKey="nombre"
-                nameKey="statut"
-                totalLabel="Participations"
+                totalLabel="participations"
               />
             ) : (
               <div className="flex h-full min-h-[250px] items-center justify-center rounded-xl border p-8 text-center text-sm text-muted-foreground">

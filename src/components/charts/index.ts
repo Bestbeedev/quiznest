@@ -1,4 +1,5 @@
 export { ChartAreaInteractive } from "./chart-area-interactive"
+export { ChartBarCategories } from "./chart-bar-categories"
 export { ChartBarInteractive } from "./chart-bar-interactive"
 export { ChartDonutTotal } from "./chart-donut-total"
 export { ChartLineInteractive } from "./chart-line-interactive"

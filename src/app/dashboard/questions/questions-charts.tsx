@@ -2,7 +2,7 @@
 
 import { Award, BarChart3, Gauge } from "lucide-react"
 
-import { ChartPieLegend } from "@/components/charts"
+import { ChartBarCategories } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -24,11 +24,6 @@ export function QuestionsCharts({
   totalPoints: number
   totalQuestions: number
 }) {
-  const pieData = typeData.map((item) => ({
-    ...item,
-    fill: `var(--color-${item.type})`,
-  }))
-
   const pieConfig = typeData.reduce<ChartConfig>((config, item) => {
     const meta = TYPE_META[item.type] ?? { label: item.type, color: "var(--chart-5)" }
     config[item.type] = { label: meta.label, color: meta.color }
@@ -38,12 +33,15 @@ export function QuestionsCharts({
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {typeData.length >= 2 ? (
-        <ChartPieLegend
-          data={pieData}
+        <ChartBarCategories
+          data={typeData.map((item) => ({
+            label: TYPE_META[item.type]?.label ?? item.type,
+            value: item.count,
+            fill: TYPE_META[item.type]?.color ?? "var(--chart-5)",
+          }))}
           title="Par type"
           config={pieConfig}
-          dataKey="count"
-          nameKey="type"
+          totalLabel="questions"
         />
       ) : (
         <Card>

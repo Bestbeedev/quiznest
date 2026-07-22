@@ -2,7 +2,7 @@
 
 import { Percent, Target } from "lucide-react"
 
-import { ChartRadialText, ChartPieLegend } from "@/components/charts"
+import { ChartBarCategories } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -21,41 +21,21 @@ export function ParticipantsCharts({
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <ChartRadialText
-        data={[{ name: "total", valeur: total }]}
-        title="Total participants"
-        description="Tous statuts confondus"
+      <ChartBarCategories
+        data={[
+          { label: "Terminé", value: completed, fill: "var(--chart-1)" },
+          { label: "En cours", value: inProgress, fill: "var(--chart-2)" },
+          { label: "Abandonné", value: abandoned, fill: "var(--chart-5)" },
+        ]}
+        title="Répartition par statut"
+        description={`${total} participant(s) au total`}
         config={{
-          total: { label: "Total", color: "var(--chart-1)" },
+          termine: { label: "Terminé", color: "var(--chart-1)" },
+          encours: { label: "En cours", color: "var(--chart-2)" },
+          abandonne: { label: "Abandonné", color: "var(--chart-5)" },
         } satisfies ChartConfig}
-        dataKey="valeur"
-        valueLabel="participants"
-        maxAngle={360}
+        totalLabel="participants"
       />
-
-      {total > 0 ? (
-        <ChartPieLegend
-          data={[
-            { statut: "termine", visitors: completed, fill: "var(--color-termine)" },
-            { statut: "encours", visitors: inProgress, fill: "var(--color-encours)" },
-            { statut: "abandonne", visitors: abandoned, fill: "var(--color-abandonne)" },
-          ]}
-          title="Répartition par statut"
-          description={`${total} participant(s) au total`}
-          config={{
-            visitors: { label: "Participants" },
-            termine: { label: "Terminé", color: "var(--chart-1)" },
-            encours: { label: "En cours", color: "var(--chart-2)" },
-            abandonne: { label: "Abandonné", color: "var(--chart-5)" },
-          } satisfies ChartConfig}
-          dataKey="visitors"
-          nameKey="statut"
-        />
-      ) : (
-        <div className="flex items-center justify-center rounded-xl border p-8 text-center text-sm text-muted-foreground">
-          Aucune tentative pour le moment.
-        </div>
-      )}
 
       <Card>
         <CardHeader>

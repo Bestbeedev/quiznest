@@ -1,6 +1,6 @@
 "use client"
 
-import { ChartPieLegend } from "@/components/charts"
+import { ChartBarCategories } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 
 export function QuizStatusChart({
@@ -13,21 +13,19 @@ export function QuizStatusChart({
   archived: number
 }) {
   return (
-    <ChartPieLegend
+    <ChartBarCategories
       data={[
-        { statut: "brouillon", visitors: draft, fill: "var(--color-brouillon)" },
-        { statut: "publie", visitors: published, fill: "var(--color-publie)" },
-        { statut: "archive", visitors: archived, fill: "var(--color-archive)" },
+        { label: "Brouillon", value: draft, fill: "var(--chart-2)" },
+        { label: "Publié", value: published, fill: "var(--chart-1)" },
+        { label: "Archivé", value: archived, fill: "var(--chart-5)" },
       ]}
       title="Quiz par statut"
       config={{
-        visitors: { label: "Quiz" },
         brouillon: { label: "Brouillon", color: "var(--chart-2)" },
         publie: { label: "Publié", color: "var(--chart-1)" },
         archive: { label: "Archivé", color: "var(--chart-5)" },
       } satisfies ChartConfig}
-      dataKey="visitors"
-      nameKey="statut"
+      totalLabel="quiz"
     />
   )
 }

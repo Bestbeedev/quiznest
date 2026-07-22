@@ -1,6 +1,6 @@
 "use client"
 
-import { ChartRadialStacked, ChartTooltipDefault } from "@/components/charts"
+import { ChartBarCategories, ChartTooltipDefault } from "@/components/charts"
 import type { ChartConfig } from "@/components/ui/chart"
 
 export function AnalyticsCharts({
@@ -20,15 +20,17 @@ export function AnalyticsCharts({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ChartRadialStacked
-        data={[{ reussi: passed, nonReussi: failed }]}
+      <ChartBarCategories
+        data={[
+          { label: "Réussi", value: Math.round(passed), fill: "var(--chart-3)" },
+          { label: "Non réussi", value: Math.round(failed), fill: "var(--chart-4)" },
+        ]}
         title="Taux de réussite"
         description={`Basé sur ${totalParticipants} participants`}
         config={{
           reussi: { label: "Réussi", color: "var(--chart-3)" },
           nonReussi: { label: "Non réussi", color: "var(--chart-4)" },
         } satisfies ChartConfig}
-        dataKeys={["reussi", "nonReussi"]}
         totalLabel="% réussite"
       />
 
