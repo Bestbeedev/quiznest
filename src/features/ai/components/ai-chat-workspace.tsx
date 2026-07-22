@@ -195,14 +195,14 @@ export function AiChatWorkspace({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-      <div className="flex flex-col gap-2 rounded-lg border p-3">
+    <div className="grid h-[calc(100dvh-8rem)] gap-4 lg:grid-cols-[260px_1fr]">
+      <div className="hidden flex-col gap-2 overflow-hidden rounded-lg border p-3 lg:flex">
         <Button type="button" size="sm" className="gap-1.5" onClick={handleNewConversation}>
           <Plus className="size-4" />
           Nouvelle conversation
         </Button>
 
-        <div className="mt-2 flex flex-col gap-1 overflow-y-auto">
+        <div className="mt-2 flex flex-1 flex-col gap-1 overflow-y-auto">
           {conversations.length === 0 && (
             <p className="px-2 py-4 text-center text-xs text-muted-foreground">Aucune conversation pour l&apos;instant.</p>
           )}
@@ -263,8 +263,8 @@ export function AiChatWorkspace({
         </div>
       </div>
 
-      <div className="flex min-h-[32rem] flex-col rounded-lg border">
-        <div className="flex items-center justify-between gap-2 border-b p-3">
+      <div className="flex flex-col overflow-hidden rounded-lg border">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-2.5">
           <p className="text-sm font-medium">Quiz associé</p>
           <Select value={quizId ?? "none"} onValueChange={handleQuizChange}>
             <SelectTrigger className="h-8 w-56 text-xs">
@@ -283,7 +283,7 @@ export function AiChatWorkspace({
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
           {messages.length === 0 && !isLoading && (
-            <div className="flex flex-1 flex-col gap-5">
+            <div className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
                   <Sparkles className="size-5 text-primary" />
@@ -308,7 +308,7 @@ export function AiChatWorkspace({
                 )}
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid w-full max-w-2xl gap-2 sm:grid-cols-2">
                 {AI_PROMPT_TEMPLATES.map((template) => {
                   const Icon = template.icon;
                   return (
@@ -363,7 +363,7 @@ export function AiChatWorkspace({
           <div ref={bottomRef} />
         </div>
 
-        <div className="flex items-end gap-2 border-t p-3">
+        <div className="flex shrink-0 items-end gap-2 border-t p-3">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
