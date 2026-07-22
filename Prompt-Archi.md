@@ -6,29 +6,31 @@ Tu travailles sur QuizNest.
 
 QuizNest est une plateforme SaaS Multi-Tenant de création, gestion et diffusion de quiz, examens, évaluations et certifications.
 
-Le projet existe déjà.
+### Stack technique
+
+- **Framework** : Next.js 16 (App Router, Turbopack)
+- **ORM** : Prisma 7.8 → génère dans `src/generated/prisma`
+- **Base de données** : PostgreSQL (Neon en production)
+- **Auth** : better-auth + prismaAdapter (email/password + Google OAuth)
+- **UI** : shadcn/ui (base-nova) + Base UI (`@base-ui/react`) + Tailwind v4
+- **Validation** : Zod
+- **Package manager** : pnpm
+- **Paiement** : FedaPay (SDK dans `src/lib/payments/fedapay-provider.ts`)
+- **Déploiement** : Vercel (région cdg1)
+
+### Conventions de code
 
 Avant toute modification :
 
-- analyser entièrement le projet existant
-- identifier les fonctionnalités déjà développées
-- vérifier la structure Prisma
-- vérifier les modèles existants
-- vérifier les Server Actions
-- vérifier les composants UI
-- vérifier les hooks
-- vérifier les services
-- vérifier les providers
-- vérifier les middlewares
-- vérifier les variables d'environnement
-
-Ne jamais recréer une fonctionnalité déjà existante.
-
-Réutiliser au maximum l'architecture actuelle.
-
-Améliorer uniquement ce qui est nécessaire.
-
-Toutes les modifications doivent être compatibles avec le reste du projet.
+- Analyser entièrement le projet existant
+- Identifier les services, composants, Prisma, routes existants
+- Vérifier les modèles Prisma, Server Actions, hooks, providers
+- Ne jamais recréer une fonctionnalité déjà existante
+- Réutiliser au maximum l'architecture actuelle
+- Ne jamais mettre de logique métier dans les composants React
+- Toute la logique métier va dans `src/lib/services/` ou `src/features/*/actions.ts`
+- Validation Zod dans `src/lib/validators/`
+- Toutes les permissions passent par le Feature Gate (jamais de vérification directe du nom de plan)
 
 ---
 
@@ -44,7 +46,7 @@ L'objectif est que le propriétaire de QuizNest puisse modifier toute son offre 
 
 ---
 
-# COMPARATIF DES LEVIERS DE MONÉTISATION
+# ARCHITECTURE DE MONÉTISATION — LES 5 LEVIERS
 
 Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle précis, un cycle de vie différent et des règles de priorité propres.
 
@@ -64,7 +66,14 @@ Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle préc
 
 **Priorité ?** C'est la **base de référence**. Tout part du plan. Si le plan couvre une action, rien d'autre n'est vérifié.
 
-**Exemple ?** Le plan Starter donne 100 générations IA/mois. Tant qu'il en reste, pas de crédits consommés.
+**Plans par défaut** (seed en DB) :
+| Plan | Prix | Quiz | Participants | Questions/quiz | IA/mois | Features |
+|------|------|------|-------------|----------------|---------|----------|
+| Free | 0 XOF | 3 | 50 | 10 | 10 | AI_GENERATION (10), EXPORT_PDF |
+| Starter | 5 000 XOF | 20 | 500 | 50 | 100 | AI_GENERATION, AI_IMPORT, QUESTION_BANK, EXPORT_PDF, EXPORT_EXCEL |
+| Professional | 15 000 XOF | ∞ | ∞ | ∞ | ∞ | Toutes les features (13) |
+
+Le Super Admin peut tout modifier depuis `/admin/plans`.
 
 ---
 
@@ -78,15 +87,14 @@ Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle préc
 
 **Quand est-ce utilisé ?** **Uniquement** quand le plan ne couvre pas l'action. C'est le filet de sécurité payant.
 
-**Qu'est-ce qu'il couvre ?**
-- Générations IA (2 crédits/question) — si quota plan épuisé
-- Exports PDF/Excel/CSV (1 crédit/export) — si quota plan épuisé
-- Certificats (3 crédits/certificat) — si non inclus dans le plan
-- Participants supplémentaires, etc.
+**Credit costs** (configurables via `PlatformSettings` en DB, fallback constants) :
+| Action | Coût | Constante |
+|--------|------|-----------|
+| Génération IA | 2 crédits/question | `AI_GENERATION` |
+| Export (PDF/Excel/CSV) | 1 crédit/export | `EXPORT` |
+| Certificat | 3 crédits/certificat | `CERTIFICATE` |
 
 **Priorité ?** **Dernier recours.** Le système vérifie d'abord : Pass actif → Add-on actif → Plan → Crédits.
-
-**Exemple ?** Le plan Starter donne 10 exports/mois. L'utilisateur fait son 11ème export → 1 crédit débité du wallet.
 
 ---
 
@@ -96,33 +104,50 @@ Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle préc
 
 **Qui le gère ?** Le Super Admin crée les produits. L'utilisateur achète via FedaPay.
 
-**Cycle de vie ?** Deux types :
-- **Quota** (metered) : ajoute un nombre de ressources (+100 participants, +50 générations IA). Se consomme progressivement. Peut être épuisé.
-- **Déverrouillage** (unlock) : active une fonctionnalité pour toujours (EXPORT_UNLOCK, CERTIFICATE_UNLOCK). Pas de consommation, pas d'expiration.
+**Cycle de vie ?** Deux types (via `isOneTime`) :
+- **Metered** (`isOneTime: false`) : ajoute un quota cumulatif (+100 participants, +50 générations IA). Le champ `remaining` se consomme progressivement. Peut être épuisé.
+- **Unlock** (`isOneTime: true`) : déverrouille une fonctionnalité pour toujours (EXPORT_UNLOCK, CERTIFICATE_UNLOCK). Pas de consommation, pas d'expiration.
 
-**Quand est-ce utilisé ?** Quand l'utilisateur veut **étendre** son plan sans changer de plan. Par exemple : il est sur Starter mais a besoin de +200 participants ce mois-ci.
+**Feature→Addon mapping** : Chaque addon peut être lié à une feature du plan via `AddOnProduct.targetFeature` (FeatureKey?). Quand défini, acheter cet addon étend le quota de cette feature.
+
+**Effets disponibles** (`AddOnEffect`) :
+| Effet | Type | Usage |
+|-------|------|-------|
+| EXTRA_PARTICIPANTS | Metered | Étend la limite participants de l'org |
+| EXTRA_QUIZZES | Metered | Étend la limite quiz de l'org |
+| EXTRA_QUESTIONS | Metered | Étend la limite questions/quiz |
+| EXTRA_AI_GENERATIONS | Metered | Étend le quota IA mensuel |
+| EXPORT_UNLOCK | Unlock | Déverrouille tous les exports |
+| CERTIFICATE_UNLOCK | Unlock | Déverrouille les certificats
 
 **Priorité ?** Vérifié **avant** les crédits. Si un add-on actif couvre l'action, aucun crédit n'est débité.
 
-**Exemple ?** L'utilisateur achète "Export Unlock" pour 5000 XOF. Désormais, tous les exports sont gratuits (pas de credits, pas de quota plan).
+**Fonctions clés** :
+- `getAddOnBonus(orgId, feature)` → somme des `remaining` pour un metered addon lié à une feature
+- `getAddOnBonusByEffect(orgId, effect)` → somme des bonus par effet (utilisé par `limits.ts`)
+- `hasAddOnUnlock(orgId, feature)` → true si un unlock permanent existe pour cette feature
+- `decrementAddonRemaining(orgId, feature, qty)` → décrémente le `remaining` à chaque utilisation
 
 ---
 
 ## 4. PASS (Accès temporaire premium)
 
-**Quoi ?** Un badge temporaire qui débloque des fonctionnalités premium pendant une durée définie.
+**Quoi ?** Un bundle temporaire de fonctionnalités premium.
 
 **Qui le gère ?** Le Super Admin crée les pass. L'utilisateur achète via FedaPay.
 
-**Cycle de vie ?** **Temporaire** — expire après X jours (30, 60, 90...). Non renouvelé automatiquement.
+**Cycle de vie ?** **Temporaire** — expire après X jours (`durationDays`). Non renouvelé automatiquement.
 
-**Qu'est-ce qu'il détermine ?** Il **ajoute des features** au plan pendant sa durée. Par exemple : un "Pass Analytics" débloque ADVANCED_ANALYTICS pendant 30 jours.
+**Modèle** :
+- `features FeatureKey[]` — liste des features déverrouillées
+- `expiresAt = now + durationDays` au moment de l'achat
+- `OrganizationPass` lie un pass à une organisation avec `paymentId`
 
-**Quand est-ce utilisé ?** Pour des **projets ponctuels** — un audit de 2 semaines, un événement, une formation temporaire.
+**Fonction clé** : `getActivePassFeatures(orgId)` → union de toutes les features de tous les passes non expirés (`expiresAt > now()`).
 
-**Priorité ?** Vérifié **en premier**. Si un pass actif contient la fonctionnalité, l'action est autorisée immédiatement, quel que soit le plan.
+**Priorité ?** Vérifié **en premier**. Si un pass actif contient la fonctionnalité, l'action est autorisée immédiatement, quel que soit le plan. Pas de quota sur les passes.
 
-**Exemple ?** L'utilisateur est sur Free. Il achète un "Pass Premium 30 jours". Pendant 30 jours, il a accès à toutes les features Premium. Après, il retourne sur Free.
+**Exemple** : L'utilisateur est sur Free. Il achète un "Pass Analytics 30 jours" qui inclut `ADVANCED_ANALYTICS`. Pendant 30 jours, il a accès aux analytics avancés. Après, il retourne sur Free.
 
 ---
 
@@ -134,16 +159,11 @@ Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle préc
 
 **Cycle de vie ?** **Unique** — utilisé une fois par transaction. Peut avoir une date de validité et un nombre max d'utilisations global.
 
-**Qu'est-ce qu'il couvre ?**
-- Réduction en pourcentage (ex: -20%)
-- Réduction en montant fixe (ex: -1000 XOF)
-- Applicable sur des plans spécifiques ou tous les plans
-
-**Quand est-ce utilisé ?** Lors du **paiement d'un plan** (upgrade/downgrade). L'utilisateur entre le code dans le dialogue de checkout.
+**Types** :
+- Pourcentage (ex: -20%)
+- Montant fixe (ex: -1000 XOF)
 
 **Priorité ?** **Pas de priorité dans le feature gate.** Les coupons agissent uniquement sur le prix, pas sur l'accès aux fonctionnalités.
-
-**Exemple ?** L'utilisateur veut passer au plan Professional (10000 XOF/mois). Il applique le code "WELCOME20" → prix réduit à 8000 XOF.
 
 ---
 
@@ -158,7 +178,6 @@ Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle préc
 | **Se consume ?** | Se renouvelle | Oui, par débit | Quota : oui / Unlock : non | Expire après durée | Non |
 | **Vérifié en** | 2ème (après Pass) | Dernier | 3ème (après Pass, avant Plan) | 1er | Jamais (prix seul) |
 | **Géré par** | Super Admin | Super Admin (packs) | Super Admin (produits) | Super Admin (pass) | Super Admin (coupons) |
-| **Exemple** | Starter = 10 quiz, 100 IA/mois | 500 crédits pour 500 XOF | +100 participants ou Export Unlock | Pass Analytics 30 jours | -20% sur Professional |
 
 ---
 
@@ -166,676 +185,549 @@ Le SaaS dispose de 5 leviers de monétisation distincts. Chacun a un rôle préc
 
 Quand une action est déclenchée, le système vérifie dans cet ordre :
 
-1. **Pass actif** → Si la feature est dans un pass non expiré → ✅ Autorisé
-2. **Add-on actif** → Si un add-on unlock couvre la feature OU un add-on quota a du stock restant → ✅ Autorisé
-3. **Plan actif** → Si le plan inclut la feature avec quota restant > 0 → ✅ Autorisé
-4. **Crédits wallet** → Si le wallet a assez de crédits → ✅ Autorisé (crédits débités)
-5. **Rien ne correspond** → ❌ Refusé avec message + CTA (upgrade, acheter, recharger)
+1. **Pass actif** → Si la feature est dans un pass non expiré → ✅ Autorisé (non usage-metered)
+2. **Add-on unlock actif** → Si un add-on `isOneTime: true` cible cette feature → ✅ Autorisé (permanent)
+3. **Plan actif** → Si le plan inclut la feature (`PlanFeature.enabled: true`) avec quota restant > 0 → ✅ Autorisé
+4. **Bonus add-on metered** → La limite du plan est étendue par les `remaining` des add-ons metered
+5. **Crédits wallet** → Si le wallet a assez de crédits → ✅ Autorisé (crédits débités)
+6. **Rien ne correspond** → ❌ Refusé avec message + CTA (upgrade, acheter, recharger)
 
 ---
 
-# LES PLANS RESTENT LE CŒUR DU SAAS
+# FEATURE GATE — IMPLÉMENTATION
 
-Le système doit conserver des plans d'abonnement.
+## Service central
 
-Par défaut créer :
+Toutes les interfaces, API, Server Actions, pages et routes doivent utiliser uniquement :
 
-Free
+```typescript
+import { canUseFeature } from "@/lib/services/feature-gate";
 
-Starter
+const result = await canUseFeature(organizationId, featureKey);
+// result.allowed → boolean
+// result.limit → number | null (quota total)
+// result.used → number (consommé ce mois)
+// result.remaining → number | null (restant)
+// result.source → "plan" | "pass"
+// result.message → string (message user-facing en cas de refus)
+// result.cta → "upgrade" | "pass" | "wallet" | "none"
+```
 
-Professional
+**Ne jamais vérifier directement le nom d'un plan.** Exemple interdit : `if (plan.slug === "professional")`. Exemple correct : `canUseFeature(orgId, "ADVANCED_ANALYTICS")`.
 
-Enterprise
+## Type FeatureCheck
 
-MAIS
+```typescript
+type FeatureCheck = {
+  allowed: boolean;
+  reason?: string;
+  limit?: number | null;
+  used?: number;
+  remaining?: number | null;
+  source?: "plan" | "pass";
+  message?: string;
+  cta?: "upgrade" | "pass" | "wallet" | "none";
+};
+```
 
-Ces plans ne doivent jamais être codés dans le projet.
+## Les 17 Features
 
-Ils doivent être créés en base de données.
+| FeatureKey | Label | Exemples d'usage |
+|-----------|-------|-----------------|
+| AI_GENERATION | Génération IA | Générer des questions via IA |
+| AI_IMPORT | Import IA | Importer des questions depuis un fichier IA |
+| QUESTION_BANK | Banque de questions | Banque de questions partagée |
+| CERTIFICATES | Certificats | Générer des certificats |
+| EXPORT_PDF | Export PDF | Exporter en PDF |
+| EXPORT_EXCEL | Export Excel | Exporter en Excel |
+| EXPORT_CSV | Export CSV | Exporter en CSV |
+| ADVANCED_ANALYTICS | Analyses avancées | Dashboard analytics détaillées |
+| CUSTOM_BRANDING | Personnalisation de marque | Logo, couleurs personnalisées |
+| CUSTOM_DOMAIN | Domaine personnalisé | URL personnalisée |
+| WEBHOOKS | Webhooks | Événements webhook |
+| API_ACCESS | Accès API | API REST |
+| MULTI_TEAM | Équipes multiples | Gestion multi-équipes |
+| LIVE_MONITORING | Suivi en temps réel | Monitoring des participations |
+| EMAIL_NOTIFICATIONS | Notifications email | Notifications par email |
+| SMS_NOTIFICATIONS | Notifications SMS | Notifications par SMS |
+| WHITE_LABEL | White-label | Supprimer la marque QuizNest |
 
-Ils doivent pouvoir être modifiés depuis le Super Admin.
+## Résolution interne de canUseFeature
 
-Le Super Admin peut :
-
-- créer un plan
-- modifier un plan
-- supprimer un plan
-- désactiver un plan
-- changer le nom
-- changer la description
-- changer le prix
-- changer la devise
-- changer la fréquence
-- changer les quotas
-- changer les fonctionnalités
-- mettre un plan en promotion
-- définir un badge
-- choisir une couleur
-- choisir une icône
-- définir un ordre d'affichage
-- définir un essai gratuit
-- programmer une date de début
-- programmer une date de fin
-
-Toutes ces modifications doivent être immédiatement reflétées dans toute l'application.
-
----
-
-# LES FONCTIONNALITÉS (FEATURES)
-
-Créer un système Feature Gate.
-
-Chaque fonctionnalité de QuizNest devient une Feature.
-
-Exemples :
-
-AI_GENERATION
-
-AI_IMPORT
-
-QUESTION_BANK
-
-CERTIFICATES
-
-EXPORT_PDF
-
-EXPORT_EXCEL
-
-EXPORT_CSV
-
-ADVANCED_ANALYTICS
-
-CUSTOM_BRANDING
-
-CUSTOM_DOMAIN
-
-WEBHOOKS
-
-API_ACCESS
-
-MULTI_TEAM
-
-LIVE_MONITORING
-
-EMAIL_NOTIFICATIONS
-
-SMS_NOTIFICATIONS
-
-WHITE_LABEL
-
-Toutes les permissions de la plateforme doivent utiliser ce système.
-
-Ne jamais vérifier directement le nom d'un plan.
+```
+1. getActivePassFeatures(orgId) → si feature dans le set → allowed, source="pass"
+2. hasAddOnUnlock(orgId, feature) → si true → allowed, source="plan"
+3. getOrganizationSubscription() → si pas d'abonnement ou statut CANCELED/PAST_DUE → denied
+4. PlanFeature[feature] → si !enabled → denied
+5. Si limit == null → allowed (illimité)
+6. getAddOnBonus(orgId, feature) → effectiveLimit = plan.limit + bonus
+7. getFeatureUsage(orgId, feature) → si used >= effectiveLimit → denied
+8. Sinon → allowed avec remaining
+```
 
 ---
 
-# FEATURE GATE
+# CONTRAINTES & LIMITES
 
-Créer un service central.
+## Limites org-wide (par organisation)
 
-Toutes les interfaces.
+Ces limites sont définies au niveau du plan et étendues par les add-ons :
 
-Toutes les API.
+| Limite | Champ Plan | Add-on Effect | Vérification |
+|--------|-----------|---------------|--------------|
+| Nombre de quiz | `plan.quizLimit` | `EXTRA_QUIZZES` | `getEffectiveQuizLimit()` |
+| Nombre de participants | `plan.participantLimit` | `EXTRA_PARTICIPANTS` | `getEffectiveParticipantLimit()` |
+| Stockage | `plan.storageLimitMb` | — | Vérifié à l'upload |
 
-Toutes les Server Actions.
+**Fonctions** (`src/lib/services/limits.ts`) :
+```typescript
+getEffectiveQuizLimit(orgId, baseLimit)      // baseLimit + bonus EXTRA_QUIZZES
+getEffectiveParticipantLimit(orgId, baseLimit) // baseLimit + bonus EXTRA_PARTICIPANTS
+getEffectiveQuestionLimit(orgId, baseLimit)   // baseLimit + bonus EXTRA_QUESTIONS
+```
 
-Toutes les pages.
+`null` = illimité, quel que soit le bonus add-on.
 
-Toutes les Routes.
+## Limite questions par quiz
 
-Toutes les opérations sensibles.
+**Fonction** : `checkQuestionLimit(orgId, quizId?)` dans `src/features/quiz/actions.ts`
 
-Doivent utiliser uniquement ce service.
+- Si `quizId` fourni → compte les questions de CE quiz
+- Si `quizId` absent → compte toutes les questions de l'organisation
+- Compare à `getEffectiveQuestionLimit(orgId, plan.questionLimit)`
+- Retourne un message d'erreur si limite atteinte, `null` sinon
 
-Exemple :
+**Utilisée dans** : `createQuizAction`, les actions d'ajout/import de questions, et la génération IA.
 
-featureGate.can(user, FEATURE)
+## Messages d'erreur
 
-Ce service vérifie automatiquement :
-
-Plan actif
-
-Achats ponctuels
-
-Pass actifs
-
-Wallet
-
-Promotions
-
-Quota
-
-Expiration
-
-Restrictions
-
-Puis autorise ou refuse l'action.
-
-Toute la logique commerciale doit être centralisée.
+Quand une limite est atteinte, le système affiche :
+- La limite actuelle
+- Le quota utilisé / total
+- Un CTA clair : "Passez à un plan supérieur", "Achetez des quiz supplémentaires", etc.
+- Jamais de messages frustrants
 
 ---
 
-# PAY AS YOU GO
+# LOGIQUE IA
 
-Les utilisateurs Free doivent pouvoir acheter des fonctionnalités.
+## Règle fondamentale
 
-Exemples :
+**Tous les utilisateurs** (y compris Free) peuvent utiliser l'IA pour générer et importer des questions.
 
-+100 participants
+La seule contrainte est le **quota AI_GENERATION** du plan via le feature gate.
 
-+500 participants
+## AI Generate (dialog dans un quiz)
 
-+1000 participants
+- Vérifie `checkQuestionLimit(orgId, quizId)` — la contrainte est le nombre de questions par quiz
+- Pas de gate AI_GENERATION sur ce bouton
+- Le quota IA n'est débité que si le plan a un `limit` sur AI_GENERATION
 
-Export Excel
+## AI Chat (`/dashboard/ai`)
 
-Export CSV
+- Vérifie `canUseFeature(orgId, "AI_GENERATION")` — gate complet
+- Si refusé et plateforme IA activée → affiche un UpgradeBanner
+- Si plateforme IA désactivée → affiche un message explicatif
+- Conversations persistantes avec renommage inline
+- Templates de prompts prédéfinis (8 modèles)
+- Paramètres IA dans un dialog (fournisseur, modèle, base URL)
 
-Import Word
+## Quiz detail "Générer avec l'IA"
 
-Import PDF
+C'est un **funnel marketing** : l'utilisateur copie le prompt, utilise n'importe quel AI externe, puis colle la réponse.
 
-Import PowerPoint
-
-Certificat Premium
-
-Pack IA 50 questions
-
-Pack IA 100 questions
-
-Pack IA 500 questions
-
-Chaque module est entièrement configurable.
-
-Le Super Admin peut :
-
-modifier le prix
-
-modifier le nom
-
-modifier la durée
-
-désactiver
-
-activer
-
-modifier la description
-
-changer l'ordre
-
-mettre en promotion
+- **PAS de gate AI_GENERATION** sur ce bouton
+- La seule contrainte est `checkQuestionLimit(orgId, quizId)`
+- Le bouton est toujours accessible
 
 ---
 
-# WALLET
+# CRÉDITS & WALLET
 
-Créer un portefeuille.
+## Principe
 
-Le Wallet est indépendant des abonnements.
+1 crédit ≈ 1 XOF. Le wallet est un portefeuille prépayé indépendant des abonnements.
 
-Le Super Admin crée des packs.
+## Credit costs (configurables en DB)
 
-Exemple :
+Les coûts en crédits sont lus depuis `PlatformSettings` avec fallback sur les constantes :
 
-500 FCFA
+| Clé | Défaut | Label | Description |
+|-----|--------|-------|-------------|
+| `AI_GENERATION` | 2 | Génération IA | Par question générée |
+| `EXPORT` | 1 | Export de données | Par export (PDF/Excel/CSV) |
+| `CERTIFICATE` | 3 | Certificat | Par certificat généré |
 
-500 crédits
+**Fonctions** (`src/lib/services/credit-costs.ts`) :
+```typescript
+getCreditCost(key: CreditCostKey)    // coût pour une action
+getAllCreditCosts()                   // tous les coûts pour affichage UI
+```
 
-1000 FCFA
+## Packs de rechargement
 
-1100 crédits
+Le Super Admin crée des packs (ex: 500 XOF = 500 crédits, 1000 XOF = 1100 crédits).
 
-5000 FCFA
+## Débit
 
-6500 crédits
-
-10000 FCFA
-
-14000 crédits
-
-Les crédits peuvent être utilisés pour :
-
-IA
-
-Imports
-
-Exports
-
-Participants supplémentaires
-
-Certificats
-
-SMS
-
-Fonctionnalités Premium
+Quand le plan ne couvre pas l'action et qu'aucun pass/addon ne l'autorise :
+1. Vérifier le solde du wallet
+2. Déduire le coût en crédits
+3. Logger la transaction
 
 ---
 
-# PASS
+# PLANS
 
-Créer un système Pass.
+## Seed par défaut
 
-Exemple :
+3 plans sont créés à l'initialisation (idempotent upsert) :
 
-Pass IA
+### Free (0 XOF)
+- 3 quiz, 50 participants, 10 questions/quiz, 100 Mo
+- Features : AI_GENERATION (10/mois), EXPORT_PDF
 
-Pass Premium
+### Starter (5 000 XOF/mois ou/an)
+- 20 quiz, 500 participants, 50 questions/quiz, 500 Mo
+- Essai gratuit : 14 jours
+- Features : AI_GENERATION (100/mois), AI_IMPORT, QUESTION_BANK, EXPORT_PDF, EXPORT_EXCEL
 
-Pass Export
+### Professional (15 000 XOF/mois ou/an)
+- Quiz ∞, participants ∞, questions ∞, 5000 Mo
+- Essai gratuit : 14 jours
+- Badge "Recommandé"
+- Features : toutes (13 features dont ADVANCED_ANALYTICS, CERTIFICATES, CUSTOM_BRANDING, API_ACCESS, etc.)
 
-Pass White Label
+## Tout est en DB
 
-Chaque Pass possède :
+Le Super Admin peut modifier depuis `/admin/plans` :
+- nom, description, prix, devise, fréquence
+- quotas (quiz, participants, questions, stockage)
+- features activées/désactivées avec quotas
+- badge, couleur, icône, ordre d'affichage
+- essai gratuit, dates de promotion
 
-nom
-
-prix
-
-durée
-
-fonctionnalités
-
-description
-
-promotion
-
-disponibilité
-
-Le Super Admin peut tout modifier.
-
----
-
-# RESTRICTIONS
-
-Toutes les restrictions doivent être dynamiques.
-
-Exemples :
-
-nombre de quiz
-
-nombre de questions
-
-nombre de participants
-
-stockage
-
-IA
-
-Exports
-
-Branding
-
-Analytics
-
-API
-
-Question Banks
-
-Toutes les restrictions doivent être vérifiées automatiquement.
-
-Lorsqu'une limite est atteinte :
-
-bloquer l'action
-
-afficher une explication
-
-afficher la limite actuelle
-
-afficher le quota restant
-
-proposer :
-
-Upgrade
-
-Achat ponctuel
-
-Wallet
-
-Pass
-
-Le message doit être clair.
-
-Jamais frustrant.
+**Aucune modification de code n'est nécessaire** pour changer l'offre commerciale.
 
 ---
 
-# DASHBOARD BILLING
-
-Créer un Dashboard Billing moderne.
-
-Afficher :
-
-plan actuel
-
-historique
-
-wallet
-
-crédits
-
-pass actifs
-
-achats
-
-factures
-
-quota utilisé
-
-quota restant
-
-consommation
-
-prochain renouvellement
-
-graphiques
-
-paiements
-
-promotions
-
-coupons
-
-Tout doit être dynamique.
-
----
-
-# SUPER ADMIN
-
-Créer un véritable centre de contrôle.
-
-Modules :
-
-Dashboard
-
-Utilisateurs
-
-Organisations
-
-Plans
-
-Features
-
-Restrictions
-
-Wallet
-
-Pass
-
-Paiements
-
-FedaPay
-
-Coupons
-
-Promotions
-
-Landing Page
-
-Emails
-
-Notifications
-
-Audit Logs
-
-IA
-
-Configuration
-
-Le Super Admin doit pouvoir gérer entièrement la plateforme.
-
-Sans modifier le code.
-
----
-
-# LANDING PAGE
-
-La Landing Page doit devenir entièrement dynamique.
-
-Toutes les informations doivent provenir de la base de données.
-
-Le Super Admin peut modifier :
-
-Hero
-
-Titre
-
-Sous-titre
-
-CTA
-
-Prix
-
-Plans
-
-Fonctionnalités
-
-Comparatif
-
-FAQ
-
-Témoignages
-
-Captures
-
-Statistiques
-
-Promotions
-
-Badges
-
-Ruban "Recommandé"
-
-Section IA
-
-Toutes les cartes de prix doivent utiliser les données de la base.
-
-Aucun prix codé.
-
-Aucune offre codée.
-
----
-
-# UI
-
-Toute l'interface doit refléter automatiquement les permissions.
-
-Les composants doivent connaître leur état.
-
-Disponible
-
-Premium
-
-Verrouillé
-
-Promotion
-
-Bêta
-
-Bientôt disponible
-
-Inclus
-
-Limité
-
-Afficher des badges.
-
-Afficher les quotas.
-
-Afficher les crédits restants.
-
-Afficher les limitations.
-
-Afficher les recommandations.
-
-Les CTA doivent évoluer automatiquement selon les droits de l'utilisateur.
+# ADD-ONS (MODULES)
+
+## Modèle
+
+```prisma
+model AddOnProduct {
+  name          String
+  description   String?
+  price         Int
+  currency      String     @default("XOF")
+  effect        AddOnEffect  // EXTRA_PARTICIPANTS, EXPORT_UNLOCK, etc.
+  amount        Int?        // nombre de ressources (metered) ou ignoré (unlock)
+  targetFeature FeatureKey? // lien vers une feature du plan (optionnel)
+  isOneTime     Boolean     @default(false)  // true = unlock permanent, false = metered
+  isActive      Boolean     @default(true)
+  isPromoted    Boolean     @default(false)
+  displayOrder  Int         @default(0)
+}
+```
+
+## Deux types
+
+| Type | `isOneTime` | Comportement | Exemples |
+|------|------------|--------------|----------|
+| **Metered** | `false` | `remaining` se consommé, ajoute au quota | +100 participants, +50 IA |
+| **Unlock** | `true` | Déverrouille pour toujours, pas de consommation | EXPORT_UNLOCK, CERTIFICATE_UNLOCK |
+
+## Feature→Addon mapping
+
+Quand `targetFeature` est défini, l'addon étend le quota de cette feature dans le feature gate :
+- `getAddOnBonus(orgId, feature)` somme les `remaining` de tous les addons metered ciblant cette feature
+- `canUseFeature()` utilise ce bonus pour calculer `effectiveLimit = plan.limit + bonus`
 
 ---
 
 # PAIEMENTS
 
-Créer une architecture Payment Provider.
+## Architecture
 
-Support MVP :
+```typescript
+// src/lib/payments/fedapay-provider.ts
+// Le code métier ne dépend JAMAIS directement de FedaPay
+// Couche d'abstraction pour supporter plusieurs providers
+```
 
-FedaPay
+## MVP : FedaPay
 
-Préparer :
+- Transactions, webhooks, callback URLs
+- Configuration via variables d'environnement
 
-Stripe
+## Providers prévus
 
-Kkiapay
-
-Orange Money
-
-MTN MoMo
-
-Moov Money
-
-Wave
-
-Créer une couche d'abstraction.
-
-Le code métier ne dépend jamais directement de FedaPay.
+- Stripe
+- Kkiapay
+- Orange Money / MTN MoMo / Moov Money / Wave
 
 ---
 
-# FACTURES
+# SUPER ADMIN
 
-Créer :
+## Authentification
 
-Factures PDF
+Deux mécanismes combinés :
+1. **Env-based** : `SUPER_ADMIN_EMAIL` dans `.env`
+2. **DB-based** : champ `isSuperAdmin` sur le modèle User
 
-Téléchargement
+`requireSuperAdmin()` vérifie les deux.
 
-Historique
+## Redirect
 
-Numérotation
+Après login, `getDefaultRedirectPath()` redirige vers `/admin` si super admin, sinon vers `/dashboard`.
 
-Taxes
+## Modules admin (`/admin`)
 
-Devise
-
-Statut
-
----
-
-# WEBHOOKS
-
-Créer un moteur générique.
-
-Paiement réussi
-
-Paiement échoué
-
-Recharge Wallet
-
-Renouvellement
-
-Expiration
-
-Annulation
+| Module | Description |
+|--------|-------------|
+| Dashboard | Vue d'ensemble |
+| Users | Gestion des utilisateurs |
+| Organizations | Gestion des organisations |
+| Plans | CRUD plans + features |
+| Add-ons | CRUD modules (metered/unlock) |
+| Passes | CRUD pass temporaires |
+| Coupons | CRUD coupons promo |
+| Credit Costs | Configuration des coûts en crédits |
+| Payments | Historique des paiements |
+| Audit Logs | Journal d'audit |
+| AI Settings | Configuration IA globale |
 
 ---
 
-# COUPONS
+# DASHBOARD USER
 
-Créer un moteur complet.
+## Layout
 
-Pourcentage
+- **Compact** : racine 14px, responsive mobile
+- **Grid** : sections structurées avec cartes
 
-Montant fixe
+## Sections
 
-Date début
+1. **Header** : salutation + badges (plan, wallet)
+2. **Quick Actions** : actions rapides (créer quiz, voir analytics, etc.)
+3. **Vue d'ensemble** : 5 stat cards (quiz, participants, IA, exports, score moyen)
+4. **Vos quotas** : `QuotaOverview` avec barres de progression (Quiz, Participants, AI Generations, Wallet)
+5. **Analytics** : charts d'activité, donut de statut, top quiz, feed d'activité
+6. **Organisation** : revenus, membres récents, quiz récents
+7. **Upgrade Banner** : si plan Free, affiche une bannière d'upgrade
 
-Date fin
+## QuotaOverview
 
-Plans concernés
-
-Fonctionnalités concernées
-
-Nombre maximal d'utilisations
-
----
-
-# ESSAI GRATUIT
-
-Créer un système d'essai.
-
-Durée configurable.
-
-Le Super Admin choisit :
-
-7 jours
-
-14 jours
-
-30 jours
-
-ou toute autre durée.
+Composant `src/features/dashboard/components/quota-overview.tsx` :
+- Barres de progression pour chaque quota
+- Affiche utilisé / total / restant
+- Récupère `canUseFeature()` pour les quotas IA
+- Style coloré selon le niveau (vert → orange → rouge)
 
 ---
 
-# ARCHITECTURE
+# UI & COMPOSANTS
 
-Utiliser :
+## Stack UI
 
-Services
+- **shadcn/ui** (base-nova) : Button, Input, Card, Badge, Dialog, Tabs, etc.
+- **Base UI** (`@base-ui/react`) : Select, Dialog (base primitives)
+- **Tailwind v4** : styling
 
-Repositories
+## Composants clés
 
-Policies
+### Select (Base UI)
 
-Feature Gates
+**IMPORTANT** : Base UI `<Select.Value>` affiche la raw value par défaut (contrairement à Radix UI).
 
-Guards
+Pour afficher les labels, passer la prop `items` à `<Select.Root>` (= `<Select>`) :
 
-Helpers
+```tsx
+// ✅ Correct
+<Select value={type} onValueChange={setType} items={TYPE_LABELS}>
+  <SelectTrigger><SelectValue /></SelectTrigger>
+  <SelectContent>
+    {Object.entries(TYPE_LABELS).map(([value, label]) => (
+      <SelectItem key={value} value={value}>{label}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
 
-DTO
+// ❌ Incorrect — affichera "SINGLE_CHOICE" au lieu de "QCM (choix unique)"
+<Select value={type} onValueChange={setType}>
+  <SelectTrigger><SelectValue /></SelectTrigger>
+  ...
+</Select>
+```
 
-Validation Zod
+`items` accepte :
+- `Record<string, React.ReactNode>` (ex: `{ SINGLE_CHOICE: "QCM", ... }`)
+- `ReadonlyArray<{ value: any; label: React.ReactNode }>` (ex: `[{ value: "all", label: "Tous" }, ...options]`)
 
-Prisma
+### Dialog (Base UI)
 
-Server Actions
+- `DialogContent` a `max-h-[90dvh] overflow-y-auto` pour le scroll mobile
+- `DialogTrigger` nécessite `render={<Button ... />}` pour le polymorphisme
+- `showCloseButton` prop (défaut: true)
 
-Ne jamais mettre la logique métier dans les composants React.
+### Bouton
+
+Le composant Button utilise `@base-ui/react/button` — ne supporte **PAS** `asChild`.
+
+Pour un bouton avec Link :
+```tsx
+import { Link } from "next/navigation";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+<Link className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
+  Label
+</Link>
+```
+
+### FeatureLockNotice
+
+Composant `src/components/shared/feature-lock.tsx` :
+- `FeatureCheckUI` type pour les vérifications côté client
+- `FeatureLockNotice` affiche un bloc verrouillé avec CTA contextuel
+- Supporte les CTA : upgrade, pass, wallet, none
 
 ---
 
-# QUALITÉ
+# ARCHITECTURE TECHNIQUE
 
-Avant toute implémentation :
+## Structure des fichiers
 
-analyser le projet
+```
+src/
+├── app/
+│   ├── (auth)/           # Pages auth (login, register, reset)
+│   ├── admin/            # Super admin panels
+│   ├── dashboard/        # User dashboard
+│   ├── q/[code]/         # Quiz public (participation)
+│   └── api/              # API routes
+├── components/
+│   ├── ui/               # shadcn/ui + Base UI wrappers
+│   └── shared/           # Composants partagés
+├── constants/            # Constantes (features, roles, credit costs, etc.)
+├── features/
+│   ├── admin/            # Admin components + actions
+│   ├── ai/               # AI chat workspace
+│   ├── authentication/   # Login, register forms
+│   ├── billing/          # Checkout, payment components
+│   ├── dashboard/        # Dashboard components
+│   └── quiz/             # Quiz CRUD, questions, participation
+├── generated/prisma/     # Prisma generated client
+├── lib/
+│   ├── auth/             # Auth utilities (require-auth, etc.)
+│   ├── db/               # Prisma client, tenant
+│   ├── payments/         # Payment provider abstraction
+│   ├── services/         # Toute la logique métier
+│   ├── validators/       # Zod schemas
+│   └── utils/            # Utilitaires
+└── prisma/
+    └── schema.prisma     # Schema Prisma
+```
 
-réutiliser l'existant
+## Modèles Prisma principaux
 
-identifier les composants
+| Modèle | Usage |
+|--------|-------|
+| `User` | Utilisateurs, `isSuperAdmin` |
+| `Organization` | Multi-tenant, lien vers owner |
+| `OrganizationMember` | Rôles par org (OWNER, ADMIN, MANAGER, EDITOR, VIEWER) |
+| `Subscription` | Abonnement org → plan |
+| `Plan` | Plans d'abonnement |
+| `PlanFeature` | Features par plan (feature, enabled, limit) |
+| `Quiz` | Quiz avec settings (passingScore, timeLimit, etc.) |
+| `Question` | Questions avec type, difficulté, points |
+| `Participant` | Sessions de participation |
+| `Wallet` + `WalletTransaction` | Crédits prépayés |
+| `AddOnProduct` | Produits add-ons (effect, targetFeature, isOneTime) |
+| `OrganizationAddOn` | Achats add-ons par org (remaining) |
+| `Pass` | Pass temporaires (features, durationDays) |
+| `OrganizationPass` | Achats pass par org (expiresAt) |
+| `Payment` | Transactions paiement |
+| `Coupon` | Codes promo |
+| `PlatformSettings` | Config globale (credit costs, AI settings) |
 
-identifier les services
+## Server Actions
 
-identifier Prisma
+Format : `src/features/*/actions.ts`
 
-identifier les routes
+```typescript
+"use server";
+// requireAuth() → session
+// requireActiveOrganization() → org
+// requireOrgRole(orgId, userId, "EDITOR") → vérifie le rôle
+// Logique métier → service
+// revalidatePath() → cache invalidation
+```
 
-Puis seulement implémenter.
+## Validation
+
+Zod schemas dans `src/lib/validators/` :
+- `quiz.ts`, `question.ts`, `ai-import.ts`
+- `plan.ts`, `addon-product.ts`, `pass.ts`
+- `coupon.ts`, `wallet.ts`
+
+`applyZodErrors()` convertit les erreurs Zod en erreurs react-hook-form.
+
+---
+
+# CI/CD
+
+## GitHub Actions
+
+`.github/workflows/ci.yml` :
+- Lint + typecheck + build
+- Vérifie Prisma generate
+
+## Vercel
+
+`vercel.json` :
+- Région : cdg1 (Paris)
+- Headers de sécurité
+- Build : `pnpm build`
+
+## Prisma Migrate en prod
+
+`scripts/vercel-migrate.sh` :
+- Exécute `prisma migrate deploy`
+- Warmup Neon cold-start (5 retries avec délais croissants)
+- Appelé via `postbuild` ou hook Vercel
+
+## Variables d'environnement Vercel
+
+Toutes configurées en production :
+- `DATABASE_URL` (Neon)
+- `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`
+- `AI_PROVIDER_API_KEY`, `AI_PROVIDER_BASE_URL`, `AI_PROVIDER_MODEL`
+- `AI_KEY_ENCRYPTION_SECRET`
+- `SUPER_ADMIN_EMAIL`
+- `FEDAPAY_*`
+
+---
+
+# RÈGLES QUALITÉ
+
+Avant toute modification :
+
+1. Analyser le projet
+2. Réutiliser l'existant
+3. Identifier composants, services, Prisma, routes
+4. Puis seulement implémenter
 
 Après chaque modification :
 
-corriger TypeScript
+1. Corriger TypeScript (`pnpm tsc --noEmit`)
+2. Corriger ESLint (`pnpm lint`)
+3. Vérifier Build
+4. Optimiser Prisma (index, includes)
+5. Supprimer la duplication
+6. Améliorer les performances
+7. Produire un résumé des fichiers modifiés
 
-corriger ESLint
-
-vérifier Build
-
-optimiser Prisma
-
-supprimer la duplication
-
-améliorer les performances
-
-produire un résumé des fichiers modifiés.
-
-L'objectif est d'obtenir une architecture SaaS professionnelle, maintenable, évolutive et entièrement pilotée par les données administrables depuis le Super Admin.
+**Objectif** : architecture SaaS professionnelle, maintenable, évolutive et entièrement pilotée par les données administrables depuis le Super Admin.
